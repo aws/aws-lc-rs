@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_44_0
+%define BORINGSSL_PREFIX aws_lc_0_45_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -999,6 +999,11 @@
 %xdefine _EC_curve_nid2nist _ %+ BORINGSSL_PREFIX %+ _EC_curve_nid2nist
 %xdefine _EC_curve_nist2nid _ %+ BORINGSSL_PREFIX %+ _EC_curve_nist2nid
 %xdefine _EC_get_builtin_curves _ %+ BORINGSSL_PREFIX %+ _EC_get_builtin_curves
+%xdefine _EC_group_brainpoolP224r1 _ %+ BORINGSSL_PREFIX %+ _EC_group_brainpoolP224r1
+%xdefine _EC_group_brainpoolP256r1 _ %+ BORINGSSL_PREFIX %+ _EC_group_brainpoolP256r1
+%xdefine _EC_group_brainpoolP320r1 _ %+ BORINGSSL_PREFIX %+ _EC_group_brainpoolP320r1
+%xdefine _EC_group_brainpoolP384r1 _ %+ BORINGSSL_PREFIX %+ _EC_group_brainpoolP384r1
+%xdefine _EC_group_brainpoolP512r1 _ %+ BORINGSSL_PREFIX %+ _EC_group_brainpoolP512r1
 %xdefine _EC_group_p224 _ %+ BORINGSSL_PREFIX %+ _EC_group_p224
 %xdefine _EC_group_p256 _ %+ BORINGSSL_PREFIX %+ _EC_group_p256
 %xdefine _EC_group_p384 _ %+ BORINGSSL_PREFIX %+ _EC_group_p384
@@ -1492,6 +1497,7 @@
 %xdefine _EVP_hpke_chacha20_poly1305 _ %+ BORINGSSL_PREFIX %+ _EVP_hpke_chacha20_poly1305
 %xdefine _EVP_hpke_hkdf_sha256 _ %+ BORINGSSL_PREFIX %+ _EVP_hpke_hkdf_sha256
 %xdefine _EVP_hpke_x25519_hkdf_sha256 _ %+ BORINGSSL_PREFIX %+ _EVP_hpke_x25519_hkdf_sha256
+%xdefine _EVP_keccak256 _ %+ BORINGSSL_PREFIX %+ _EVP_keccak256
 %xdefine _EVP_marshal_digest_algorithm _ %+ BORINGSSL_PREFIX %+ _EVP_marshal_digest_algorithm
 %xdefine _EVP_marshal_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_marshal_private_key
 %xdefine _EVP_marshal_private_key_v2 _ %+ BORINGSSL_PREFIX %+ _EVP_marshal_private_key_v2
@@ -1601,8 +1607,15 @@
 %xdefine _Keccak1600_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
 %xdefine _Keccak1600_Squeeze _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeeze
 %xdefine _Keccak1600_Squeezeblocks_x4 _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeezeblocks_x4
+%xdefine _Keccak256 _ %+ BORINGSSL_PREFIX %+ _Keccak256
+%xdefine _Keccak256_Final _ %+ BORINGSSL_PREFIX %+ _Keccak256_Final
+%xdefine _Keccak256_Init _ %+ BORINGSSL_PREFIX %+ _Keccak256_Init
+%xdefine _Keccak256_Update _ %+ BORINGSSL_PREFIX %+ _Keccak256_Update
 %xdefine _KeccakF1600 _ %+ BORINGSSL_PREFIX %+ _KeccakF1600
 %xdefine _KeccakF1600_hw _ %+ BORINGSSL_PREFIX %+ _KeccakF1600_hw
+%xdefine _KeccakSponge_Absorb _ %+ BORINGSSL_PREFIX %+ _KeccakSponge_Absorb
+%xdefine _KeccakSponge_AbsorbFinal _ %+ BORINGSSL_PREFIX %+ _KeccakSponge_AbsorbFinal
+%xdefine _KeccakSponge_Reset _ %+ BORINGSSL_PREFIX %+ _KeccakSponge_Reset
 %xdefine _MD4 _ %+ BORINGSSL_PREFIX %+ _MD4
 %xdefine _MD4_Final _ %+ BORINGSSL_PREFIX %+ _MD4_Final
 %xdefine _MD4_Init _ %+ BORINGSSL_PREFIX %+ _MD4_Init
@@ -3472,6 +3485,7 @@
 %xdefine _ec_felem_to_bytes _ %+ BORINGSSL_PREFIX %+ _ec_felem_to_bytes
 %xdefine _ec_get_x_coordinate_as_bytes _ %+ BORINGSSL_PREFIX %+ _ec_get_x_coordinate_as_bytes
 %xdefine _ec_get_x_coordinate_as_scalar _ %+ BORINGSSL_PREFIX %+ _ec_get_x_coordinate_as_scalar
+%xdefine _ec_group_new_by_curve_name_nonfips _ %+ BORINGSSL_PREFIX %+ _ec_group_new_by_curve_name_nonfips
 %xdefine _ec_hash_to_curve_p256_xmd_sha256_sswu _ %+ BORINGSSL_PREFIX %+ _ec_hash_to_curve_p256_xmd_sha256_sswu
 %xdefine _ec_hash_to_curve_p384_xmd_sha384_sswu _ %+ BORINGSSL_PREFIX %+ _ec_hash_to_curve_p384_xmd_sha384_sswu
 %xdefine _ec_hash_to_curve_p384_xmd_sha512_sswu_draft07 _ %+ BORINGSSL_PREFIX %+ _ec_hash_to_curve_p384_xmd_sha512_sswu_draft07
@@ -3878,62 +3892,60 @@
 %xdefine _mldsa_poly_caddq_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_caddq_aarch64_asm
 %xdefine _mldsa_poly_caddq_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_caddq_avx2_asm
 %xdefine _mldsa_poly_chknorm_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_aarch64_asm
+%xdefine _mldsa_poly_chknorm_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_avx2_asm
 %xdefine _mldsa_poly_decompose_32_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_aarch64_asm
+%xdefine _mldsa_poly_decompose_32_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_avx2_asm
 %xdefine _mldsa_poly_decompose_88_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_aarch64_asm
+%xdefine _mldsa_poly_decompose_88_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_avx2_asm
 %xdefine _mldsa_poly_pointwise_montgomery_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_pointwise_montgomery_aarch64_asm
 %xdefine _mldsa_poly_use_hint_32_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_aarch64_asm
+%xdefine _mldsa_poly_use_hint_32_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_avx2_asm
 %xdefine _mldsa_poly_use_hint_88_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_aarch64_asm
+%xdefine _mldsa_poly_use_hint_88_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_avx2_asm
 %xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm
 %xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm
 %xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm
 %xdefine _mldsa_polyz_unpack_17_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_aarch64_asm
+%xdefine _mldsa_polyz_unpack_17_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_avx2_asm
 %xdefine _mldsa_polyz_unpack_19_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_aarch64_asm
+%xdefine _mldsa_polyz_unpack_19_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_avx2_asm
 %xdefine _mldsa_rej_uniform_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_aarch64_asm
+%xdefine _mldsa_rej_uniform_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_avx2_asm
 %xdefine _mldsa_rej_uniform_eta2_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_aarch64_asm
+%xdefine _mldsa_rej_uniform_eta2_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_avx2_asm
 %xdefine _mldsa_rej_uniform_eta4_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_aarch64_asm
-%xdefine _mlkem_aarch64_invntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
-%xdefine _mlkem_aarch64_invntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
-%xdefine _mlkem_aarch64_ntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345
-%xdefine _mlkem_aarch64_ntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
-%xdefine _mlkem_aarch64_zetas_mulcache_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
-%xdefine _mlkem_aarch64_zetas_mulcache_twisted_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
-%xdefine _mlkem_compress_d10_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d10_data
-%xdefine _mlkem_compress_d11_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d11_data
-%xdefine _mlkem_compress_d4_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d4_data
-%xdefine _mlkem_compress_d5_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d5_data
+%xdefine _mldsa_rej_uniform_eta4_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_avx2_asm
 %xdefine _mlkem_ct_opt_blocker_u64 _ %+ BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
-%xdefine _mlkem_decompress_d10_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d10_data
-%xdefine _mlkem_decompress_d11_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d11_data
-%xdefine _mlkem_decompress_d4_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d4_data
-%xdefine _mlkem_decompress_d5_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d5_data
-%xdefine _mlkem_intt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_intt_asm
-%xdefine _mlkem_invntt_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
-%xdefine _mlkem_ntt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_asm
-%xdefine _mlkem_ntt_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_avx2
-%xdefine _mlkem_nttfrombytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
-%xdefine _mlkem_ntttobytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
-%xdefine _mlkem_nttunpack_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
-%xdefine _mlkem_poly_compress_d10_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2
-%xdefine _mlkem_poly_compress_d11_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2
-%xdefine _mlkem_poly_compress_d4_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2
-%xdefine _mlkem_poly_compress_d5_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2
-%xdefine _mlkem_poly_decompress_d10_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2
-%xdefine _mlkem_poly_decompress_d11_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2
-%xdefine _mlkem_poly_decompress_d4_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2
-%xdefine _mlkem_poly_decompress_d5_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2
-%xdefine _mlkem_poly_mulcache_compute_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
-%xdefine _mlkem_poly_mulcache_compute_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
-%xdefine _mlkem_poly_reduce_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
-%xdefine _mlkem_poly_tobytes_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_asm
-%xdefine _mlkem_poly_tomont_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tomont_asm
-%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2
-%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3
-%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4
-%xdefine _mlkem_qdata _ %+ BORINGSSL_PREFIX %+ _mlkem_qdata
-%xdefine _mlkem_reduce_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_reduce_avx2
-%xdefine _mlkem_rej_uniform_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_asm
-%xdefine _mlkem_rej_uniform_table _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_table
-%xdefine _mlkem_tomont_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_tomont_avx2
+%xdefine _mlkem_intt_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_intt_aarch64_asm
+%xdefine _mlkem_invntt_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_invntt_avx2_asm
+%xdefine _mlkem_ntt_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_aarch64_asm
+%xdefine _mlkem_ntt_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_avx2_asm
+%xdefine _mlkem_nttfrombytes_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2_asm
+%xdefine _mlkem_ntttobytes_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2_asm
+%xdefine _mlkem_nttunpack_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2_asm
+%xdefine _mlkem_poly_compress_d10_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2_asm
+%xdefine _mlkem_poly_compress_d11_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2_asm
+%xdefine _mlkem_poly_compress_d4_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2_asm
+%xdefine _mlkem_poly_compress_d5_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2_asm
+%xdefine _mlkem_poly_decompress_d10_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2_asm
+%xdefine _mlkem_poly_decompress_d11_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2_asm
+%xdefine _mlkem_poly_decompress_d4_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2_asm
+%xdefine _mlkem_poly_decompress_d5_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2_asm
+%xdefine _mlkem_poly_mulcache_compute_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_aarch64_asm
+%xdefine _mlkem_poly_mulcache_compute_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2_asm
+%xdefine _mlkem_poly_reduce_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_reduce_aarch64_asm
+%xdefine _mlkem_poly_tobytes_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_aarch64_asm
+%xdefine _mlkem_poly_tomont_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tomont_aarch64_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k2_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k2_aarch64_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k2_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k2_avx2_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k3_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k3_aarch64_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k3_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k3_avx2_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k4_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k4_aarch64_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_k4_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k4_avx2_asm
+%xdefine _mlkem_reduce_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_reduce_avx2_asm
+%xdefine _mlkem_rej_uniform_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_aarch64_asm
+%xdefine _mlkem_rej_uniform_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_avx2_asm
+%xdefine _mlkem_tomont_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_tomont_avx2_asm
 %xdefine _o2i_ECPublicKey _ %+ BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine _openssl_console_acquire_mutex _ %+ BORINGSSL_PREFIX %+ _openssl_console_acquire_mutex
 %xdefine _openssl_console_close _ %+ BORINGSSL_PREFIX %+ _openssl_console_close
@@ -5145,6 +5157,11 @@
 %xdefine EC_curve_nid2nist BORINGSSL_PREFIX %+ _EC_curve_nid2nist
 %xdefine EC_curve_nist2nid BORINGSSL_PREFIX %+ _EC_curve_nist2nid
 %xdefine EC_get_builtin_curves BORINGSSL_PREFIX %+ _EC_get_builtin_curves
+%xdefine EC_group_brainpoolP224r1 BORINGSSL_PREFIX %+ _EC_group_brainpoolP224r1
+%xdefine EC_group_brainpoolP256r1 BORINGSSL_PREFIX %+ _EC_group_brainpoolP256r1
+%xdefine EC_group_brainpoolP320r1 BORINGSSL_PREFIX %+ _EC_group_brainpoolP320r1
+%xdefine EC_group_brainpoolP384r1 BORINGSSL_PREFIX %+ _EC_group_brainpoolP384r1
+%xdefine EC_group_brainpoolP512r1 BORINGSSL_PREFIX %+ _EC_group_brainpoolP512r1
 %xdefine EC_group_p224 BORINGSSL_PREFIX %+ _EC_group_p224
 %xdefine EC_group_p256 BORINGSSL_PREFIX %+ _EC_group_p256
 %xdefine EC_group_p384 BORINGSSL_PREFIX %+ _EC_group_p384
@@ -5638,6 +5655,7 @@
 %xdefine EVP_hpke_chacha20_poly1305 BORINGSSL_PREFIX %+ _EVP_hpke_chacha20_poly1305
 %xdefine EVP_hpke_hkdf_sha256 BORINGSSL_PREFIX %+ _EVP_hpke_hkdf_sha256
 %xdefine EVP_hpke_x25519_hkdf_sha256 BORINGSSL_PREFIX %+ _EVP_hpke_x25519_hkdf_sha256
+%xdefine EVP_keccak256 BORINGSSL_PREFIX %+ _EVP_keccak256
 %xdefine EVP_marshal_digest_algorithm BORINGSSL_PREFIX %+ _EVP_marshal_digest_algorithm
 %xdefine EVP_marshal_private_key BORINGSSL_PREFIX %+ _EVP_marshal_private_key
 %xdefine EVP_marshal_private_key_v2 BORINGSSL_PREFIX %+ _EVP_marshal_private_key_v2
@@ -5747,8 +5765,15 @@
 %xdefine Keccak1600_Absorb_once_x4 BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
 %xdefine Keccak1600_Squeeze BORINGSSL_PREFIX %+ _Keccak1600_Squeeze
 %xdefine Keccak1600_Squeezeblocks_x4 BORINGSSL_PREFIX %+ _Keccak1600_Squeezeblocks_x4
+%xdefine Keccak256 BORINGSSL_PREFIX %+ _Keccak256
+%xdefine Keccak256_Final BORINGSSL_PREFIX %+ _Keccak256_Final
+%xdefine Keccak256_Init BORINGSSL_PREFIX %+ _Keccak256_Init
+%xdefine Keccak256_Update BORINGSSL_PREFIX %+ _Keccak256_Update
 %xdefine KeccakF1600 BORINGSSL_PREFIX %+ _KeccakF1600
 %xdefine KeccakF1600_hw BORINGSSL_PREFIX %+ _KeccakF1600_hw
+%xdefine KeccakSponge_Absorb BORINGSSL_PREFIX %+ _KeccakSponge_Absorb
+%xdefine KeccakSponge_AbsorbFinal BORINGSSL_PREFIX %+ _KeccakSponge_AbsorbFinal
+%xdefine KeccakSponge_Reset BORINGSSL_PREFIX %+ _KeccakSponge_Reset
 %xdefine MD4 BORINGSSL_PREFIX %+ _MD4
 %xdefine MD4_Final BORINGSSL_PREFIX %+ _MD4_Final
 %xdefine MD4_Init BORINGSSL_PREFIX %+ _MD4_Init
@@ -7618,6 +7643,7 @@
 %xdefine ec_felem_to_bytes BORINGSSL_PREFIX %+ _ec_felem_to_bytes
 %xdefine ec_get_x_coordinate_as_bytes BORINGSSL_PREFIX %+ _ec_get_x_coordinate_as_bytes
 %xdefine ec_get_x_coordinate_as_scalar BORINGSSL_PREFIX %+ _ec_get_x_coordinate_as_scalar
+%xdefine ec_group_new_by_curve_name_nonfips BORINGSSL_PREFIX %+ _ec_group_new_by_curve_name_nonfips
 %xdefine ec_hash_to_curve_p256_xmd_sha256_sswu BORINGSSL_PREFIX %+ _ec_hash_to_curve_p256_xmd_sha256_sswu
 %xdefine ec_hash_to_curve_p384_xmd_sha384_sswu BORINGSSL_PREFIX %+ _ec_hash_to_curve_p384_xmd_sha384_sswu
 %xdefine ec_hash_to_curve_p384_xmd_sha512_sswu_draft07 BORINGSSL_PREFIX %+ _ec_hash_to_curve_p384_xmd_sha512_sswu_draft07
@@ -8024,62 +8050,60 @@
 %xdefine mldsa_poly_caddq_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_caddq_aarch64_asm
 %xdefine mldsa_poly_caddq_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_caddq_avx2_asm
 %xdefine mldsa_poly_chknorm_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_aarch64_asm
+%xdefine mldsa_poly_chknorm_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_avx2_asm
 %xdefine mldsa_poly_decompose_32_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_aarch64_asm
+%xdefine mldsa_poly_decompose_32_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_avx2_asm
 %xdefine mldsa_poly_decompose_88_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_aarch64_asm
+%xdefine mldsa_poly_decompose_88_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_avx2_asm
 %xdefine mldsa_poly_pointwise_montgomery_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_pointwise_montgomery_aarch64_asm
 %xdefine mldsa_poly_use_hint_32_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_aarch64_asm
+%xdefine mldsa_poly_use_hint_32_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_avx2_asm
 %xdefine mldsa_poly_use_hint_88_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_aarch64_asm
+%xdefine mldsa_poly_use_hint_88_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_avx2_asm
 %xdefine mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm
 %xdefine mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm
 %xdefine mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm
 %xdefine mldsa_polyz_unpack_17_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_aarch64_asm
+%xdefine mldsa_polyz_unpack_17_avx2_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_avx2_asm
 %xdefine mldsa_polyz_unpack_19_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_aarch64_asm
+%xdefine mldsa_polyz_unpack_19_avx2_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_avx2_asm
 %xdefine mldsa_rej_uniform_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_aarch64_asm
+%xdefine mldsa_rej_uniform_avx2_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_avx2_asm
 %xdefine mldsa_rej_uniform_eta2_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_aarch64_asm
+%xdefine mldsa_rej_uniform_eta2_avx2_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_avx2_asm
 %xdefine mldsa_rej_uniform_eta4_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_aarch64_asm
-%xdefine mlkem_aarch64_invntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
-%xdefine mlkem_aarch64_invntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
-%xdefine mlkem_aarch64_ntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345
-%xdefine mlkem_aarch64_ntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
-%xdefine mlkem_aarch64_zetas_mulcache_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
-%xdefine mlkem_aarch64_zetas_mulcache_twisted_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
-%xdefine mlkem_compress_d10_data BORINGSSL_PREFIX %+ _mlkem_compress_d10_data
-%xdefine mlkem_compress_d11_data BORINGSSL_PREFIX %+ _mlkem_compress_d11_data
-%xdefine mlkem_compress_d4_data BORINGSSL_PREFIX %+ _mlkem_compress_d4_data
-%xdefine mlkem_compress_d5_data BORINGSSL_PREFIX %+ _mlkem_compress_d5_data
+%xdefine mldsa_rej_uniform_eta4_avx2_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_avx2_asm
 %xdefine mlkem_ct_opt_blocker_u64 BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
-%xdefine mlkem_decompress_d10_data BORINGSSL_PREFIX %+ _mlkem_decompress_d10_data
-%xdefine mlkem_decompress_d11_data BORINGSSL_PREFIX %+ _mlkem_decompress_d11_data
-%xdefine mlkem_decompress_d4_data BORINGSSL_PREFIX %+ _mlkem_decompress_d4_data
-%xdefine mlkem_decompress_d5_data BORINGSSL_PREFIX %+ _mlkem_decompress_d5_data
-%xdefine mlkem_intt_asm BORINGSSL_PREFIX %+ _mlkem_intt_asm
-%xdefine mlkem_invntt_avx2 BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
-%xdefine mlkem_ntt_asm BORINGSSL_PREFIX %+ _mlkem_ntt_asm
-%xdefine mlkem_ntt_avx2 BORINGSSL_PREFIX %+ _mlkem_ntt_avx2
-%xdefine mlkem_nttfrombytes_avx2 BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
-%xdefine mlkem_ntttobytes_avx2 BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
-%xdefine mlkem_nttunpack_avx2 BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
-%xdefine mlkem_poly_compress_d10_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2
-%xdefine mlkem_poly_compress_d11_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2
-%xdefine mlkem_poly_compress_d4_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2
-%xdefine mlkem_poly_compress_d5_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2
-%xdefine mlkem_poly_decompress_d10_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2
-%xdefine mlkem_poly_decompress_d11_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2
-%xdefine mlkem_poly_decompress_d4_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2
-%xdefine mlkem_poly_decompress_d5_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2
-%xdefine mlkem_poly_mulcache_compute_asm BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
-%xdefine mlkem_poly_mulcache_compute_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
-%xdefine mlkem_poly_reduce_asm BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
-%xdefine mlkem_poly_tobytes_asm BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_asm
-%xdefine mlkem_poly_tomont_asm BORINGSSL_PREFIX %+ _mlkem_poly_tomont_asm
-%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2
-%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3
-%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4
-%xdefine mlkem_qdata BORINGSSL_PREFIX %+ _mlkem_qdata
-%xdefine mlkem_reduce_avx2 BORINGSSL_PREFIX %+ _mlkem_reduce_avx2
-%xdefine mlkem_rej_uniform_asm BORINGSSL_PREFIX %+ _mlkem_rej_uniform_asm
-%xdefine mlkem_rej_uniform_table BORINGSSL_PREFIX %+ _mlkem_rej_uniform_table
-%xdefine mlkem_tomont_avx2 BORINGSSL_PREFIX %+ _mlkem_tomont_avx2
+%xdefine mlkem_intt_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_intt_aarch64_asm
+%xdefine mlkem_invntt_avx2_asm BORINGSSL_PREFIX %+ _mlkem_invntt_avx2_asm
+%xdefine mlkem_ntt_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_ntt_aarch64_asm
+%xdefine mlkem_ntt_avx2_asm BORINGSSL_PREFIX %+ _mlkem_ntt_avx2_asm
+%xdefine mlkem_nttfrombytes_avx2_asm BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2_asm
+%xdefine mlkem_ntttobytes_avx2_asm BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2_asm
+%xdefine mlkem_nttunpack_avx2_asm BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2_asm
+%xdefine mlkem_poly_compress_d10_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2_asm
+%xdefine mlkem_poly_compress_d11_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2_asm
+%xdefine mlkem_poly_compress_d4_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2_asm
+%xdefine mlkem_poly_compress_d5_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2_asm
+%xdefine mlkem_poly_decompress_d10_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2_asm
+%xdefine mlkem_poly_decompress_d11_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2_asm
+%xdefine mlkem_poly_decompress_d4_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2_asm
+%xdefine mlkem_poly_decompress_d5_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2_asm
+%xdefine mlkem_poly_mulcache_compute_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_aarch64_asm
+%xdefine mlkem_poly_mulcache_compute_avx2_asm BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2_asm
+%xdefine mlkem_poly_reduce_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_poly_reduce_aarch64_asm
+%xdefine mlkem_poly_tobytes_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_aarch64_asm
+%xdefine mlkem_poly_tomont_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_poly_tomont_aarch64_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k2_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k2_aarch64_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k2_avx2_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k2_avx2_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k3_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k3_aarch64_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k3_avx2_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k3_avx2_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k4_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k4_aarch64_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_k4_avx2_asm BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_k4_avx2_asm
+%xdefine mlkem_reduce_avx2_asm BORINGSSL_PREFIX %+ _mlkem_reduce_avx2_asm
+%xdefine mlkem_rej_uniform_aarch64_asm BORINGSSL_PREFIX %+ _mlkem_rej_uniform_aarch64_asm
+%xdefine mlkem_rej_uniform_avx2_asm BORINGSSL_PREFIX %+ _mlkem_rej_uniform_avx2_asm
+%xdefine mlkem_tomont_avx2_asm BORINGSSL_PREFIX %+ _mlkem_tomont_avx2_asm
 %xdefine o2i_ECPublicKey BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine openssl_console_acquire_mutex BORINGSSL_PREFIX %+ _openssl_console_acquire_mutex
 %xdefine openssl_console_close BORINGSSL_PREFIX %+ _openssl_console_close
