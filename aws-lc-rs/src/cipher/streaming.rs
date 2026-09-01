@@ -536,6 +536,8 @@ impl StreamingDecryptingKey {
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
         self.output_generated += outlen;
+        // Reported length, not bytes written -- so this is not a bounds check on
+        // the write. The canary tests in this module cover that.
         assert!(outlen <= output.len());
 
         Ok(BufferUpdate::new(output, outlen))
@@ -723,6 +725,36 @@ mod tests {
     use crate::test::from_hex;
     use paste::*;
 
+    // Complementary fills so a stray write matching one canary is caught by
+    // the other. Refilled immediately before each update/finish so a prior
+    // call's (legal) write into a larger slice cannot be mistaken for an
+    // overrun of a later, shorter one.
+    const OUTPUT_CANARIES: [u8; 2] = [0xAA, 0x55];
+
+    fn assert_no_write_past(output: &[u8], slice_start: usize, slice_end: usize, canary: u8) {
+        let slice_len = slice_end - slice_start;
+        let tail = &output[slice_end..output.len().min(slice_end + 16)];
+        assert!(
+            output[slice_end..].iter().all(|&b| b == canary),
+            "wrote past the provided {slice_len}-byte output slice at buffer offsets \
+             {slice_start}..{slice_end} \
+             (canary {canary:#04x}, bytes at {slice_end}..: {tail:02x?})"
+        );
+    }
+
+    fn apply_update_with_canary(
+        output: &mut [u8],
+        out_idx: usize,
+        out_end: usize,
+        canary: u8,
+        op: impl FnOnce(&mut [u8]) -> usize,
+    ) -> usize {
+        output[out_end..].fill(canary);
+        let written = op(&mut output[out_idx..out_end]);
+        assert_no_write_past(output, out_idx, out_end, canary);
+        written
+    }
+
     /// Generic helper for step encryption that accepts a closure for the update operation.
     /// The closure receives: (key, input, output_buffer, out_idx, block_len, step)
     /// and returns the number of bytes written.
@@ -730,6 +762,7 @@ mod tests {
         mut encrypting_key: StreamingEncryptingKey,
         plaintext: &[u8],
         step: usize,
+        canary: u8,
         mut updater: F,
     ) -> (Box<[u8]>, DecryptionContext)
     where
@@ -739,7 +772,9 @@ mod tests {
         let mode = encrypting_key.mode();
         let block_len = alg.block_len();
         let n = plaintext.len();
-        let mut ciphertext = vec![0u8; n + block_len];
+        // Extra block so there is always canary past the documented-min slice
+        // (`in_len + block_len - 1`) and past `finish`'s block-sized tail.
+        let mut ciphertext = vec![canary; n + 2 * block_len];
 
         let mut in_idx: usize = 0;
         let mut out_idx: usize = 0;
@@ -763,11 +798,15 @@ mod tests {
             }
         }
         let out_end = out_idx + block_len;
-        let (decrypt_iv, output) = encrypting_key
-            .finish(&mut ciphertext[out_idx..out_end])
-            .unwrap();
-        let outlen = output.written().len();
-        ciphertext.truncate(out_idx + outlen);
+        ciphertext[out_end..].fill(canary);
+        let (decrypt_iv, written_len) = {
+            let (decrypt_iv, output) = encrypting_key
+                .finish(&mut ciphertext[out_idx..out_end])
+                .unwrap();
+            (decrypt_iv, output.written().len())
+        };
+        assert_no_write_past(&ciphertext, out_idx, out_end, canary);
+        ciphertext.truncate(out_idx + written_len);
         match mode {
             OperatingMode::CBC | OperatingMode::ECB => {
                 assert!(ciphertext.len() > plaintext.len());
@@ -788,6 +827,7 @@ mod tests {
         mut decrypting_key: StreamingDecryptingKey,
         ciphertext: &[u8],
         step: usize,
+        canary: u8,
         mut updater: F,
     ) -> Box<[u8]>
     where
@@ -797,7 +837,7 @@ mod tests {
         let mode = decrypting_key.mode();
         let block_len = alg.block_len();
         let n = ciphertext.len();
-        let mut plaintext = vec![0u8; n + block_len];
+        let mut plaintext = vec![canary; n + 2 * block_len];
 
         let mut in_idx: usize = 0;
         let mut out_idx: usize = 0;
@@ -821,11 +861,15 @@ mod tests {
             }
         }
         let out_end = out_idx + block_len;
-        let output = decrypting_key
-            .finish(&mut plaintext[out_idx..out_end])
-            .unwrap();
-        let outlen = output.written().len();
-        plaintext.truncate(out_idx + outlen);
+        plaintext[out_end..].fill(canary);
+        let written_len = {
+            let output = decrypting_key
+                .finish(&mut plaintext[out_idx..out_end])
+                .unwrap();
+            output.written().len()
+        };
+        assert_no_write_past(&plaintext, out_idx, out_end, canary);
+        plaintext.truncate(out_idx + written_len);
         match mode {
             OperatingMode::CBC | OperatingMode::ECB => {
                 assert!(ciphertext.len() > plaintext.len());
@@ -842,15 +886,18 @@ mod tests {
         encrypting_key: StreamingEncryptingKey,
         plaintext: &[u8],
         step: usize,
+        canary: u8,
     ) -> (Box<[u8]>, DecryptionContext) {
         step_encrypt_with_updater(
             encrypting_key,
             plaintext,
             step,
+            canary,
             |key, input, output, out_idx, block_len, _step| {
                 let out_end = out_idx + input.len() + block_len - 1;
-                let result = key.update(input, &mut output[out_idx..out_end]).unwrap();
-                result.written().len()
+                apply_update_with_canary(output, out_idx, out_end, canary, |out| {
+                    key.update(input, out).unwrap().written().len()
+                })
             },
         )
     }
@@ -859,42 +906,48 @@ mod tests {
         decrypting_key: StreamingDecryptingKey,
         ciphertext: &[u8],
         step: usize,
+        canary: u8,
     ) -> Box<[u8]> {
         step_decrypt_with_updater(
             decrypting_key,
             ciphertext,
             step,
+            canary,
             |key, input, output, out_idx, block_len, _step| {
                 let out_end = out_idx + input.len() + block_len - 1;
-                let result = key.update(input, &mut output[out_idx..out_end]).unwrap();
-                result.written().len()
+                apply_update_with_canary(output, out_idx, out_end, canary, |out| {
+                    key.update(input, out).unwrap().written().len()
+                })
             },
         )
+    }
+
+    fn less_safe_min_out(block_len: usize, out_idx: usize, input_len: usize) -> usize {
+        let next_total = out_idx + input_len;
+        input_len + ((block_len - (next_total % block_len)) % block_len)
     }
 
     fn step_encrypt_less_safe(
         encrypting_key: StreamingEncryptingKey,
         plaintext: &[u8],
         step: usize,
+        canary: u8,
     ) -> (Box<[u8]>, DecryptionContext) {
         step_encrypt_with_updater(
             encrypting_key,
             plaintext,
             step,
+            canary,
             |key, input, output, out_idx, block_len, step| {
-                let input_len = input.len();
-                let next_total = out_idx + input_len;
-                // Calculate the tighter minimum output buffer size
-                let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
-                if input_len % block_len == 0 && step % block_len == 0 {
+                let min_out_len = less_safe_min_out(block_len, out_idx, input.len());
+                if input.len() % block_len == 0 && step % block_len == 0 {
                     // When input is provided one block at a time, no additional space should be needed.
-                    assert_eq!(input_len, min_out_len);
+                    assert_eq!(input.len(), min_out_len);
                 }
                 let out_end = out_idx + min_out_len;
-                let result = key
-                    .less_safe_update(input, &mut output[out_idx..out_end])
-                    .unwrap();
-                result.written().len()
+                apply_update_with_canary(output, out_idx, out_end, canary, |out| {
+                    key.less_safe_update(input, out).unwrap().written().len()
+                })
             },
         )
     }
@@ -903,25 +956,23 @@ mod tests {
         decrypting_key: StreamingDecryptingKey,
         ciphertext: &[u8],
         step: usize,
+        canary: u8,
     ) -> Box<[u8]> {
         step_decrypt_with_updater(
             decrypting_key,
             ciphertext,
             step,
+            canary,
             |key, input, output, out_idx, block_len, step| {
-                let input_len = input.len();
-                let next_total = out_idx + input_len;
-                // Calculate the tighter minimum output buffer size
-                let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
-                if input_len % block_len == 0 && step % block_len == 0 {
+                let min_out_len = less_safe_min_out(block_len, out_idx, input.len());
+                if input.len() % block_len == 0 && step % block_len == 0 {
                     // When input is provided one block at a time, no additional space should be needed.
-                    assert_eq!(input_len, min_out_len);
+                    assert_eq!(input.len(), min_out_len);
                 }
                 let out_end = out_idx + min_out_len;
-                let result = key
-                    .less_safe_update(input, &mut output[out_idx..out_end])
-                    .unwrap();
-                result.written().len()
+                apply_update_with_canary(output, out_idx, out_end, canary, |out| {
+                    key.less_safe_update(input, out).unwrap().written().len()
+                })
             },
         )
     }
@@ -934,6 +985,7 @@ mod tests {
                     decrypting_key_creator: impl Fn(DecryptionContext) -> StreamingDecryptingKey,
                     n: usize,
                     step: usize,
+                    canary: u8,
                 ) {
                     let mut input = vec![0u8; n];
                     let random = SystemRandom::new();
@@ -941,11 +993,12 @@ mod tests {
 
                     let encrypting_key = encrypting_key_creator();
 
-                    let (ciphertext, decrypt_iv) = step_encrypt(encrypting_key, &input, step);
+                    let (ciphertext, decrypt_iv) =
+                        step_encrypt(encrypting_key, &input, step, canary);
 
                     let decrypting_key = decrypting_key_creator(decrypt_iv);
 
-                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step, canary);
 
                     assert_eq!(input.as_slice(), &*plaintext);
                 }
@@ -958,6 +1011,7 @@ mod tests {
                     decrypting_key_creator: impl Fn(DecryptionContext) -> StreamingDecryptingKey,
                     n: usize,
                     step: usize,
+                    canary: u8,
                 ) {
                     let mut input = vec![0u8; n];
                     let random = SystemRandom::new();
@@ -965,11 +1019,13 @@ mod tests {
 
                     let encrypting_key = encrypting_key_creator();
 
-                    let (ciphertext, decrypt_iv) = step_encrypt_less_safe(encrypting_key, &input, step);
+                    let (ciphertext, decrypt_iv) =
+                        step_encrypt_less_safe(encrypting_key, &input, step, canary);
 
                     let decrypting_key = decrypting_key_creator(decrypt_iv);
 
-                    let plaintext = step_decrypt_less_safe(decrypting_key, &ciphertext, step);
+                    let plaintext =
+                        step_decrypt_less_safe(decrypting_key, &ciphertext, step, canary);
 
                     assert_eq!(input.as_slice(), &*plaintext);
                 }
@@ -987,447 +1043,212 @@ mod tests {
     helper_stream_step_encrypt_test!(cfb128, less_safe);
     helper_stream_step_encrypt_test!(ecb_pkcs7, less_safe);
 
-    #[test]
-    fn test_step_cbc() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-        let key = key;
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::cbc_pkcs7(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::cbc_pkcs7(key, decryption_ctx).unwrap()
-        };
-
+    fn run_step_matrix(test: impl Fn(usize, usize)) {
         for i in 13..=21 {
             for j in 124..=131 {
-                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
+                test(j, i);
+                test(j, j - i);
             }
         }
         for j in 124..=131 {
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
+            test(j, j);
+            test(j, 256);
+            test(j, 1);
         }
     }
 
-    #[test]
-    fn test_step_ctr() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
+    fn random_aes_key(len: usize) -> Vec<u8> {
+        let mut key = vec![0u8; len];
+        SystemRandom::new().fill(&mut key).unwrap();
+        key
+    }
 
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::ctr(key).unwrap()
+    macro_rules! step_roundtrip_tests {
+        ($name:ident, $constructor:ident, $helper:ident) => {
+            #[test]
+            fn $name() {
+                for (alg, key_len) in [(&AES_128, AES_128_KEY_LEN), (&AES_256, AES_256_KEY_LEN)] {
+                    let key = random_aes_key(key_len);
+                    let encrypting_key_creator = || {
+                        let key = UnboundCipherKey::new(alg, &key).unwrap();
+                        StreamingEncryptingKey::$constructor(key).unwrap()
+                    };
+                    let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+                        let key = UnboundCipherKey::new(alg, &key).unwrap();
+                        StreamingDecryptingKey::$constructor(key, decryption_ctx).unwrap()
+                    };
+                    // Alternate complementary canaries across the (n, step)
+                    // grid so both fills are exercised without doubling the
+                    // already-expensive AES-128 x AES-256 matrix.
+                    run_step_matrix(|n, step| {
+                        let canary = OUTPUT_CANARIES[(n + step) % OUTPUT_CANARIES.len()];
+                        $helper(
+                            encrypting_key_creator,
+                            decrypting_key_creator,
+                            n,
+                            step,
+                            canary,
+                        );
+                    });
+                }
+            }
         };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::ctr(key, decryption_ctx).unwrap()
-        };
+    }
 
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_ctr_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_ctr_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_ctr_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_ctr_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_ctr_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
+    step_roundtrip_tests!(
+        test_step_cbc,
+        cbc_pkcs7,
+        helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes
+    );
+    step_roundtrip_tests!(
+        test_step_ctr,
+        ctr,
+        helper_test_ctr_stream_encrypt_step_n_bytes
+    );
+    step_roundtrip_tests!(
+        test_step_cfb128,
+        cfb128,
+        helper_test_cfb128_stream_encrypt_step_n_bytes
+    );
+    step_roundtrip_tests!(
+        test_step_ecb_pkcs7,
+        ecb_pkcs7,
+        helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes
+    );
+    step_roundtrip_tests!(
+        test_step_cbc_less_safe,
+        cbc_pkcs7,
+        helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe
+    );
+    step_roundtrip_tests!(
+        test_step_ctr_less_safe,
+        ctr,
+        helper_test_ctr_stream_encrypt_step_n_bytes_less_safe
+    );
+    step_roundtrip_tests!(
+        test_step_cfb128_less_safe,
+        cfb128,
+        helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe
+    );
+    step_roundtrip_tests!(
+        test_step_ecb_pkcs7_less_safe,
+        ecb_pkcs7,
+        helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe
+    );
+
+    #[derive(Clone, Copy)]
+    enum UpdateVariant {
+        /// [`StreamingDecryptingKey::update`]: `in_len + block_len - 1`.
+        Documented,
+        /// [`StreamingDecryptingKey::less_safe_update`]: `in_len` when aligned.
+        LessSafe,
+    }
+
+    /// Feeds block-aligned chunks through `key`, handing each call exactly the
+    /// minimum output slice its API documents, with canary bytes just past it.
+    /// `update`-only: the overrun precedes any padding check, so the ciphertext
+    /// is arbitrary and `finish` is never called.
+    fn assert_block_aligned_updates_stay_in_slice(
+        mut key: StreamingDecryptingKey,
+        variant: UpdateVariant,
+        chunks: usize,
+        canary: u8,
+    ) {
+        let block_len = key.algorithm().block_len();
+        let ciphertext = vec![0x42u8; chunks * block_len];
+        // Widest documented minimum is `2 * block_len - 1`, leaving every slice
+        // >= `block_len + 1` canary bytes -- enough for a full-block overrun.
+        let mut output = vec![canary; ciphertext.len() + 3 * block_len];
+        let mut out_idx = 0usize;
+
+        for chunk in ciphertext.chunks(block_len) {
+            let min_outsize = match variant {
+                UpdateVariant::Documented => chunk.len() + block_len - 1,
+                UpdateVariant::LessSafe => less_safe_min_out(block_len, out_idx, chunk.len()),
+            };
+            let out_end = out_idx + min_outsize;
+            out_idx += apply_update_with_canary(&mut output, out_idx, out_end, canary, |out| {
+                match variant {
+                    UpdateVariant::Documented => key.update(chunk, out),
+                    UpdateVariant::LessSafe => key.less_safe_update(chunk, out),
+                }
+                .expect("update rejected a documented-minimum output slice")
+                .written()
+                .len()
+            });
         }
     }
 
-    #[test]
-    fn test_step_cfb128() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
+    /// The overrun needs a second call: the first leaves the cipher aligned (so
+    /// AWS-LC buffers a block), the next replays it. Four gives three chances.
+    const REGRESSION_CHUNKS: usize = 4;
 
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::cfb128(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
-        };
+    macro_rules! decrypt_output_bounds_tests {
+        ($name:ident, $alg:expr, $key_len:expr, $constructor:ident, $context:expr) => {
+            paste! {
+                #[test]
+                fn [<test_ $name _update_stays_in_output_slice>]() {
+                    for canary in OUTPUT_CANARIES {
+                        let unbound =
+                            UnboundCipherKey::new($alg, &random_aes_key($key_len)).unwrap();
+                        let key =
+                            StreamingDecryptingKey::$constructor(unbound, $context).unwrap();
+                        assert_block_aligned_updates_stay_in_slice(
+                            key,
+                            UpdateVariant::Documented,
+                            REGRESSION_CHUNKS,
+                            canary,
+                        );
+                    }
+                }
 
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_cfb128_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
+                #[test]
+                fn [<test_ $name _less_safe_update_stays_in_output_slice>]() {
+                    for canary in OUTPUT_CANARIES {
+                        let unbound =
+                            UnboundCipherKey::new($alg, &random_aes_key($key_len)).unwrap();
+                        let key =
+                            StreamingDecryptingKey::$constructor(unbound, $context).unwrap();
+                        assert_block_aligned_updates_stay_in_slice(
+                            key,
+                            UpdateVariant::LessSafe,
+                            REGRESSION_CHUNKS,
+                            canary,
+                        );
+                    }
+                }
             }
-            for j in 124..=131 {
-                helper_test_cfb128_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_cfb128_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_cfb128_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_cfb128_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
+        };
     }
 
-    #[test]
-    fn test_step_ecb_pkcs7() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::ecb_pkcs7(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::ecb_pkcs7(key, decryption_ctx).unwrap()
-        };
-
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
-    }
-
-    #[test]
-    fn test_step_cbc_less_safe() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-        let key = key;
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::cbc_pkcs7(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::cbc_pkcs7(key, decryption_ctx).unwrap()
-        };
-
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
-    }
-
-    #[test]
-    fn test_step_ctr_less_safe() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::ctr(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::ctr(key, decryption_ctx).unwrap()
-        };
-
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
-    }
-
-    #[test]
-    fn test_step_cfb128_less_safe() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::cfb128(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
-        };
-
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
-    }
-
-    #[test]
-    fn test_step_ecb_pkcs7_less_safe() {
-        let random = SystemRandom::new();
-        let mut key = [0u8; AES_256_KEY_LEN];
-        random.fill(&mut key).unwrap();
-
-        let encrypting_key_creator = || {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingEncryptingKey::ecb_pkcs7(key).unwrap()
-        };
-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
-            StreamingDecryptingKey::ecb_pkcs7(key, decryption_ctx).unwrap()
-        };
-
-        for i in 13..=21 {
-            for j in 124..=131 {
-                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    i,
-                );
-            }
-            for j in 124..=131 {
-                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                    encrypting_key_creator,
-                    decrypting_key_creator,
-                    j,
-                    j - i,
-                );
-            }
-        }
-        for j in 124..=131 {
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                j,
-            );
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                256,
-            );
-            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
-                encrypting_key_creator,
-                decrypting_key_creator,
-                j,
-                1,
-            );
-        }
-    }
+    decrypt_output_bounds_tests!(
+        aes_128_cbc_pkcs7,
+        &AES_128,
+        AES_128_KEY_LEN,
+        cbc_pkcs7,
+        DecryptionContext::Iv128(FixedLength::from([0u8; IV_LEN_128_BIT]))
+    );
+    decrypt_output_bounds_tests!(
+        aes_256_cbc_pkcs7,
+        &AES_256,
+        AES_256_KEY_LEN,
+        cbc_pkcs7,
+        DecryptionContext::Iv128(FixedLength::from([0u8; IV_LEN_128_BIT]))
+    );
+    decrypt_output_bounds_tests!(
+        aes_128_ecb_pkcs7,
+        &AES_128,
+        AES_128_KEY_LEN,
+        ecb_pkcs7,
+        DecryptionContext::None
+    );
+    decrypt_output_bounds_tests!(
+        aes_256_ecb_pkcs7,
+        &AES_256,
+        AES_256_KEY_LEN,
+        ecb_pkcs7,
+        DecryptionContext::None
+    );
 
     macro_rules! streaming_cipher_kat {
         ($name:ident, $alg:expr, $mode:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
@@ -1448,7 +1269,8 @@ mod tests {
                     let encrypting_key =
                         StreamingEncryptingKey::new(unbound_key, $mode, ec).unwrap();
 
-                    let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+                    let (ciphertext, decrypt_ctx) =
+                        step_encrypt(encrypting_key, &input, step, OUTPUT_CANARIES[0]);
 
                     assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
 
@@ -1456,7 +1278,8 @@ mod tests {
                     let decrypting_key =
                         StreamingDecryptingKey::new(unbound_key2, $mode, decrypt_ctx).unwrap();
 
-                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                    let plaintext =
+                        step_decrypt(decrypting_key, &ciphertext, step, OUTPUT_CANARIES[1]);
                     assert_eq!(input.as_slice(), plaintext.as_ref());
                 }
             }
@@ -1475,7 +1298,8 @@ mod tests {
                         StreamingEncryptingKey::new(unbound_key, $mode, EncryptionContext::None)
                             .unwrap();
 
-                    let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+                    let (ciphertext, decrypt_ctx) =
+                        step_encrypt(encrypting_key, &input, step, OUTPUT_CANARIES[0]);
 
                     assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
 
@@ -1483,7 +1307,8 @@ mod tests {
                     let decrypting_key =
                         StreamingDecryptingKey::new(unbound_key2, $mode, decrypt_ctx).unwrap();
 
-                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                    let plaintext =
+                        step_decrypt(decrypting_key, &ciphertext, step, OUTPUT_CANARIES[1]);
                     assert_eq!(input.as_slice(), plaintext.as_ref());
                 }
             }
