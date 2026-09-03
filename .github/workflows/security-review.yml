@@ -2,16 +2,16 @@ name: security-review
 
 on:
   pull_request_target:
-    branches: ["*"]
+    branches: ["**"]
     types: [opened, synchronize, reopened, closed] # Note: closed is needed to update internal tracking state
   push:
     branches: [main]
 concurrency:
-  group: >
-    ${{ github.workflow }}-
-    ${{ github.event_name == 'pull_request_target'
-      && format('pr-{0}', github.event.pull_request.number)
-      || format('{0}-{1}', github.ref_type || 'ref', github.ref_name || github.ref) }}
+  group: >-
+    ${{ github.workflow }}-${{
+    github.event_name == 'pull_request_target'
+    && format('pr-{0}', github.event.pull_request.number)
+    || format('{0}-{1}', github.ref_type || 'ref', github.ref_name || github.ref) }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -48,6 +48,7 @@ jobs:
     if: github.event_name != 'push'
     needs: authorize
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     environment: ${{ needs.authorize.outputs.approval-env == 'manual-approval' && 'manual-approval' || '' }}
     permissions:
       id-token: write
@@ -55,17 +56,6 @@ jobs:
       statuses: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          # Safe: this job's fork checkout is gated behind the authorize
-          # deployment-environment approval (AWS-542), so fork code is only
-          # checked out after a maintainer approves the run. That approval gate
-          # is exactly the human-in-the-loop mitigation that
-          # actions/checkout@v7's new pull_request_target default requires; this
-          # opt-in re-asserts our existing protection, it does not weaken it.
-          allow-unsafe-pr-checkout: true
-
       - name: Get AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
