@@ -55,11 +55,11 @@ impl RandomizedNonceKey {
     }
 
     /// Authenticates and decrypts (“opens”) data in place.
-    //
-    // aad is the additional authenticated data (AAD), if any.
-    //
-    // On input, in_out must be the ciphertext followed by the tag. When open_in_place() returns Ok(plaintext),
-    // the input ciphertext has been overwritten by the plaintext; plaintext will refer to the plaintext without the tag.
+    ///
+    /// aad is the additional authenticated data (AAD), if any.
+    ///
+    /// On input, in_out must be the ciphertext followed by the tag. When open_in_place() returns Ok(plaintext),
+    /// the input ciphertext has been overwritten by the plaintext; plaintext will refer to the plaintext without the tag.
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
