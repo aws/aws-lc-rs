@@ -147,6 +147,18 @@ impl Debug for RsaParameters {
     }
 }
 
+/// Two `RsaParameters` are equal when they identify the same verification
+/// algorithm. The remaining fields (digest algorithm, padding and modulus
+/// range) are determined by that identifier, so comparing it is sufficient.
+impl PartialEq for RsaParameters {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.3 == other.3
+    }
+}
+
+impl Eq for RsaParameters {}
+
 impl RsaParameters {
     pub(crate) const fn new(
         digest_alg: &'static digest::Algorithm,
@@ -179,7 +191,7 @@ impl RsaParameters {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 pub(crate) enum RsaVerificationAlgorithmId {
     RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
