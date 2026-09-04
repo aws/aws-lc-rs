@@ -6,7 +6,7 @@
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, Curve25519SeedBin};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{
-    self, Ed25519KeyPair, KeyPair, ParsedPublicKey, VerificationAlgorithm, ED25519,
+    self, Ed25519KeyPair, EdDSAParameters, KeyPair, ParsedPublicKey, VerificationAlgorithm, ED25519,
 };
 use aws_lc_rs::{error, test, test_file};
 
@@ -14,6 +14,10 @@ use aws_lc_rs::{error, test, test_file};
 fn test_ed25519_traits() {
     test::compile_time_assert_send::<Ed25519KeyPair>();
     test::compile_time_assert_sync::<Ed25519KeyPair>();
+
+    test::compile_time_assert_eq::<EdDSAParameters>();
+    // `EdDSAParameters` carries no state, so all values are equal.
+    assert_eq!(&ED25519, &ED25519);
 }
 
 /// Test vectors from `BoringSSL`.

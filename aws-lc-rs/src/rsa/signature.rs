@@ -22,13 +22,18 @@ use untrusted::Input;
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum RsaPadding {
     RSA_PKCS1_PADDING,
     RSA_PKCS1_PSS_PADDING,
 }
 
 /// Parameters for RSA verification.
+///
+/// Two values are equal when they denote the same verification algorithm, e.g.
+/// `RSA_PKCS1_2048_8192_SHA256`. Algorithms differing in digest algorithm,
+/// padding scheme or modulus size range compare unequal.
+#[derive(Eq, PartialEq)]
 pub struct RsaParameters(
     &'static digest::Algorithm,
     &'static RsaPadding,
@@ -146,18 +151,6 @@ impl Debug for RsaParameters {
         f.write_str(&format!("{{ {:?} }}", self.3))
     }
 }
-
-/// Two `RsaParameters` are equal when they identify the same verification
-/// algorithm. The remaining fields (digest algorithm, padding and modulus
-/// range) are determined by that identifier, so comparing it is sufficient.
-impl PartialEq for RsaParameters {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.3 == other.3
-    }
-}
-
-impl Eq for RsaParameters {}
 
 impl RsaParameters {
     pub(crate) const fn new(
