@@ -1,6 +1,8 @@
-#!/bin/bash -exu
+#!/bin/bash
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
+
+set -euo pipefail
 
 # This script tests aws-lc-rs integration with the rustls ecosystem (rcgen, webpki, rustls).
 # It uses Cargo's [patch.crates-io] feature to override dependencies, which is more robust
@@ -17,46 +19,64 @@ Options:
   --cleanup         Automatically delete cloned repositories on exit
   --help            Show this help message
 
-Dependencies: jq, cargo-show, cargo-download
+Dependencies for --latest-release: jq, cargo-show, cargo-download
 EOF
-  exit 0
 }
 
-[[ " $* " =~ " --help " ]] && usage
-
-ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
-
 latest_release=0
-cleanup=0
+auto_cleanup=0
 for arg in "$@"; do
-  if [ "$arg" = "--latest-release" ]; then
-    latest_release=1
-  fi
-  if [ "$arg" = "--cleanup" ]; then
-    cleanup=1
-  fi
+  case "$arg" in
+    --help)
+      usage
+      exit 0
+      ;;
+    --latest-release)
+      latest_release=1
+      ;;
+    --cleanup)
+      auto_cleanup=1
+      ;;
+    # GitHub Actions emits the literal string "false" when
+    # ${{ matrix.latest == 1 && '--latest-release' }} is unset.
+    false | "")
+      ;;
+    *)
+      echo "Unknown option: $arg" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
 done
 
-function check_dependencies() {
-  local missing=()
-  command -v jq >/dev/null 2>&1 || missing+=("jq")
-  command -v cargo-show >/dev/null 2>&1 >/dev/null 2>&1 || missing+=("cargo-show (cargo install cargo-show)")
-  command -v cargo-download >/dev/null 2>&1 || missing+=("cargo-download (cargo install cargo-download)")
-
-  if [ ${#missing[@]} -gt 0 ]; then
-    echo "Missing dependencies: ${missing[*]}" >&2
+function require_cmd() {
+  local cmd="$1"
+  local hint="$2"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing dependency: ${hint}" >&2
     exit 1
   fi
 }
-check_dependencies
+
+# cargo-show / cargo-download / jq are only used to resolve published crate
+# versions. The default (main-branch) path does not need them.
+function check_latest_release_dependencies() {
+  [[ $latest_release == "1" ]] || return 0
+  require_cmd jq "jq"
+  require_cmd cargo-show "cargo-show (cargo install cargo-show)"
+  require_cmd cargo-download "cargo-download (cargo install cargo-download)"
+}
+check_latest_release_dependencies
+
+ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
 
 CLEANUP_ON_EXIT=()
 
-function cleanup() {
+function cleanup_cloned_repos() {
   if [ ${#CLEANUP_ON_EXIT[@]} -eq 0 ]; then
     return
   fi
-  if [ "$cleanup" -eq 0 ]; then
+  if [ "$auto_cleanup" -eq 0 ]; then
     echo "You can delete the following directories:"
     echo "${CLEANUP_ON_EXIT[@]}"
   else
@@ -67,40 +87,48 @@ function cleanup() {
   fi
 }
 
-trap cleanup EXIT
+trap cleanup_cloned_repos EXIT
 
 # Get the latest stable (non-prerelease) version of a crate from crates.io
 function get_latest_stable_version() {
   local crate="$1"
-  cargo show --json "$crate" | jq -r '
+  local version
+  version="$(cargo show --json "$crate" | jq -r '
     [.versions[] |
      select(.yanked == false and (.num | test("alpha|beta|rc") | not))
     ][0].num
-  '
+  ')"
+  if [[ -z "$version" || "$version" == "null" ]]; then
+    echo "Failed to determine latest stable version of ${crate}" >&2
+    exit 1
+  fi
+  echo "$version"
 }
 
 # Get the git commit SHA for a specific crate version from crates.io
 function get_crate_commit() {
   local crate="$1"
   local version="$2"
-  local tmp_dir
+  local tmp_dir sha
   tmp_dir="$(mktemp -d)"
 
   cargo download -o "$tmp_dir/crate.tar.gz" "${crate}=${version}"
   tar xzf "$tmp_dir/crate.tar.gz" -C "$tmp_dir" --strip-components=1
-  local sha
   sha="$(jq -r '.git.sha1' "$tmp_dir/.cargo_vcs_info.json")"
   rm -rf "$tmp_dir"
+  if [[ -z "$sha" || "$sha" == "null" ]]; then
+    echo "Failed to read git SHA for ${crate} ${version}" >&2
+    exit 1
+  fi
   echo "$sha"
 }
 
-# Add [patch.crates-io] section to a Cargo.toml to override aws-lc-rs and aws-lc-sys
+# Add [patch.crates-io] entries to override aws-lc-rs and aws-lc-sys
 # Usage: add_aws_lc_patch <cargo_toml_path> <aws_lc_rs_workspace_root>
 function add_aws_lc_patch() {
   local cargo_toml="$1"
   local aws_lc_workspace="$2"
 
-  # Skip if already patched
   if grep -q "aws-lc-rs = { path = \"${aws_lc_workspace}" "$cargo_toml"; then
     echo "Patch already present in $cargo_toml"
     return
@@ -110,20 +138,14 @@ function add_aws_lc_patch() {
   local aws_lc_sys_patch="aws-lc-sys = { path = \"${aws_lc_workspace}/aws-lc-sys\" }"
 
   if grep -q '^\[patch\.crates-io\]' "$cargo_toml"; then
-    # [patch.crates-io] section exists - insert our patches after the header
     local tmp_file
     tmp_file="$(mktemp)"
-    trap "rm -f '$tmp_file'" RETURN
-    while IFS= read -r line || [[ -n "$line" ]]; do
-      echo "$line"
-      if [[ "$line" == "[patch.crates-io]" ]]; then
-        echo "$aws_lc_rs_patch"
-        echo "$aws_lc_sys_patch"
-      fi
-    done < "$cargo_toml" > "$tmp_file"
+    awk -v rs="$aws_lc_rs_patch" -v sys="$aws_lc_sys_patch" '
+      { print }
+      $0 == "[patch.crates-io]" { print rs; print sys }
+    ' "$cargo_toml" > "$tmp_file"
     mv "$tmp_file" "$cargo_toml"
   else
-    # No existing [patch.crates-io] section - append to end of file
     cat >> "$cargo_toml" << EOF
 
 [patch.crates-io]
@@ -133,69 +155,66 @@ EOF
   fi
 }
 
-# Clone a repository and optionally checkout a specific commit
+# Shallow-clone a repository. When a commit is given, fetch only that object.
 # Usage: clone_repo <url> <destination> [commit]
 function clone_repo() {
   local url="$1"
   local dest="$2"
   local commit="${3:-}"
 
-  git clone --recurse-submodules "$url" "$dest"
   if [ -n "$commit" ]; then
-    pushd "$dest" > /dev/null
-    git checkout "$commit"
-    popd > /dev/null
+    git init "$dest"
+    git -C "$dest" remote add origin "$url"
+    git -C "$dest" fetch --depth 1 origin "$commit"
+    git -C "$dest" checkout --detach FETCH_HEAD
+    # Do not shallow-clone submodules here: the recorded SHA is often not a
+    # branch tip, so --depth 1 cannot resolve it.
+    git -C "$dest" submodule update --init --recursive
+  else
+    git clone --depth 1 --recurse-submodules --shallow-submodules "$url" "$dest"
+  fi
+}
+
+# Clone, patch aws-lc-rs into the workspace, and refresh the lockfile.
+# Leaves the caller in the cloned directory (pair with popd).
+# Usage: setup_upstream <git_url> <crates_io_name>
+function setup_upstream() {
+  local url="$1"
+  local crate="$2"
+  local dest
+  dest="$(mktemp -d)"
+  CLEANUP_ON_EXIT+=("$dest")
+
+  if [[ $latest_release == "1" ]]; then
+    local version commit
+    version="$(get_latest_stable_version "$crate")"
+    commit="$(get_crate_commit "$crate" "$version")"
+    echo "Using ${crate} version ${version} (commit: ${commit})"
+    clone_repo "$url" "$dest" "$commit"
+  else
+    clone_repo "$url" "$dest"
+  fi
+
+  pushd "$dest" > /dev/null
+  add_aws_lc_patch "Cargo.toml" "$ROOT"
+  if [[ $latest_release != "1" ]]; then
+    rm -f Cargo.lock
+    cargo update
+  else
+    cargo update -p aws-lc-rs -p aws-lc-sys
   fi
 }
 
 echo "=== Testing rcgen with aws-lc-rs ==="
 
-RCGEN_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("$RCGEN_DIR")
-
-if [[ $latest_release == "1" ]]; then
-  RCGEN_VERSION="$(get_latest_stable_version rcgen)"
-  RCGEN_COMMIT="$(get_crate_commit rcgen "$RCGEN_VERSION")"
-  echo "Using rcgen version ${RCGEN_VERSION} (commit: ${RCGEN_COMMIT})"
-  clone_repo "https://github.com/rustls/rcgen" "$RCGEN_DIR" "$RCGEN_COMMIT"
-else
-  clone_repo "https://github.com/rustls/rcgen" "$RCGEN_DIR"
-fi
-
-pushd "$RCGEN_DIR"
-add_aws_lc_patch "Cargo.toml" "$ROOT"
-if [[ $latest_release != "1" ]]; then
-  rm -f Cargo.lock
-  cargo update
-else
-  cargo update -p aws-lc-rs -p aws-lc-sys
-fi
+setup_upstream "https://github.com/rustls/rcgen" "rcgen"
 cargo tree -i aws-lc-rs --features aws_lc_rs
 cargo test --features aws_lc_rs
 popd > /dev/null
 
 echo "=== Testing rustls-webpki with aws-lc-rs ==="
 
-WEBPKI_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("$WEBPKI_DIR")
-
-if [[ $latest_release == "1" ]]; then
-  WEBPKI_VERSION="$(get_latest_stable_version rustls-webpki)"
-  WEBPKI_COMMIT="$(get_crate_commit rustls-webpki "$WEBPKI_VERSION")"
-  echo "Using rustls-webpki version ${WEBPKI_VERSION} (commit: ${WEBPKI_COMMIT})"
-  clone_repo "https://github.com/rustls/webpki.git" "$WEBPKI_DIR" "$WEBPKI_COMMIT"
-else
-  clone_repo "https://github.com/rustls/webpki.git" "$WEBPKI_DIR"
-fi
-
-pushd "$WEBPKI_DIR"
-add_aws_lc_patch "Cargo.toml" "$ROOT"
-if [[ $latest_release != "1" ]]; then
-  rm -f Cargo.lock
-  cargo update
-else
-  cargo update -p aws-lc-rs -p aws-lc-sys
-fi
+setup_upstream "https://github.com/rustls/webpki.git" "rustls-webpki"
 # Extract just the [features] section and check for aws-lc-rs feature there.
 FEATURES_SECTION=$(sed -n '/^\[features\]/,/^\[/p' Cargo.toml)
 if echo "$FEATURES_SECTION" | grep -qE '^aws(-|_)lc(-|_)rs\s*='; then
@@ -212,26 +231,7 @@ popd > /dev/null
 
 echo "=== Testing rustls with aws-lc-rs ==="
 
-RUSTLS_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("$RUSTLS_DIR")
-
-if [[ $latest_release == "1" ]]; then
-  RUSTLS_VERSION="$(get_latest_stable_version rustls)"
-  RUSTLS_COMMIT="$(get_crate_commit rustls "$RUSTLS_VERSION")"
-  echo "Using rustls version ${RUSTLS_VERSION} (commit: ${RUSTLS_COMMIT})"
-  clone_repo "https://github.com/rustls/rustls.git" "$RUSTLS_DIR" "$RUSTLS_COMMIT"
-else
-  clone_repo "https://github.com/rustls/rustls.git" "$RUSTLS_DIR"
-fi
-
-pushd "$RUSTLS_DIR"
-add_aws_lc_patch "Cargo.toml" "$ROOT"
-if [[ $latest_release != "1" ]]; then
-  rm -f Cargo.lock
-  cargo update
-else
-  cargo update -p aws-lc-rs -p aws-lc-sys
-fi
+setup_upstream "https://github.com/rustls/rustls.git" "rustls"
 
 # Detect which package exercises aws-lc-rs.
 # <=0.23.x: aws-lc-rs feature is in rustls/Cargo.toml
@@ -259,6 +259,6 @@ else
   echo "Unable to locate aws-lc-rs usage in rustls workspace" >&2
   exit 1
 fi
-popd > /dev/null # "$RUSTLS_DIR"
+popd > /dev/null # rustls clone
 
 echo "=== All rustls integration tests passed ==="
