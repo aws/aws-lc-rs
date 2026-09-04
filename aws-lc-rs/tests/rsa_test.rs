@@ -44,6 +44,57 @@ fn rsa_traits() {
     test::compile_time_assert_sync::<Pkcs1PrivateDecryptingKey>();
     test::compile_time_assert_send::<Pkcs1PublicEncryptingKey>();
     test::compile_time_assert_sync::<Pkcs1PublicEncryptingKey>();
+
+    test::compile_time_assert_eq::<RsaParameters>();
+}
+
+#[test]
+fn rsa_parameters_equality() {
+    let all = [
+        &signature::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
+        &signature::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+        &signature::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+        &signature::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        &signature::RSA_PKCS1_2048_8192_SHA384,
+        &signature::RSA_PKCS1_2048_8192_SHA512,
+        &signature::RSA_PKCS1_3072_8192_SHA384,
+        &signature::RSA_PSS_2048_8192_SHA256,
+        &signature::RSA_PSS_2048_8192_SHA384,
+        &signature::RSA_PSS_2048_8192_SHA512,
+    ];
+
+    // Every algorithm equals itself, and no two distinct algorithms compare
+    // equal.
+    for (i, a) in all.iter().enumerate() {
+        for (j, b) in all.iter().enumerate() {
+            if i == j {
+                assert_eq!(a, b, "params compared unequal to itself: {a:?}");
+            } else {
+                assert_ne!(a, b, "distinct params compared equal: {a:?} vs {b:?}");
+            }
+        }
+    }
+
+    // Each field participates in the comparison.
+
+    // Same digest and modulus range, different padding.
+    assert_ne!(
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        &signature::RSA_PSS_2048_8192_SHA256
+    );
+
+    // Same digest and padding, different modulus range.
+    assert_ne!(
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        &signature::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY
+    );
+
+    // Same padding and modulus range, different digest.
+    assert_ne!(
+        &signature::RSA_PKCS1_2048_8192_SHA384,
+        &signature::RSA_PKCS1_2048_8192_SHA512
+    );
 }
 
 #[test]

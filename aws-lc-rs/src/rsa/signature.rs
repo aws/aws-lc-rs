@@ -22,13 +22,18 @@ use untrusted::Input;
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum RsaPadding {
     RSA_PKCS1_PADDING,
     RSA_PKCS1_PSS_PADDING,
 }
 
 /// Parameters for RSA verification.
+///
+/// Two values are equal when they denote the same verification algorithm, e.g.
+/// `RSA_PKCS1_2048_8192_SHA256`. Algorithms differing in digest algorithm,
+/// padding scheme or modulus size range compare unequal.
+#[derive(Eq, PartialEq)]
 pub struct RsaParameters(
     &'static digest::Algorithm,
     &'static RsaPadding,
@@ -179,7 +184,7 @@ impl RsaParameters {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 pub(crate) enum RsaVerificationAlgorithmId {
     RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,

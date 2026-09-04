@@ -9,8 +9,8 @@ use aws_lc_rs::digest::{
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{
-    self, EcdsaKeyPair, KeyPair, ParsedPublicKey, Signature, UnparsedPublicKey,
-    VerificationAlgorithm,
+    self, EcdsaKeyPair, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, KeyPair,
+    ParsedPublicKey, Signature, UnparsedPublicKey, VerificationAlgorithm,
 };
 use aws_lc_rs::{digest, test, test_file};
 
@@ -20,6 +20,9 @@ fn ecdsa_traits() {
     test::compile_time_assert_sync::<EcdsaKeyPair>();
     test::compile_time_assert_send::<Signature>();
     test::compile_time_assert_sync::<Signature>();
+
+    test::compile_time_assert_eq::<EcdsaVerificationAlgorithm>();
+    test::compile_time_assert_eq::<EcdsaSigningAlgorithm>();
 }
 
 #[test]
