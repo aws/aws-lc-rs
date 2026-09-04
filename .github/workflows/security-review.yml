@@ -48,7 +48,7 @@ jobs:
     if: github.event_name != 'push'
     needs: authorize
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     environment: ${{ needs.authorize.outputs.approval-env == 'manual-approval' && 'manual-approval' || '' }}
     permissions:
       id-token: write
