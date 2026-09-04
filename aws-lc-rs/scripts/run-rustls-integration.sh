@@ -233,21 +233,31 @@ else
   cargo update -p aws-lc-rs -p aws-lc-sys
 fi
 
-# Detect which package has the aws-lc-rs feature by checking [features] section.
-# Old structure (<=0.23.x): aws-lc-rs feature is in rustls/Cargo.toml
-# New structure (>=0.24.x): aws-lc-rs feature is in rustls-test/Cargo.toml
+# Detect which package exercises aws-lc-rs.
+# <=0.23.x: aws-lc-rs feature is in rustls/Cargo.toml
+# early 0.24.x: aws-lc-rs feature is in rustls-test/Cargo.toml
+# current main: dedicated rustls-aws-lc-rs provider crate; rustls-test
+# always runs both providers and has no aws-lc-rs feature.
 if grep -q '^aws-lc-rs\s*=' ./rustls/Cargo.toml; then
   # Old structure: aws-lc-rs feature is in the main rustls crate
   pushd ./rustls
   cargo tree -i aws-lc-rs --features aws-lc-rs
   cargo test --features aws-lc-rs
   popd > /dev/null # ./rustls
-else
-  # New structure: aws-lc-rs feature is in rustls-test
+elif [ -d ./rustls-aws-lc-rs ]; then
+  # Latest structure: aws-lc-rs lives in the rustls-aws-lc-rs provider crate
+  cargo tree -i aws-lc-rs -p rustls-aws-lc-rs
+  cargo test -p rustls-aws-lc-rs
+  cargo test -p rustls-test
+elif grep -q '^aws-lc-rs\s*=' ./rustls-test/Cargo.toml; then
+  # Intermediate structure: aws-lc-rs feature is in rustls-test
   pushd ./rustls-test
   cargo tree -i aws-lc-rs --features aws-lc-rs
   cargo test --features aws-lc-rs
   popd > /dev/null # ./rustls-test
+else
+  echo "Unable to locate aws-lc-rs usage in rustls workspace" >&2
+  exit 1
 fi
 popd > /dev/null # "$RUSTLS_DIR"
 
