@@ -92,11 +92,21 @@ jobs:
       - name: Install cargo-docs-rs
         run: cargo install cargo-docs-rs
 
+      # docs.rs builds from a read-only registry mount, which cargo docs-rs
+      # does not reproduce on its own: a build that writes into its own source
+      # tree passes here but fails there. See aws/aws-lc#3412.
+      - name: Make crate sources read-only, as docs.rs does
+        run: chmod -R a-w aws-lc-rs aws-lc-sys aws-lc-fips-sys
+
       - name: Verify docs.rs build
         run: |
           cargo +nightly docs-rs -p aws-lc-rs
           cargo +nightly docs-rs -p aws-lc-sys
           cargo +nightly docs-rs -p aws-lc-fips-sys
+
+      - name: Restore write permissions for runner cleanup
+        if: always()
+        run: chmod -R u+w aws-lc-rs aws-lc-sys aws-lc-fips-sys || true
 
   dev-tests-only-feature:
     if: github.repository_owner == 'aws'
