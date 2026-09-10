@@ -33,7 +33,7 @@ const ED25519_SIGNATURE_LEN: usize = crate::aws_lc::ED25519_SIGNATURE_LEN as usi
 const ED25519_SEED_LEN: usize = 32;
 
 /// Parameters for `EdDSA` signing and verification.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EdDSAParameters;
 
 impl sealed::Sealed for EdDSAParameters {}
