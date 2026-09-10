@@ -56,13 +56,15 @@ impl RandomizedNonceKey {
 
     /// Authenticates and decrypts (“opens”) data in place.
     ///
-    /// aad is the additional authenticated data (AAD), if any.
+    /// `aad` is the additional authenticated data (AAD), if any.
+    /// `nonce` must be the nonce used by the corresponding sealing operation.
     ///
-    /// On input, in_out must be the ciphertext followed by the tag. When open_in_place() returns Ok(plaintext),
-    /// the input ciphertext has been overwritten by the plaintext; plaintext will refer to the plaintext without the tag.
+    /// `in_out` must contain the ciphertext followed by the tag. On success, it is
+    /// overwritten with the plaintext, which is returned without the tag.
     ///
     /// # Errors
-    /// `error::Unspecified` when ciphertext is invalid.
+    /// Returns `error::Unspecified` if the ciphertext is invalid. In this case,
+    /// `in_out` may have been overwritten in an unspecified way.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn open_in_place<'in_out, A>(
