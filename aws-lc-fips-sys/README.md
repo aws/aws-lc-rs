@@ -101,8 +101,16 @@ AWS_LC_FIPS_SYS_SYSTEM_DIR=/path/to/aws-lc-fips-install cargo build
 `AWS_LC_FIPS_SYS_SYSTEM_DIR` need not be set explicitly. When it is unset, the
 build script tries to discover a usable AWS-LC FIPS install from common
 OpenSSL-compatible environment variables and pkg-config metadata, and links it
-if found; otherwise it builds the bundled source. Discovery order, highest
-precedence first:
+if found; otherwise it builds the bundled source.
+
+Paths selected by these variables or pkg-config are trusted build inputs.
+Validation may load and execute a candidate before adoption, including
+shared-library initialization and candidates later rejected. The probe runs only
+when the host can launch the target directly or through
+`CARGO_TARGET_<TRIPLE>_RUNNER`. To disable automatic detection, leave
+`AWS_LC_FIPS_SYS_SYSTEM_DIR` unset and set `AWS_LC_FIPS_SYS_USE_SYSTEM=0`.
+
+Discovery order, highest precedence first:
 
 1. `AWS_LC_FIPS_SYS_SYSTEM_DIR` — explicit prefix (above); problems with an
    explicit prefix are fatal, never a silent fallback.

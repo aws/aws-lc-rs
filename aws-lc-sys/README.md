@@ -108,7 +108,16 @@ environment variables and pkg-config metadata, and links it if found; otherwise
 it falls back to building the bundled source.
 This makes the crate link against the AWS-LC provided by the surrounding
 environment (for example, the AWS-LC present in a build's dependency closure)
-with no extra configuration. Discovery order, highest precedence first:
+with no extra configuration.
+
+Paths selected by these variables or pkg-config are trusted build inputs. With
+the `fips` feature, validation may load and execute a candidate before adoption,
+including shared-library initialization and candidates later rejected. The
+probe runs only when the host can launch the target directly or through
+`CARGO_TARGET_<TRIPLE>_RUNNER`. To disable automatic detection, leave
+`AWS_LC_SYS_SYSTEM_DIR` unset and set `AWS_LC_SYS_USE_SYSTEM=0`.
+
+Discovery order, highest precedence first:
 
 1. `AWS_LC_SYS_SYSTEM_DIR` — explicit install prefix (above). Any problem with
    an explicit prefix is a hard error, never a silent fallback.

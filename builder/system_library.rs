@@ -309,9 +309,9 @@ impl SystemLib {
             resolve_bindings(self.layout.bindings_prefix.as_deref(), &self.bindings_file)?;
 
         if is_fips_build() {
-            // Verify the supplied FIPS library is a usable FIPS module before
-            // committing to it. The matching startup self-check link directive
-            // is emitted later, in `link`.
+            // This may execute code from the trusted FIPS candidate before
+            // validation completes. See `system_detect` for the trust model. The
+            // matching startup self-check link directive is emitted in `link`.
             verify_fips_install(
                 self.manifest_dir.as_path(),
                 include_dir,
