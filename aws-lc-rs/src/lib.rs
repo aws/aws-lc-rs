@@ -281,6 +281,7 @@ pub mod iv;
 pub mod kdf;
 #[allow(clippy::module_name_repetitions)]
 pub mod kem;
+pub mod ml_dsa;
 mod pqdsa;
 mod ptr;
 pub mod rsa;
