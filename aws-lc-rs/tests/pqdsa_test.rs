@@ -323,3 +323,67 @@ fn test_mldsa_seed_functional_equivalence() {
             .expect("reconstructed signature should verify");
     }
 }
+
+// The context-string API is gated behind `unstable`, and ML-DSA context strings
+// are not supported by the FIPS module (signing with a non-empty context fails
+// under `fips`). Exercise this only in non-FIPS `unstable` builds; the
+// empty-context path is covered by the sigver KATs.
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
+#[test]
+fn test_mldsa_context_string() {
+    for (signing_alg, verify_alg) in [
+        (&ML_DSA_44_SIGNING, &ML_DSA_44),
+        (&ML_DSA_65_SIGNING, &ML_DSA_65),
+        (&ML_DSA_87_SIGNING, &ML_DSA_87),
+    ] {
+        let kp = PqdsaKeyPair::generate(signing_alg).unwrap();
+        let msg = b"context string test message";
+        let ctx = b"my-application-context";
+        let mut sig = vec![0u8; signing_alg.signature_len()];
+
+        // Sign with context, verify with same context
+        let sig_len = kp.sign_with_context(msg, ctx, &mut sig).unwrap();
+        assert_eq!(sig_len, signing_alg.signature_len());
+        verify_alg
+            .verify_sig_with_context(kp.public_key().as_ref(), msg, ctx, &sig)
+            .expect("same context should verify");
+
+        // Wrong context fails
+        assert!(
+            verify_alg
+                .verify_sig_with_context(kp.public_key().as_ref(), msg, b"wrong", &sig)
+                .is_err(),
+            "wrong context should fail"
+        );
+
+        // No context fails for signature made with context
+        assert!(
+            verify_alg
+                .verify_sig(kp.public_key().as_ref(), msg, &sig)
+                .is_err(),
+            "no context should fail for context-signed signature"
+        );
+
+        // Empty context matches default sign()
+        let mut sig_empty = vec![0u8; signing_alg.signature_len()];
+        kp.sign_with_context(msg, b"", &mut sig_empty).unwrap();
+        verify_alg
+            .verify_sig(kp.public_key().as_ref(), msg, &sig_empty)
+            .expect("empty context should match default");
+
+        // Context > 255 bytes rejected
+        let long_ctx = [0x41u8; 256];
+        assert!(
+            kp.sign_with_context(msg, &long_ctx, &mut sig).is_err(),
+            "context > 255 bytes should be rejected"
+        );
+
+        // Max context (255 bytes) accepted
+        let max_ctx = [0x42u8; 255];
+        kp.sign_with_context(msg, &max_ctx, &mut sig)
+            .expect("255-byte context should be accepted");
+        verify_alg
+            .verify_sig_with_context(kp.public_key().as_ref(), msg, &max_ctx, &sig)
+            .expect("255-byte context should verify");
+    }
+}
