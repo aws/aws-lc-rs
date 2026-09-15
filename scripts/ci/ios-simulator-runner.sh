@@ -380,6 +380,8 @@ export BINDGEN_EXTRA_CLANG_ARGS="-isysroot ${IOS_SDK_PATH}"
 
 cd "${REPO_ROOT}"
 
-cargo test --features bindgen,unstable --target aarch64-apple-ios-sim
+# Scope to aws-lc-rs: a workspace-wide test would also run the builder's
+# bindgen unit tests inside the simulator, where host libclang is unavailable.
+cargo test -p aws-lc-rs --features bindgen,unstable --target aarch64-apple-ios-sim
 
-cargo test --release --features bindgen,unstable --target aarch64-apple-ios-sim
+cargo test -p aws-lc-rs --release --features bindgen,unstable --target aarch64-apple-ios-sim
