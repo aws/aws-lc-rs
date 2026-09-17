@@ -1,0 +1,8 @@
+[package]
+name = "wrapper"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aws-lc-rs = { path = "../../../aws-lc-rs", default-features = false, features = ["fips"] }
