@@ -317,6 +317,10 @@ jobs:
             exit 1
           fi
 
+      - name: Test transitive static FIPS consumers with GNU ld.bfd
+        if: runner.os == 'Linux' && matrix.config.cargo_cmd == 'test'
+        run: bash scripts/tests/test_system_lib_fips_link.sh "$GITHUB_WORKSPACE/fips-artifacts/install-fips"
+
   # ---------------------------------------------------------------------------
   # Proves the declared FIPS floor: build AWS-LC FIPS at the oldest branch that
   # both reports MINIMUM_FIPS_VERSION (see builder/system_library.rs) and can
@@ -467,6 +471,10 @@ jobs:
             echo '::error::FIPS verification did not run on the system-library FIPS path.'
             exit 1
           fi
+
+      - name: Test transitive prefixed static FIPS consumers with GNU ld.bfd
+        if: matrix.config.cargo_cmd == 'test'
+        run: bash scripts/tests/test_system_lib_fips_link.sh "$GITHUB_WORKSPACE/fips-artifacts/install-fips-prefixed"
 
   test-fips-windows:
     if: github.repository_owner == 'aws'

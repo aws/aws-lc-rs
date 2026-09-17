@@ -105,6 +105,18 @@ fn setup_test_env_with_target(os: &str, env: &str) -> TestEnvGuard<'static> {
     }
 }
 
+#[test]
+fn test_crypto_link_kind() {
+    for (lib_type, fips_build, expected) in [
+        (OutputLibType::Static, true, "static:+whole-archive"),
+        (OutputLibType::Dynamic, true, "dylib"),
+        (OutputLibType::Static, false, "static"),
+        (OutputLibType::Dynamic, false, "dylib"),
+    ] {
+        assert_eq!(crypto_link_kind(&lib_type, fips_build), expected);
+    }
+}
+
 // -------------------------------------------------------------------------
 // version_at_least
 // -------------------------------------------------------------------------

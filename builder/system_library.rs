@@ -392,7 +392,8 @@ impl SystemLib {
         println!("cargo:libcrypto={}", crypto_lib.name);
         println!("cargo:libcrypto_path={}", crypto_lib.path.display());
         println!("cargo:link_kind={kind}");
-        println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
+        let crypto_kind = crypto_link_kind(&crypto_lib.lib_type, is_fips_build());
+        println!("cargo:rustc-link-lib={crypto_kind}={}", crypto_lib.name);
         if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
             // `link_kind` (above) describes libcrypto. Without a requested lib
             // type the two libraries could in principle resolve to different
@@ -420,6 +421,19 @@ impl SystemLib {
 
         println!("cargo:rerun-if-changed={}", include_dir.display());
         println!("cargo:rerun-if-changed={}", crypto_lib.path.display());
+    }
+}
+
+fn crypto_link_kind(lib_type: &OutputLibType, fips_build: bool) -> &str {
+    if fips_build && *lib_type == OutputLibType::Static {
+        // rustc links the packed +whole-archive runtime check after the rlibs.
+        // Ordinary bundling puts crypto in an earlier rlib, where a one-pass
+        // linker can miss FIPS_mode when LTO removes the Rust references. Pack
+        // crypto too, so it follows the check. Unlike -bundle, this also keeps
+        // the native library in downstream Rust staticlib outputs.
+        "static:+whole-archive"
+    } else {
+        lib_type.rust_lib_type()
     }
 }
 
