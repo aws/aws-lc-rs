@@ -4,6 +4,8 @@
 use crate::aws_lc::{
     EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY, EVP_PKEY_PQDSA,
 };
+#[cfg(feature = "unstable")]
+use crate::aws_lc::{EVP_PKEY_CTX_set_signature_context, EVP_PKEY_CTX};
 use crate::encoding::{AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw};
 use crate::error::{KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
@@ -242,6 +244,46 @@ impl PqdsaKeyPair {
             return Err(Unspecified);
         }
         let sig_bytes = self.evp_pkey.sign(msg, None, No_EVP_PKEY_CTX_consumer)?;
+        signature[0..sig_length].copy_from_slice(&sig_bytes);
+        Ok(sig_length)
+    }
+
+    /// Signs the message with a FIPS 204 context string.
+    ///
+    /// The `context` parameter is an octet string of at most 255 bytes that provides
+    /// domain separation per FIPS 204 §5.2. An empty context is equivalent to calling
+    /// [`Self::sign`].
+    ///
+    /// This method is gated behind the `unstable` feature: context strings are not
+    /// supported by the FIPS 204 module, so signing with a non-empty context fails
+    /// under the `fips` feature.
+    ///
+    /// # Errors
+    /// Returns `Unspecified` if signing fails or if `context` exceeds 255 bytes.
+    #[cfg(feature = "unstable")]
+    pub fn sign_with_context(
+        &self,
+        msg: &[u8],
+        context: &[u8],
+        signature: &mut [u8],
+    ) -> Result<usize, Unspecified> {
+        let sig_length = self.algorithm.signature_len();
+        if signature.len() < sig_length {
+            return Err(Unspecified);
+        }
+        let ctx_fn = |pctx: *mut EVP_PKEY_CTX| -> Result<(), ()> {
+            if context.is_empty() {
+                return Ok(());
+            }
+            if 1 == unsafe {
+                EVP_PKEY_CTX_set_signature_context(pctx, context.as_ptr(), context.len())
+            } {
+                Ok(())
+            } else {
+                Err(())
+            }
+        };
+        let sig_bytes = self.evp_pkey.sign(msg, None, Some(ctx_fn))?;
         signature[0..sig_length].copy_from_slice(&sig_bytes);
         Ok(sig_length)
     }
