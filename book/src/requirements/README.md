@@ -28,6 +28,19 @@ required** for `aws-lc-rs` users.
 See the [Pre-generated FIPS Bindings](../platform_support.md#pre-generated-fips-bindings) table
 on the Platform Support page for the full list. Bindgen is required for all other targets.
 
+### Universal Bindings Subset
+
+The pre-generated universal subset is stored in one `universal_crypto.rs`, shared by Apple
+and non-Apple targets. This subset excludes platform-dependent items not used by `aws-lc-rs`:
+`va_list` and its implementation types, `BIO_vsnprintf`, `OPENSSL_vasprintf`,
+unused libc types, the `BN_DEC_FMT1`/`BN_HEX_FMT1`/`BN_HEX_FMT2` format constants, and the
+architecture-specific `armv8_enable_dit`/`armv8_disable_dit` functions.
+
+These items are no longer exported by the universal bindings. Direct `aws-lc-sys` consumers
+using `default-features = false` who need them should enable `all-bindings` (the crate's
+default feature). Also enable `bindgen` if the target has no pre-generated complete bindings.
+The complete target-specific bindings and FIPS bindings retain their existing APIs.
+
 ### Tested Platforms
 
 A mostly complete set of platforms for which we test our builds can be found in our
