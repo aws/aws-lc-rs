@@ -1185,6 +1185,14 @@ jobs:
             --manifest-path /tmp/aws-lc-rs-link/Cargo.toml
       - name: Verify archive member names match
         run: |
+          # Empty paths would make both checks below pass vacuously.
+          for dir in /tmp/target-real /tmp/target-link; do
+            count=$(find "${dir}/release" -type f -name "libaws_lc_*_crypto.a" | wc -l)
+            if [ "${count}" -ne 1 ]; then
+              echo "FAIL: expected exactly one libcrypto archive under ${dir}, found ${count}"
+              exit 1
+            fi
+          done
           REAL=$(find /tmp/target-real/release -type f -name "libaws_lc_*_crypto.a")
           LINK=$(find /tmp/target-link/release -type f -name "libaws_lc_*_crypto.a")
           if ! diff <(ar t "${REAL}") <(ar t "${LINK}"); then
