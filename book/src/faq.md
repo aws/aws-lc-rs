@@ -56,6 +56,30 @@ and the required install layout.
 
 [aws-lc-fips-sys]: https://github.com/aws/aws-lc-rs/blob/main/aws-lc-fips-sys/README.md
 
+## Why does my FIPS build fail with GCC 15 (`-Werror=unterminated-string-initialization`)?
+
+GCC 15 added `-Wunterminated-string-initialization` to `-Wextra`, and AWS-LC compiles with
+`-Wextra -Werror`. FIPS module sources released before AWS-LC FIPS 3.1.0 initialize three
+self-test constants in `crypto/fipsmodule/self_check/self_check.c` from string literals that
+exactly fill their arrays (`static const uint8_t kAESKey[16] = "BoringCrypto Key";`), which
+this warning rejects, and the sources of a released FIPS module cannot be changed. Build a FIPS
+module that no longer has them:
+
+- `aws-lc-fips-sys` 0.13.11 or later (AWS-LC FIPS 3.1.0 and later), or
+- `aws-lc-fips-sys` 0.14.0 or later (AWS-LC FIPS 4.x).
+
+Whether the failure appears also depends on the `cc` crate in your lockfile. Since `cc` 1.2.50
+the `cmake` crate's builds pass `-w` to the C compiler, which silences every warning of the
+CMake build, so a lockfile with `cc` 1.2.50 or later builds the older sources as well. With an
+older `cc`, or on a module line that cannot move (AWS-LC FIPS 2.0, `aws-lc-fips-sys` 0.12.x),
+make the diagnostic a warning through the build environment:
+
+```shell
+CFLAGS="-Wno-error=unterminated-string-initialization" cargo build --features fips
+```
+
+Non-FIPS builds are unaffected since `aws-lc-sys` 0.24.0. See [issue #935] for the details.
+
 ## How can I use a custom or deterministic RNG for testing?
 
 The `dev-tests-only` feature unseals the `rand::SecureRandom` trait, allowing you to provide your
@@ -109,3 +133,5 @@ impl unsealed::SecureRandom for DeterministicRandom {
 
 See the [`unsealed_rand_test.rs`](https://github.com/aws/aws-lc-rs/blob/main/aws-lc-rs/tests/unsealed_rand_test.rs)
 file in the repository for additional examples.
+
+[issue #935]: https://github.com/aws/aws-lc-rs/issues/935

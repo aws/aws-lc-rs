@@ -40,6 +40,9 @@ For other Linux targets using FIPS, bindgen is required.
 
 ## C/C++ Compiler
 
+FIPS builds with GCC 15 or later need `aws-lc-fips-sys` 0.13.11 or later; see the
+[FAQ](../faq.md#why-does-my-fips-build-fail-with-gcc-15--werrorunterminated-string-initialization).
+
 ### Amazon Linux (AL2023)
 
 ```shell
