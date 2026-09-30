@@ -456,7 +456,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Keep in sync with MINIMUM_AWS_LC_VERSION in builder/system_library.rs.
-      AWS_LC_MIN_VERSION: "v1.68.0"
+      AWS_LC_MIN_VERSION: "v5.7.0"
     steps:
       # aws-lc-rs checkout WITHOUT the submodule, so a from-source fallback is
       # impossible (see test-unix).
