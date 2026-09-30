@@ -801,6 +801,39 @@ fn test_probe_succeeds_on_valid_install() {
 
 #[test]
 #[cfg(not(feature = "fips"))]
+fn test_probe_rejects_versions_below_minimum() {
+    let _env = setup_test_env();
+    for version in ["1.68.0", "5.6.0"] {
+        let fx = fake_valid_install();
+        write_base_h(
+            &fx.root.join("include"),
+            &format!(
+                "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"{version}\"\n"
+            ),
+        );
+        let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
+        let err = sys.probe().unwrap_err();
+        assert!(err.contains("AWS-LC version too old"), "{err}");
+        assert!(err.contains("minimum supported 5.7.0"), "{err}");
+    }
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_accepts_minimum_version() {
+    let _env = setup_test_env();
+    let fx = fake_valid_install();
+    write_base_h(
+        &fx.root.join("include"),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"5.7.0\"\n",
+    );
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
+    sys.probe()
+        .expect("AWS-LC 5.7.0 should satisfy the minimum version check");
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
 fn test_probe_falls_back_when_bindings_missing() {
     let _env = setup_test_env();
     // Valid library + headers, but no pre-generated bindings present.

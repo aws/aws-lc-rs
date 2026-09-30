@@ -428,12 +428,11 @@ impl SystemLib {
 // =============================================================================
 
 /// Minimum AWS-LC (mainline) version supported via the system-library path,
-/// for the non-FIPS `aws-lc-sys` crate. `1.68.0` is the first release that can
-/// emit Rust bindings (`-DGENERATE_RUST_BINDINGS=ON`), which the
-/// system-library path consumes. A declared floor (not derived from the
-/// bundled submodule) whose support is proven by CI; bump it and the CI pin
-/// together. See `.github/workflows/system-lib-tests.yml`.
-const MINIMUM_AWS_LC_VERSION: &str = "1.68.0";
+/// for the non-FIPS `aws-lc-sys` crate.
+/// A declared floor (not derived from the bundled submodule) whose support is
+/// proven by CI; bump it and the CI pin together.
+/// See `.github/workflows/system-lib-tests.yml`.
+const MINIMUM_AWS_LC_VERSION: &str = "5.7.0";
 
 /// Minimum AWS-LC FIPS *module* version supported via the system-library path,
 /// for `aws-lc-fips-sys`. The FIPS version (aws/aws-lc#3211) is decoupled from
