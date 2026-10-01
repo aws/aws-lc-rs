@@ -130,6 +130,52 @@ jobs:
         run:
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features bindgen --target ${{ matrix.target[0] }}
 
+  aws-lc-rs-wasi:
+    if: github.repository_owner == 'aws'
+    name: cross test ${{ matrix.target }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: wasm32-wasip2
+            toolchain: stable
+          - target: wasm32-wasip3
+            toolchain: nightly
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Install Rust target
+        run: rustup toolchain install ${{ matrix.toolchain }} --profile minimal --target ${{ matrix.target }} --no-self-update
+      - name: Install Wasmtime
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          version: "48.0.2"
+      - name: Install wasi-sdk
+        id: wasi-sdk
+        uses: bytecodealliance/setup-wasi-sdk-action@v1
+        with:
+          version: "34"
+          add-to-path: false
+      - name: Test WASI
+        env:
+          WASI_CC: ${{ steps.wasi-sdk.outputs.clang-path }}
+          WASI_SYSROOT: ${{ steps.wasi-sdk.outputs.sysroot-path }}
+        run: |
+          target=${{ matrix.target }}
+          target_var=${target//-/_}
+          export "CC_${target_var}=$WASI_CC"
+          export "CFLAGS_${target_var}=--sysroot=$WASI_SYSROOT"
+          export AWS_LC_SYS_EXTERNAL_BINDGEN=0
+          export "CARGO_TARGET_${target_var^^}_RUNNER=wasmtime run"
+          cargo +${{ matrix.toolchain }} test -p aws-lc-sys --no-default-features --target "$target" --test sanity-tests
+          cargo +${{ matrix.toolchain }} test -p aws-lc-rs --target "$target" --lib
+          cargo +${{ matrix.toolchain }} build -p aws-lc-rs --example digest --target "$target"
+          actual="$(wasmtime run --dir . "target/$target/debug/examples/digest.wasm" -d sha256 LICENSE)"
+          expected="$(sha256sum LICENSE | cut -d ' ' -f1)"
+          test "${actual%% *}" = "$expected"
+
   # This test ensures that older Android API levels (before getentropy was added in API 28)
   # build correctly with the cc-builder. See: https://github.com/aws/aws-lc-rs/issues/1006
   aws-lc-rs-android-old-api:
