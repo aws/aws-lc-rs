@@ -1157,6 +1157,53 @@ jobs:
       - name: Run cargo test
         run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys
 
+  symlinked-manifest-dir-reproducibility:
+    if: github.repository_owner == 'aws'
+    # cc-rs hashes each source's dirname into its object name after stripping the raw
+    # CARGO_MANIFEST_DIR. If the builder passes symlink-resolved paths, the strip misses
+    # and the absolute build path is hashed into archive member names, so the library
+    # differs between builds of identical sources. cc builder only: CMake names objects itself.
+    name: Symlinked manifest dir reproducibility
+    runs-on: ubuntu-latest
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: 0
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Build from real path and through a symlink
+        # Use `--manifest-path` rather than `cd`-ing into the symlink: cargo derives
+        # CARGO_MANIFEST_DIR from the resolved cwd, which would make the check vacuous.
+        run: |
+          ln -s "${PWD}" /tmp/aws-lc-rs-link
+          cargo build -p aws-lc-sys --release --target-dir /tmp/target-real
+          cargo build -p aws-lc-sys --release --target-dir /tmp/target-link \
+            --manifest-path /tmp/aws-lc-rs-link/Cargo.toml
+      - name: Verify archive member names match
+        run: |
+          # Empty paths would make both checks below pass vacuously.
+          for dir in /tmp/target-real /tmp/target-link; do
+            count=$(find "${dir}/release" -type f -name "libaws_lc_*_crypto.a" | wc -l)
+            if [ "${count}" -ne 1 ]; then
+              echo "FAIL: expected exactly one libcrypto archive under ${dir}, found ${count}"
+              exit 1
+            fi
+          done
+          REAL=$(find /tmp/target-real/release -type f -name "libaws_lc_*_crypto.a")
+          LINK=$(find /tmp/target-link/release -type f -name "libaws_lc_*_crypto.a")
+          if ! diff <(ar t "${REAL}") <(ar t "${LINK}"); then
+            echo "FAIL: archive member names depend on the build path"
+            exit 1
+          fi
+          if strings "${LINK}" | grep -E "/tmp/aws-lc-rs-link/|${PWD}/"; then
+            echo "FAIL: build paths leaked into archive"
+            exit 1
+          fi
+
   build-env-no-u1-bindings-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs build-env-no-u1-bindings-test

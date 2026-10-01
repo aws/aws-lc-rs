@@ -1317,9 +1317,19 @@ fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
     false
 }
 
-fn canonicalized_manifest_dir() -> PathBuf {
-    let manifest_dir = current_dir();
-    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+/// Uses `CARGO_MANIFEST_DIR` verbatim (symlinks unresolved) on non-Windows hosts.
+/// cc-rs derives object names by stripping the raw `CARGO_MANIFEST_DIR` prefix before
+/// hashing each source's dirname; symlink-resolved paths defeat that strip, embedding
+/// the absolute build path in archive member names and making the library
+/// non-reproducible. Windows canonicalizes and shortens to 8.3 form for `MAX_PATH`.
+fn manifest_dir() -> PathBuf {
+    #[cfg(not(windows))]
+    if let Some(dir) = std::env::var_os("CARGO_MANIFEST_DIR").map(PathBuf::from) {
+        if dir.is_absolute() {
+            return dir;
+        }
+    }
+    let manifest_dir = dunce::canonicalize(current_dir()).unwrap();
     #[cfg(windows)]
     let manifest_dir = to_short_path(&manifest_dir);
     manifest_dir
@@ -1366,7 +1376,7 @@ fn main() {
     initialize();
     prepare_cargo_cfg();
 
-    let manifest_dir = canonicalized_manifest_dir();
+    let manifest_dir = manifest_dir();
 
     let prefix = (!is_no_prefix()).then(prefix_string);
 
