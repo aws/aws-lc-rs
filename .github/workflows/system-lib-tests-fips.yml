@@ -259,6 +259,11 @@ jobs:
           - name: "aws-lc-fips-sys"
             cargo_args: "-p aws-lc-fips-sys"
             cargo_cmd: "build"
+          # A test binary that never calls into libcrypto: the FIPS runtime
+          # check must still resolve `FIPS_mode` at link time.
+          - name: "aws-lc-fips-sys, link without crypto"
+            cargo_args: "-p aws-lc-fips-sys --test link_without_crypto"
+            cargo_cmd: "test"
           - name: "aws-lc-rs, fips"
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"

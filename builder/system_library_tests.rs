@@ -223,6 +223,29 @@ fn test_extract_fips_version_number_present_but_malformed_is_error() {
 }
 
 #[test]
+fn test_crypto_link_lib_kind_unbundles_static_fips() {
+    // Bundled, libcrypto lands ahead of the FIPS runtime check on the link
+    // line and GNU ld can drop the module before the check references it.
+    assert_eq!(
+        crypto_link_lib_kind(&OutputLibType::Static, true),
+        "static:-bundle"
+    );
+}
+
+#[test]
+fn test_crypto_link_lib_kind_unchanged_otherwise() {
+    assert_eq!(
+        crypto_link_lib_kind(&OutputLibType::Static, false),
+        "static"
+    );
+    assert_eq!(crypto_link_lib_kind(&OutputLibType::Dynamic, true), "dylib");
+    assert_eq!(
+        crypto_link_lib_kind(&OutputLibType::Dynamic, false),
+        "dylib"
+    );
+}
+
+#[test]
 fn test_version_major() {
     assert_eq!(version_major("3.3.0").unwrap(), 3);
     assert_eq!(version_major("12.1.4").unwrap(), 12);

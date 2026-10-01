@@ -392,7 +392,11 @@ impl SystemLib {
         println!("cargo:libcrypto={}", crypto_lib.name);
         println!("cargo:libcrypto_path={}", crypto_lib.path.display());
         println!("cargo:link_kind={kind}");
-        println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
+        println!(
+            "cargo:rustc-link-lib={}={}",
+            crypto_link_lib_kind(&crypto_lib.lib_type, is_fips_build()),
+            crypto_lib.name
+        );
         if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
             // `link_kind` (above) describes libcrypto. Without a requested lib
             // type the two libraries could in principle resolve to different
@@ -420,6 +424,22 @@ impl SystemLib {
 
         println!("cargo:rerun-if-changed={}", include_dir.display());
         println!("cargo:rerun-if-changed={}", crypto_lib.path.display());
+    }
+}
+
+/// Returns the `kind` for libcrypto's `cargo:rustc-link-lib` directive.
+///
+/// On a FIPS build, `link_fips_runtime_check` has already emitted the runtime
+/// check, which references libcrypto. A bundled static libcrypto is placed
+/// inside this crate's rlib, ahead of the runtime check on the final link
+/// line. GNU ld reads each archive once, so in a binary where nothing else
+/// references `FIPS_mode` (e.g. an empty test harness) it skips the module
+/// and the runtime check's reference is left undefined. Unbundled, libcrypto
+/// is passed after the runtime check.
+fn crypto_link_lib_kind(lib_type: &OutputLibType, fips_build: bool) -> &str {
+    match lib_type {
+        OutputLibType::Static if fips_build => "static:-bundle",
+        _ => lib_type.rust_lib_type(),
     }
 }
 
