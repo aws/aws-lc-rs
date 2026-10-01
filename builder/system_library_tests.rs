@@ -224,8 +224,6 @@ fn test_extract_fips_version_number_present_but_malformed_is_error() {
 
 #[test]
 fn test_crypto_link_lib_kind_unbundles_static_fips() {
-    // Bundled, libcrypto lands ahead of the FIPS runtime check on the link
-    // line and GNU ld can drop the module before the check references it.
     assert_eq!(
         crypto_link_lib_kind(&OutputLibType::Static, true),
         "static:-bundle"

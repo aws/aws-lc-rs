@@ -1,9 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-// A test binary that never calls into libcrypto. On a static FIPS build the
-// runtime check still references `FIPS_mode`, so this only links if libcrypto
-// is placed after the runtime check on the link line.
+// Link the FIPS runtime check without making any libcrypto calls.
 extern crate aws_lc_fips_sys;
 
 #[test]

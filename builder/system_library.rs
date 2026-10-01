@@ -427,15 +427,9 @@ impl SystemLib {
     }
 }
 
-/// Returns the `kind` for libcrypto's `cargo:rustc-link-lib` directive.
-///
-/// On a FIPS build, `link_fips_runtime_check` has already emitted the runtime
-/// check, which references libcrypto. A bundled static libcrypto is placed
-/// inside this crate's rlib, ahead of the runtime check on the final link
-/// line. GNU ld reads each archive once, so in a binary where nothing else
-/// references `FIPS_mode` (e.g. an empty test harness) it skips the module
-/// and the runtime check's reference is left undefined. Unbundled, libcrypto
-/// is passed after the runtime check.
+// Keep static libcrypto after the FIPS runtime check on the link line.
+// Bundling it into the rlib puts it before the check, so GNU ld can leave
+// FIPS_mode unresolved when the binary makes no other libcrypto calls.
 fn crypto_link_lib_kind(lib_type: &OutputLibType, fips_build: bool) -> &str {
     match lib_type {
         OutputLibType::Static if fips_build => "static:-bundle",
