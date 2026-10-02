@@ -38,7 +38,7 @@ platform_binding!(x86_64_unknown_linux_musl, x86_64_unknown_linux_musl_crypto);
     clippy::doc_markdown,
     clippy::missing_safety_doc,
     clippy::must_use_candidate,
-    clippy::not_unsafe_ptr_arg_deref,
+    clippy::possible_missing_else,
     clippy::ptr_as_ptr,
     clippy::ptr_offset_with_cast,
     clippy::pub_underscore_fields,
