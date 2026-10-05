@@ -474,7 +474,20 @@ impl CcBuilder {
         self.add_includes(&mut build_options);
         self.add_defines(&mut build_options, is_cl_like);
 
+        let _je_cflags_guards = Self::jitter_entropy_cflags_guards(is_cl_like);
         let mut je_builder = cc::Build::new();
+
+        // calling is_flag_supported would trigger capturing environment variables.
+        // is_flag_supported
+        //  => calls get_base_compiler,
+        //  => calls env_tool
+        //  => calls getenv_with_target_prefixes
+        //  => calls get_env
+        //     => triggers capturing environment variables.
+        // Since we need to ensure environment variables are captured under
+        // the jitter_entropy_cflags_guards scope, we call is_flag_supported with a dummy flag here.
+        let _ = je_builder.is_flag_supported("-D");
+
         for option in build_options {
             option.apply_cc(&mut je_builder);
         }
