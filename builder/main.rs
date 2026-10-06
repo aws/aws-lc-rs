@@ -387,32 +387,10 @@ fn prefix_string() -> String {
     )
 }
 
-fn target_has_prefixed_symbols() -> bool {
-    target_vendor() == "apple" || (target_arch() == "x86" && target_os() == "windows")
-}
-
-fn is_cranelift_backend() -> bool {
-    // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
-    if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
-        for flag in rustflags.split('\x1f') {
-            if flag.contains("codegen-backend") && flag.contains("cranelift") {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-fn target_chokes_on_u1() -> bool {
-    target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
-}
-
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 fn target_platform_prefix(name: &str) -> String {
     if is_all_bindings() {
         format!("{}_{}", effective_target().replace('-', "_"), name)
-    } else if target_has_prefixed_symbols() {
-        format!("universal_prefixed_{}", name.replace('-', "_"))
     } else {
         format!("universal_{}", name.replace('-', "_"))
     }
@@ -851,7 +829,6 @@ static mut SYS_NO_PREGENERATED_SRC: bool = false;
 static mut SYS_SMALL: Option<bool> = None;
 static mut SYS_EFFECTIVE_TARGET: String = String::new();
 static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
-static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_SANITIZER: Option<String> = None;
 static mut SYS_LINK_WHOLE_ARCHIVE: bool = false;
@@ -876,7 +853,6 @@ fn initialize() {
         SYS_SMALL = env_crate_var_to_bool("SMALL");
         SYS_EFFECTIVE_TARGET = optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
         SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
-        SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
         SYS_INCLUDES =
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
         SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
@@ -908,10 +884,6 @@ fn initialize() {
         && !cfg!(feature = "ssl")
     {
         if is_all_bindings() {
-            assert!(
-                use_no_u1_bindings() != Some(true),
-                "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
-            );
             let target = effective_target();
             let supported_platform = match (is_fips_crate(), target.as_str()) {
                 (
@@ -942,24 +914,7 @@ fn initialize() {
                 }
             }
         } else if !is_fips_crate() {
-            if use_no_u1_bindings() == Some(true)
-                || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
-            {
-                if is_cranelift_backend() {
-                    emit_warning(
-                        "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
-                    );
-                }
-                if target_has_prefixed_symbols() {
-                    emit_rustc_cfg("universal-no-u1-prefixed");
-                } else {
-                    emit_rustc_cfg("universal-no-u1");
-                }
-            } else if target_has_prefixed_symbols() {
-                emit_rustc_cfg("universal-prefixed");
-            } else {
-                emit_rustc_cfg("universal");
-            }
+            emit_rustc_cfg("universal");
             unsafe {
                 PREGENERATED = true;
             }
@@ -1148,10 +1103,6 @@ fn probe_apple_core_services() -> bool {
     available
 }
 
-fn use_no_u1_bindings() -> Option<bool> {
-    unsafe { SYS_NO_U1_BINDINGS }
-}
-
 // Per the cc-rs convention, `TARGET_*` vars apply only when cross-compiling and
 // `HOST_*` vars only to native builds. This keeps cross-target flags out of the
 // host build when this crate is compiled for both in one cargo invocation
@@ -1286,9 +1237,6 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
-        println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
-        println!("cargo:rustc-check-cfg=cfg(universal_no_u1_prefixed)");
-        println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
 
@@ -1408,10 +1356,6 @@ fn main() {
             bindings_available = true;
         }
     } else if is_bindgen_required() {
-        assert!(
-            use_no_u1_bindings() != Some(true),
-            "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
-        );
         emit_warning("######");
         emit_warning(
             "If bindgen is unable to locate a header file, use the \
@@ -1444,10 +1388,6 @@ fn main() {
                 "External bindgen required, but external bindgen unable to produce SSL bindings.",
             );
         } else {
-            assert!(
-                use_no_u1_bindings() != Some(true),
-                "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
-            );
             let gen_bindings_path = out_dir().join("bindings.rs");
             let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
             match result {
