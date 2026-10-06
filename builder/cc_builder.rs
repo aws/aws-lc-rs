@@ -19,11 +19,11 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command, find_clang_cl,
-    get_crate_cc, get_crate_cflags, get_crate_cxx, is_cross_compiling, is_link_whole_archive,
-    is_no_asm, is_small, out_dir, requested_c_std, set_env_for_target, should_build_jitter_entropy,
-    target, target_arch, target_env, target_is_msvc, target_os, target_vendor, use_prebuilt_nasm,
-    CStdRequested, EnvGuard, OutputLibType,
+    cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command,
+    export_crate_compilers, find_clang_cl, get_crate_cc, get_crate_cflags, is_cross_compiling,
+    is_link_whole_archive, is_no_asm, is_small, out_dir, requested_c_std, set_env_for_target,
+    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
+    target_vendor, use_prebuilt_nasm, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -225,13 +225,6 @@ impl CcBuilder {
             }
         }
 
-        if let Some(cc) = get_crate_cc() {
-            set_env_for_target("CC", &cc);
-        }
-        if let Some(cxx) = get_crate_cxx() {
-            set_env_for_target("CXX", &cxx);
-        }
-
         if target_arch() == "x86" && !is_cl_like {
             if let Some(option) = BuildOption::flag_if_supported(cc_build, "-msse2") {
                 build_options.push(option);
@@ -378,6 +371,7 @@ impl CcBuilder {
         if let Some(cflags) = get_crate_cflags() {
             set_env_for_target("CFLAGS", cflags);
         }
+        export_crate_compilers();
 
         let mut cc_build = self.create_builder();
         let (_, build_options) = self.collect_universal_build_options(&cc_build, false);
@@ -1485,6 +1479,81 @@ mod tests {
             panic!("user CFLAGS optimization reached the jitterentropy compile: {e}")
         });
         assert_eq!(objects.len(), 1);
+    }
+
+    // `AWS_LC_SYS_CC` must reach the main library build, not only jitterentropy's
+    // separate `cc::Build`. The override is a symlink to the default compiler named
+    // `cc` (the macOS xcrun shim dispatches on its name), so it still works but has
+    // a distinct path. Only cc releases that cache env reads per `Build` (e.g.
+    // 1.2.41, 1.6.0) can detect a late export.
+    #[cfg(unix)]
+    #[test]
+    fn test_crate_cc_reaches_main_builder() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(host) = host_triple() else {
+            return;
+        };
+        let parts: Vec<&str> = host.split('-').collect();
+        let target_env = ["gnu", "musl"]
+            .into_iter()
+            .find(|env| host.ends_with(env))
+            .unwrap_or("");
+        let temp_out = tempfile::tempdir().unwrap();
+        let manifest_dir = tempfile::tempdir().unwrap();
+        let target_u = host.to_lowercase().replace('-', "_");
+        let mut guards = vec![
+            EnvGuard::new("OUT_DIR", temp_out.path()),
+            EnvGuard::new("TARGET", &host),
+            EnvGuard::new("HOST", &host),
+            EnvGuard::new("CARGO_PKG_NAME", "aws-lc-sys"),
+            EnvGuard::new("CARGO_CFG_TARGET_OS", std::env::consts::OS),
+            EnvGuard::new("CARGO_CFG_TARGET_ARCH", std::env::consts::ARCH),
+            EnvGuard::new("CARGO_CFG_TARGET_VENDOR", parts[1]),
+            EnvGuard::new("CARGO_CFG_TARGET_ENV", target_env),
+            EnvGuard::new("OPT_LEVEL", "0"),
+            EnvGuard::new("DEBUG", "false"),
+        ];
+        // Isolate both cc-rs and crate-specific compiler overrides. Guard CFLAGS
+        // too: prepare_builder can export it into the target-specific environment.
+        for name in ["CC", "HOST_CC", "CXX", "HOST_CXX", "CFLAGS", "HOST_CFLAGS"] {
+            for prefix in ["", "AWS_LC_SYS_"] {
+                let name = format!("{prefix}{name}");
+                for key in [
+                    name.clone(),
+                    format!("{name}_{host}"),
+                    format!("{name}_{target_u}"),
+                ] {
+                    guards.push(EnvGuard::remove(&key));
+                }
+            }
+        }
+        let Ok(default_cc) = cc::Build::new().try_get_compiler() else {
+            return;
+        };
+        let Some(default_cc_path) = env::var_os("PATH").and_then(|path| {
+            env::split_paths(&path)
+                .map(|dir| dir.join(default_cc.path()))
+                .find(|candidate| candidate.is_file())
+        }) else {
+            return;
+        };
+        let crate_cc = manifest_dir.path().join("cc");
+        std::os::unix::fs::symlink(default_cc_path, &crate_cc).unwrap();
+        // Drop the override before restoring any inherited AWS_LC_SYS_CC.
+        let _crate_cc_guard = EnvGuard::new("AWS_LC_SYS_CC", &crate_cc);
+
+        let builder = CcBuilder::new(
+            manifest_dir.path().to_path_buf(),
+            temp_out.path().to_path_buf(),
+            None,
+            OutputLibType::Static,
+        );
+        let cc_build = builder.prepare_builder();
+        assert_eq!(
+            cc_build.get_compiler().path(),
+            crate_cc,
+            "AWS_LC_SYS_CC must select the main library's compiler"
+        );
     }
 
     // cc 1.2.26 replaces only `-` in `target_envs`, while newer versions replace
