@@ -1,0 +1,24 @@
+[package]
+name = "system-fips-link"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Keep workspace feature unification from making crypto live in this consumer.
+[workspace]
+members = ["wrapper"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+wrapper = { path = "wrapper" }
+
+[features]
+live-crypto = []
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = true
