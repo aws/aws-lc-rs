@@ -17,6 +17,7 @@ use std::process::Command;
 use std::sync::OnceLock;
 use std::{env, fmt};
 
+use binding_names::strip_binding_link_prefixes;
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
 use system_library::SystemLib;
@@ -73,6 +74,7 @@ const OSSL_CONF_DEFINES: &[&str] = &[
     "OPENSSL_NO_WHIRLPOOL",
 ];
 
+mod binding_names;
 mod cc_builder;
 mod cmake_builder;
 mod fips_probe;
@@ -476,16 +478,14 @@ fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path
         disable_prelude: true,
     };
 
-    let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
-
-    bindings
-        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
+    let bindings = sys_bindgen::generate_bindings(manifest_dir, &options).to_string();
+    std::fs::write(bindings_path, strip_binding_link_prefixes(&bindings))
         .expect("written bindings");
 }
 
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
-    sys_bindgen::generate_bindings(
+    let bindings = sys_bindgen::generate_bindings(
         manifest_dir,
         &BindingOptions {
             build_prefix: prefix.clone(),
@@ -493,8 +493,9 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
             ..Default::default()
         },
     )
-    .write_to_file(src_bindings_path)
-    .expect("write bindings");
+    .to_string();
+    std::fs::write(src_bindings_path, strip_binding_link_prefixes(&bindings))
+        .expect("write bindings");
 }
 
 pub(crate) fn emit_rustc_cfg(cfg: &str) {
@@ -1802,6 +1803,10 @@ fn invoke_external_bindgen(
             result.stderr.as_ref()
         ));
     }
+    let bindings = std::fs::read_to_string(gen_bindings_path)
+        .map_err(|err| format!("Unable to read generated bindings: {err}"))?;
+    std::fs::write(gen_bindings_path, strip_binding_link_prefixes(&bindings))
+        .map_err(|err| format!("Unable to write normalized bindings: {err}"))?;
     Ok(())
 }
 
