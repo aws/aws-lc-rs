@@ -474,14 +474,13 @@ impl CcBuilder {
     fn compile_jitter_entropy(
         &self,
         is_cl_like: bool,
-        force_include_option: &str,
         sources: &[PathBuf],
     ) -> Result<Vec<PathBuf>, cc::Error> {
-        let _je_cflags_guards = Self::jitter_entropy_cflags_guards(is_cl_like);
-        let mut je_builder = self.prepare_jitter_entropy_builder(is_cl_like);
+        let je_cflags_guards = Self::jitter_entropy_cflags_guards(is_cl_like);
+        let mut je_builder = self.prepare_jitter_entropy_builder(&je_cflags_guards, is_cl_like);
         je_builder.flag(format!(
             "{}{}",
-            force_include_option,
+            if is_cl_like { "/FI" } else { "--include=" },
             self.manifest_dir
                 .join("generated-include")
                 .join("openssl")
@@ -492,8 +491,12 @@ impl CcBuilder {
         je_builder.try_compile_intermediates()
     }
 
-    /// Must only be called while `jitter_entropy_cflags_guards` are held.
-    fn prepare_jitter_entropy_builder(&self, is_cl_like: bool) -> cc::Build {
+    /// The returned builder must not outlive `_cflags_guards`.
+    fn prepare_jitter_entropy_builder(
+        &self,
+        _cflags_guards: &JitterEntropyCflagsGuards,
+        is_cl_like: bool,
+    ) -> cc::Build {
         // See: https://github.com/aws/aws-lc/blob/2294510cd0ecb2d5946461e3dbb038363b7b94cb/third_party/jitterentropy/CMakeLists.txt#L19-L35
         let mut build_options: Vec<BuildOption> = Vec::new();
         self.add_includes(&mut build_options);
@@ -601,7 +604,7 @@ impl CcBuilder {
     ///
     /// Every variable cc reads must be filtered (see `cflags_env_names`); missing
     /// the raw-triple spelling was <https://github.com/aws/aws-lc-rs/issues/1205>.
-    fn jitter_entropy_cflags_guards(is_cl_like: bool) -> Vec<EnvGuard> {
+    fn jitter_entropy_cflags_guards(is_cl_like: bool) -> JitterEntropyCflagsGuards {
         // Jitterentropy may be cross-compiled, so include TARGET_CFLAGS too.
         let cflags_env_names = cflags_env_names(true);
 
@@ -620,13 +623,15 @@ impl CcBuilder {
             }
         };
 
-        cflags_env_names
-            .into_iter()
-            .filter_map(|name| {
-                let value = env::var(&name).ok()?;
-                Some(EnvGuard::new(&name, filter_cflags(&value)))
-            })
-            .collect()
+        JitterEntropyCflagsGuards(
+            cflags_env_names
+                .into_iter()
+                .filter_map(|name| {
+                    let value = env::var(&name).ok()?;
+                    Some(EnvGuard::new(&name, filter_cflags(&value)))
+                })
+                .collect(),
+        )
     }
 
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
@@ -719,7 +724,7 @@ impl CcBuilder {
         }
         if build_jitter_entropy {
             let jitter_entropy_object_files = self
-                .compile_jitter_entropy(is_cl_like, force_include_option, &jitter_entropy_sources)
+                .compile_jitter_entropy(is_cl_like, &jitter_entropy_sources)
                 .unwrap_or_else(|e| panic!("Failed to compile jitterentropy: {e}"));
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
@@ -1011,6 +1016,10 @@ fn cflags_env_names(include_target_prefixed: bool) -> Vec<String> {
     names.push("CFLAGS".to_string());
     names
 }
+
+/// Filtered `CFLAGS` overrides for the jitterentropy build, restored on drop. A
+/// distinct type so only these guards satisfy `prepare_jitter_entropy_builder`.
+struct JitterEntropyCflagsGuards(#[allow(dead_code)] Vec<EnvGuard>);
 
 /// Temporarily removes every `CFLAGS`-family env var the cc crate consults (see its
 /// `target_envs`), so that `cc::Build::get_compiler()` computes only the target's
@@ -1466,7 +1475,7 @@ mod tests {
             None,
             OutputLibType::Static,
         );
-        let result = builder.compile_jitter_entropy(false, "--include=", &[source]);
+        let result = builder.compile_jitter_entropy(false, &[source]);
         assert_eq!(
             env::var("CFLAGS").unwrap(),
             "-O2",
