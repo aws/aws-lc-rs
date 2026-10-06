@@ -20,9 +20,9 @@ name: System Library Tests (FIPS)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ release-1.17.x ]
   pull_request:
-    branches: [ main ]
+    branches: [ release-1.17.x ]
 
 env:
   RUST_BACKTRACE: 1
@@ -40,7 +40,7 @@ jobs:
       refs: ${{ steps.refs.outputs.refs }}
     steps:
       - id: refs
-        run: echo 'refs=["fips-2025-09-12-lts","main"]' >> "$GITHUB_OUTPUT"
+        run: echo 'refs=["fips-2024-09-27","main"]' >> "$GITHUB_OUTPUT"
   # ---------------------------------------------------------------------------
   # Build AWS-LC FIPS (and a non-FIPS negative fixture) from each ref into
   # install prefixes the test jobs consume via workflow artifacts.
