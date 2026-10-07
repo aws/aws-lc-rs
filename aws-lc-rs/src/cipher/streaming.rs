@@ -419,6 +419,100 @@ impl StreamingEncryptingKey {
         Self::new(key, OperatingMode::CFB128, context)
     }
 
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB8 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB8 mode.
+    pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB8)?;
+        Self::less_safe_cfb8(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB8 cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB8 mode.
+    pub fn less_safe_cfb8(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB1 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB1 mode.
+    pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB1)?;
+        Self::less_safe_cfb1(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB1 cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB1 mode.
+    pub fn less_safe_cfb1(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the OFB cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support OFB mode.
+    pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key.algorithm().new_encryption_context(OperatingMode::OFB)?;
+        Self::less_safe_ofb(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the OFB cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support OFB mode.
+    pub fn less_safe_ofb(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB, context)
+    }
+
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
     /// with pkcs7 padding.
     /// The resulting ciphertext will be longer than the plaintext; padding is added
@@ -686,6 +780,39 @@ impl StreamingDecryptingKey {
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CFB8 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB8 mode.
+    pub fn cfb8(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CFB1 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support CFB1 mode.
+    pub fn cfb1(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the OFB cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure, or if `key`'s algorithm does not
+    /// support OFB mode.
+    pub fn ofb(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB, context)
     }
 
     /// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
