@@ -299,6 +299,13 @@ cargo clean -p aws-lc-fips-sys -p aws-lc-rs 2>/dev/null || true
 run_test "aws-lc-fips-sys rejects invalid SYSTEM_DIR" \
     "! AWS_LC_FIPS_SYS_SYSTEM_DIR='/nonexistent/path' cargo build -p aws-lc-fips-sys 2>/dev/null"
 
+# Test 9: A transitive consumer must retain the runtime check even when LTO
+# eliminates every Rust-side crypto call. The fixture also covers staticlib.
+if [ "$FIPS_STATIC" = "1" ]; then
+    run_test "FIPS static consumer linking" \
+        "bash '${SCRIPT_DIR}/test_system_lib_fips_link.sh' '$INSTALL_DIR'"
+fi
+
 # Summary
 echo ""
 echo "=========================================="

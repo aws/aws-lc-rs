@@ -20,9 +20,9 @@ name: System Library Tests (FIPS)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ release-1.17.x ]
   pull_request:
-    branches: [ main ]
+    branches: [ release-1.17.x ]
 
 env:
   RUST_BACKTRACE: 1
@@ -40,7 +40,7 @@ jobs:
       refs: ${{ steps.refs.outputs.refs }}
     steps:
       - id: refs
-        run: echo 'refs=["fips-2025-09-12-lts","main"]' >> "$GITHUB_OUTPUT"
+        run: echo 'refs=["fips-2024-09-27","main"]' >> "$GITHUB_OUTPUT"
   # ---------------------------------------------------------------------------
   # Build AWS-LC FIPS (and a non-FIPS negative fixture) from each ref into
   # install prefixes the test jobs consume via workflow artifacts.
@@ -250,9 +250,15 @@ jobs:
           - name: "aws-lc-fips-sys"
             cargo_args: "-p aws-lc-fips-sys"
             cargo_cmd: "build"
+          # A test binary that never calls into libcrypto: the FIPS runtime
+          # check must still resolve `FIPS_mode` at link time (#1246).
+          - name: "aws-lc-fips-sys, link without crypto"
+            cargo_args: "-p aws-lc-fips-sys --test link_without_crypto"
+            cargo_cmd: "test"
           - name: "aws-lc-rs, fips"
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
+            link_fixtures: true
     steps:
       # Do not initialize the aws-lc submodule, then remove its working tree
       # outright; that makes fallback-to-source a hard failure instead of a
@@ -302,6 +308,10 @@ jobs:
             echo '::error::FIPS verification did not run on the system-library FIPS path.'
             exit 1
           fi
+
+      - name: Test transitive static FIPS consumers with GNU ld.bfd
+        if: runner.os == 'Linux' && matrix.config.link_fixtures
+        run: bash scripts/tests/test_system_lib_fips_link.sh "$GITHUB_WORKSPACE/fips-artifacts/install-fips"
 
   # ---------------------------------------------------------------------------
   # Proves the declared FIPS floor: build AWS-LC FIPS at the oldest branch that
@@ -398,9 +408,13 @@ jobs:
           - name: "aws-lc-fips-sys, prefixed"
             cargo_args: "-p aws-lc-fips-sys"
             cargo_cmd: "build"
+          - name: "aws-lc-fips-sys, link without crypto, prefixed"
+            cargo_args: "-p aws-lc-fips-sys --test link_without_crypto"
+            cargo_cmd: "test"
           - name: "aws-lc-rs, fips, prefixed"
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
+            link_fixtures: true
     steps:
       # Do not initialize the aws-lc submodule, and remove its working tree
       # outright (see test-fips-unix).
@@ -444,6 +458,10 @@ jobs:
             echo '::error::FIPS verification did not run on the system-library FIPS path.'
             exit 1
           fi
+
+      - name: Test transitive prefixed static FIPS consumers with GNU ld.bfd
+        if: matrix.config.link_fixtures
+        run: bash scripts/tests/test_system_lib_fips_link.sh "$GITHUB_WORKSPACE/fips-artifacts/install-fips-prefixed"
 
   test-fips-windows:
     if: github.repository_owner == 'aws'
