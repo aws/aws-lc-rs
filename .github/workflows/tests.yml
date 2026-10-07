@@ -860,12 +860,24 @@ jobs:
     # The builder normally compiles only as a build script, so its unit tests run
     # solely through the builder-test harness crate; no other lane runs them. The
     # compiler-probe tests need the runner's clang and GCC and only run on Linux.
-    name: builder unit tests (${{ matrix.os }})
+    # CI otherwise resolves the newest `cc`, so the pinned lanes cover releases
+    # where cc changed when it reads CFLAGS (#1064, #1252). 1.2.41: workspace
+    # minimum (newer cmake needs cc >= 1.2.46, so cmake is pinned to its own
+    # minimum too); 1.2.57: cc-rs#1682; 1.6.0: cc-rs#1969.
+    name: builder unit tests (${{ matrix.os }}${{ matrix.cc_version != 'latest' && format(', cc {0}', matrix.cc_version) || '' }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
+        cc_version: [ latest ]
+        include:
+          - os: ubuntu-latest
+            cc_version: '1.2.41'
+          - os: ubuntu-latest
+            cc_version: '1.2.57'
+          - os: ubuntu-latest
+            cc_version: '1.6.0'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -874,8 +886,19 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
+      - if: ${{ matrix.cc_version != 'latest' }}
+        name: Pin cc ${{ matrix.cc_version }}
+        run: |
+          cargo update -p cmake --precise 0.1.54
+          cargo update -p cc --precise ${{ matrix.cc_version }}
       - name: Run builder unit tests
         run: cargo test -p builder-test
+      # hostile-environment covers the newest cc end to end.
+      - if: ${{ matrix.cc_version != 'latest' }}
+        name: Build aws-lc-sys with optimizing CFLAGS
+        env:
+          CFLAGS: '-O2'
+        run: cargo build -p aws-lc-sys
 
   linux-clang-lto:
     if: github.repository_owner == 'aws'
