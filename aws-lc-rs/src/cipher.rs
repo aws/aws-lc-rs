@@ -241,9 +241,11 @@ pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
 pub use streaming::{BufferUpdate, StreamingDecryptingKey, StreamingEncryptingKey};
 
 use crate::aws_lc::{
-    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
-    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
-    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
+    EVP_aes_128_cbc, EVP_aes_128_cfb1, EVP_aes_128_cfb128, EVP_aes_128_cfb8, EVP_aes_128_ctr,
+    EVP_aes_128_ecb, EVP_aes_128_ofb, EVP_aes_192_cbc, EVP_aes_192_cfb1, EVP_aes_192_cfb128,
+    EVP_aes_192_cfb8, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_192_ofb, EVP_aes_256_cbc,
+    EVP_aes_256_cfb1, EVP_aes_256_cfb128, EVP_aes_256_cfb8, EVP_aes_256_ctr, EVP_aes_256_ecb,
+    EVP_aes_256_ofb, EVP_CIPHER,
 };
 #[cfg(feature = "legacy-des")]
 use crate::aws_lc::{
@@ -343,6 +345,18 @@ pub enum OperatingMode {
     /// CFB 128-bit mode.
     CFB128,
 
+    /// CFB 8-bit mode.
+    CFB8,
+
+    /// CFB 1-bit mode.
+    ///
+    /// This API is byte-oriented: input and output lengths are counted in
+    /// bytes, and each byte is processed as eight successive 1-bit segments.
+    CFB1,
+
+    /// Output feedback (OFB) mode.
+    OFB,
+
     /// Electronic Code Book (ECB) mode.
     ECB,
 }
@@ -353,14 +367,23 @@ impl OperatingMode {
             (OperatingMode::CBC, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb128() },
+            (OperatingMode::CFB8, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb8() },
+            (OperatingMode::CFB1, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb1() },
+            (OperatingMode::OFB, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ofb() },
             (OperatingMode::ECB, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cfb128() },
+            (OperatingMode::CFB8, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cfb8() },
+            (OperatingMode::CFB1, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cfb1() },
+            (OperatingMode::OFB, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ofb() },
             (OperatingMode::ECB, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb128() },
+            (OperatingMode::CFB8, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb8() },
+            (OperatingMode::CFB1, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb1() },
+            (OperatingMode::OFB, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ofb() },
             (OperatingMode::ECB, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ecb() },
             #[cfg(feature = "legacy-des")]
             #[allow(deprecated)]
@@ -393,10 +416,20 @@ impl OperatingMode {
             | (OperatingMode::CTR, AlgorithmId::DesEde3ForLegacyUseOnly)
             | (OperatingMode::CFB128, AlgorithmId::DesForLegacyUseOnly)
             | (OperatingMode::CFB128, AlgorithmId::DesEdeForLegacyUseOnly)
-            | (OperatingMode::CFB128, AlgorithmId::DesEde3ForLegacyUseOnly) => {
+            | (OperatingMode::CFB128, AlgorithmId::DesEde3ForLegacyUseOnly)
+            | (OperatingMode::CFB8, AlgorithmId::DesForLegacyUseOnly)
+            | (OperatingMode::CFB8, AlgorithmId::DesEdeForLegacyUseOnly)
+            | (OperatingMode::CFB8, AlgorithmId::DesEde3ForLegacyUseOnly)
+            | (OperatingMode::CFB1, AlgorithmId::DesForLegacyUseOnly)
+            | (OperatingMode::CFB1, AlgorithmId::DesEdeForLegacyUseOnly)
+            | (OperatingMode::CFB1, AlgorithmId::DesEde3ForLegacyUseOnly)
+            | (OperatingMode::OFB, AlgorithmId::DesForLegacyUseOnly)
+            | (OperatingMode::OFB, AlgorithmId::DesEdeForLegacyUseOnly)
+            | (OperatingMode::OFB, AlgorithmId::DesEde3ForLegacyUseOnly) => {
                 // `supports_mode()` rejects these combinations at key-construction
-                // time, so this branch is unreachable in practice.
-                unreachable!("DES does not support CTR or CFB128 modes")
+                // time, so this branch is unreachable in practice. AWS-LC declares
+                // no DES OFB or CFB ciphers at all.
+                unreachable!("DES does not support CTR, CFB or OFB modes")
             }
         };
         unsafe { ConstPointer::new_static(alg).unwrap() }
@@ -666,11 +699,13 @@ impl Algorithm {
         mode: OperatingMode,
     ) -> Result<EncryptionContext, Unspecified> {
         match self.id {
-            // TODO: Hopefully support CFB1, and CFB8
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
-                    Ok(EncryptionContext::Iv128(FixedLength::new()?))
-                }
+                OperatingMode::CBC
+                | OperatingMode::CTR
+                | OperatingMode::CFB128
+                | OperatingMode::CFB8
+                | OperatingMode::CFB1
+                | OperatingMode::OFB => Ok(EncryptionContext::Iv128(FixedLength::new()?)),
                 OperatingMode::ECB => Ok(EncryptionContext::None),
             },
             #[cfg(feature = "legacy-des")]
@@ -687,11 +722,13 @@ impl Algorithm {
 
     fn is_valid_encryption_context(&self, mode: OperatingMode, input: &EncryptionContext) -> bool {
         match self.id {
-            // TODO: Hopefully support CFB1, and CFB8
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
-                    matches!(input, EncryptionContext::Iv128(_))
-                }
+                OperatingMode::CBC
+                | OperatingMode::CTR
+                | OperatingMode::CFB128
+                | OperatingMode::CFB8
+                | OperatingMode::CFB1
+                | OperatingMode::OFB => matches!(input, EncryptionContext::Iv128(_)),
                 OperatingMode::ECB => {
                     matches!(input, EncryptionContext::None)
                 }
@@ -709,12 +746,14 @@ impl Algorithm {
     }
 
     fn is_valid_decryption_context(&self, mode: OperatingMode, input: &DecryptionContext) -> bool {
-        // TODO: Hopefully support CFB1, and CFB8
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
-                    matches!(input, DecryptionContext::Iv128(_))
-                }
+                OperatingMode::CBC
+                | OperatingMode::CTR
+                | OperatingMode::CFB128
+                | OperatingMode::CFB8
+                | OperatingMode::CFB1
+                | OperatingMode::OFB => matches!(input, DecryptionContext::Iv128(_)),
                 OperatingMode::ECB => {
                     matches!(input, DecryptionContext::None)
                 }
@@ -743,6 +782,9 @@ impl Algorithm {
                 OperatingMode::CBC
                     | OperatingMode::CTR
                     | OperatingMode::CFB128
+                    | OperatingMode::CFB8
+                    | OperatingMode::CFB1
+                    | OperatingMode::OFB
                     | OperatingMode::ECB
             ),
             #[cfg(feature = "legacy-des")]
@@ -907,6 +949,45 @@ impl EncryptingKey {
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128)
+    }
+
+    /// Constructs an `EncryptingKey` operating in cipher feedback 8-bit mode (CFB8) using the provided key.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support CFB8 mode.
+    pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8)
+    }
+
+    /// Constructs an `EncryptingKey` operating in cipher feedback 1-bit mode (CFB1) using the provided key.
+    ///
+    /// This API is byte-oriented: the input length is counted in bytes, and
+    /// each byte is processed as eight successive 1-bit segments.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support CFB1 mode.
+    pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1)
+    }
+
+    /// Constructs an `EncryptingKey` operating in output feedback mode (OFB) using the provided key.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support OFB mode.
+    pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB)
     }
 
     /// Constructs an `EncryptingKey` operating in cipher block chaining (CBC) mode using the provided key.
@@ -1077,6 +1158,45 @@ impl DecryptingKey {
         Self::new(key, OperatingMode::CFB128)
     }
 
+    /// Constructs a `DecryptingKey` operating in cipher feedback 8-bit mode (CFB8) using the provided key.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support CFB8 mode.
+    pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8)
+    }
+
+    /// Constructs a `DecryptingKey` operating in cipher feedback 1-bit mode (CFB1) using the provided key.
+    ///
+    /// This API is byte-oriented: the input length is counted in bytes, and
+    /// each byte is processed as eight successive 1-bit segments.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support CFB1 mode.
+    pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1)
+    }
+
+    /// Constructs a `DecryptingKey` operating in output feedback mode (OFB) using the provided key.
+    ///
+    // # FIPS
+    // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
+    ///   `key`'s algorithm does not support OFB mode.
+    pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB)
+    }
+
     /// Constructs an `DecryptingKey` operating in cipher block chaining (CBC) mode using the provided key and context.
     ///
     /// # ☠️ ️️️DANGER ☠️
@@ -1221,8 +1341,7 @@ fn encrypt(
                 unreachable!("DES does not support CTR mode.")
             }
         },
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CFB128 => match algorithm.id() {
+        OperatingMode::CFB128 | OperatingMode::CFB8 | OperatingMode::CFB1 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
@@ -1231,7 +1350,19 @@ fn encrypt(
             AlgorithmId::DesForLegacyUseOnly
             | AlgorithmId::DesEdeForLegacyUseOnly
             | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                unreachable!("DES does not support CFB128 mode.")
+                unreachable!("DES does not support CFB modes.")
+            }
+        },
+        OperatingMode::OFB => match algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+                aes::encrypt_ofb_mode(key, context, in_out)
+            }
+            #[cfg(feature = "legacy-des")]
+            #[allow(deprecated)]
+            AlgorithmId::DesForLegacyUseOnly
+            | AlgorithmId::DesEdeForLegacyUseOnly
+            | AlgorithmId::DesEde3ForLegacyUseOnly => {
+                unreachable!("DES does not support OFB mode.")
             }
         },
         OperatingMode::ECB => match algorithm.id() {
@@ -1286,8 +1417,7 @@ fn decrypt<'in_out>(
                 unreachable!("DES does not support CTR mode.")
             }
         },
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CFB128 => match algorithm.id() {
+        OperatingMode::CFB128 | OperatingMode::CFB8 | OperatingMode::CFB1 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
@@ -1296,7 +1426,19 @@ fn decrypt<'in_out>(
             AlgorithmId::DesForLegacyUseOnly
             | AlgorithmId::DesEdeForLegacyUseOnly
             | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                unreachable!("DES does not support CFB128 mode.")
+                unreachable!("DES does not support CFB modes.")
+            }
+        },
+        OperatingMode::OFB => match algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+                aes::decrypt_ofb_mode(key, context, in_out)
+            }
+            #[cfg(feature = "legacy-des")]
+            #[allow(deprecated)]
+            AlgorithmId::DesForLegacyUseOnly
+            | AlgorithmId::DesEdeForLegacyUseOnly
+            | AlgorithmId::DesEde3ForLegacyUseOnly => {
+                unreachable!("DES does not support OFB mode.")
             }
         },
         OperatingMode::ECB => match algorithm.id() {
@@ -1643,6 +1785,108 @@ mod tests {
         "000102030405060708090a0b0c0d0e0f",
         "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
         "f58c4c04d6e5f1ba779eabfb5f7bfbd69cfc4e967edb808d679f777bc6702c7d39f23369a9d9bacfa530e26304231461b2eb05e2c39be9fcda6c19078c6a9d1b"
+    );
+
+    // NIST SP 800-38A, Appendix F
+    // <https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf>
+
+    // Source: F.4.1
+    cipher_kat!(
+        test_sp800_38a_ofb_aes128,
+        &AES_128,
+        OperatingMode::OFB,
+        "2b7e151628aed2a6abf7158809cf4f3c",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+        "3b3fd92eb72dad20333449f8e83cfb4a7789508d16918f03f53c52dac54ed8259740051e9c5fecf64344f7a82260edcc304c6528f659c77866a510d9c1d6ae5e"
+    );
+
+    // Source: F.4.3
+    cipher_kat!(
+        test_sp800_38a_ofb_aes192,
+        &AES_192,
+        OperatingMode::OFB,
+        "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+        "cdc80d6fddf18cab34c25909c99a4174fcc28b8d4c63837c09e81700c11004018d9a9aeac0f6596f559c6d4daf59a5f26d9f200857ca6c3e9cac524bd9acc92a"
+    );
+
+    // Source: F.4.5
+    cipher_kat!(
+        test_sp800_38a_ofb_aes256,
+        &AES_256,
+        OperatingMode::OFB,
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+        "dc7e84bfda79164b7ecd8486985d38604febdc6740d20b3ac88f6ad82a4fb08d71ab47a086e86eedf39d1c5bba97c4080126141d67f37be8538f5a8be740e484"
+    );
+
+    // Source: F.3.7, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb8_aes128,
+        &AES_128,
+        OperatingMode::CFB8,
+        "2b7e151628aed2a6abf7158809cf4f3c",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d",
+        "3b79424c9c0dd436bace9e0ed4586a4f32b9"
+    );
+
+    // Source: F.3.9, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb8_aes192,
+        &AES_192,
+        OperatingMode::CFB8,
+        "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d",
+        "cda2521ef0a905ca44cd057cbf0d47a0678a"
+    );
+
+    // Source: F.3.11, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb8_aes256,
+        &AES_256,
+        OperatingMode::CFB8,
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1bee22e409f96e93d7e117393172aae2d",
+        "dc1f1a8520a64db55fcc8ac554844e889700"
+    );
+
+    // Source: F.3.1, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb1_aes128,
+        &AES_128,
+        OperatingMode::CFB1,
+        "2b7e151628aed2a6abf7158809cf4f3c",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1",
+        "68b3"
+    );
+
+    // Source: F.3.3, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb1_aes192,
+        &AES_192,
+        OperatingMode::CFB1,
+        "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1",
+        "9359"
+    );
+
+    // Source: F.3.5, via AWS-LC cfb_test.cc
+    cipher_kat!(
+        test_sp800_38a_cfb1_aes256,
+        &AES_256,
+        OperatingMode::CFB1,
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+        "000102030405060708090a0b0c0d0e0f",
+        "6bc1",
+        "9029"
     );
 
     #[cfg(feature = "legacy-des")]

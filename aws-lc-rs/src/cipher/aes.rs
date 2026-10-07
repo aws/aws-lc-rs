@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, AES_DECRYPT,
-    AES_ENCRYPT, AES_KEY,
+    AES_cbc_encrypt, AES_cfb128_encrypt, AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ctr128_encrypt,
+    AES_ecb_encrypt, AES_ofb128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY,
 };
 use crate::cipher::block::Block;
 use crate::error::Unspecified;
@@ -31,6 +31,9 @@ pub const AES_CTR_IV_LEN: usize = 16;
 
 /// The number of bytes for an AES-CFB initialization vector (IV)
 pub const AES_CFB_IV_LEN: usize = 16;
+
+/// The number of bytes for an AES-OFB initialization vector (IV)
+pub const AES_OFB_IV_LEN: usize = 16;
 
 pub const AES_BLOCK_LEN: usize = 16;
 
@@ -149,8 +152,9 @@ pub(super) fn encrypt_cfb_mode(
     };
 
     let cfb_encrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_encrypt,
+        OperatingMode::CFB8 => aes_cfb8_encrypt,
+        OperatingMode::CFB1 => aes_cfb1_encrypt,
         _ => unreachable!(),
     };
 
@@ -181,8 +185,9 @@ pub(super) fn decrypt_cfb_mode<'in_out>(
     };
 
     let cfb_decrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_decrypt,
+        OperatingMode::CFB8 => aes_cfb8_decrypt,
+        OperatingMode::CFB1 => aes_cfb1_decrypt,
         _ => unreachable!(),
     };
 
@@ -339,4 +344,150 @@ fn aes_cfb128_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             AES_DECRYPT,
         );
     });
+}
+
+fn aes_cfb8_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    // AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR
+    // modes, so this call does not increment the approved-operation counter.
+    // `indicator_check!` observes that and marks the service indicator
+    // unapproved in FIPS builds.
+    indicator_check!(unsafe {
+        AES_cfb8_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_ENCRYPT,
+        );
+    });
+}
+
+fn aes_cfb8_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    // AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR
+    // modes, so this call does not increment the approved-operation counter.
+    // `indicator_check!` observes that and marks the service indicator
+    // unapproved in FIPS builds.
+    indicator_check!(unsafe {
+        AES_cfb8_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_DECRYPT,
+        );
+    });
+}
+
+/// `AES_cfb1_encrypt` measures its input in bits, unlike every other
+/// `AES_*` stream function in this module, which take byte lengths. This API is
+/// byte-oriented, so the length is converted here. This matches what AWS-LC's
+/// own EVP layer does for `EVP_aes_*_cfb1` when the caller has not opted in to
+/// `EVP_CIPH_FLAG_LENGTH_BITS`, so the two paths agree.
+fn aes_cfb1_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    let bits = in_out.len() * 8;
+    // AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR
+    // modes, so this call does not increment the approved-operation counter.
+    // `indicator_check!` observes that and marks the service indicator
+    // unapproved in FIPS builds.
+    indicator_check!(unsafe {
+        AES_cfb1_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            bits,
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_ENCRYPT,
+        );
+    });
+}
+
+/// Decrypting calls `AES_cfb1_encrypt` as well: AWS-LC declares no
+/// `AES_cfb1_decrypt`, and the direction is selected by the trailing `enc`
+/// argument, which is `AES_DECRYPT` here.
+///
+/// That function measures its input in bits, unlike every other `AES_*` stream
+/// function in this module, which take byte lengths. This API is byte-oriented,
+/// so the length is converted here. This matches what AWS-LC's own EVP layer
+/// does for `EVP_aes_*_cfb1` when the caller has not opted in to
+/// `EVP_CIPH_FLAG_LENGTH_BITS`, so the two paths agree.
+fn aes_cfb1_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    let bits = in_out.len() * 8;
+    // AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR
+    // modes, so this call does not increment the approved-operation counter.
+    // `indicator_check!` observes that and marks the service indicator
+    // unapproved in FIPS builds.
+    indicator_check!(unsafe {
+        AES_cfb1_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            bits,
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_DECRYPT,
+        );
+    });
+}
+
+/// `AES_ofb128_encrypt` takes no direction argument: the keystream does not
+/// depend on the data, so OFB encryption and decryption are the same operation.
+fn aes_ofb128_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    // AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR
+    // modes, so this call does not increment the approved-operation counter.
+    // `indicator_check!` observes that and marks the service indicator
+    // unapproved in FIPS builds.
+    indicator_check!(unsafe {
+        AES_ofb128_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+        );
+    });
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub(super) fn encrypt_ofb_mode(
+    key: &SymmetricCipherKey,
+    context: EncryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
+    };
+
+    let mut iv = {
+        let mut iv = [0u8; AES_OFB_IV_LEN];
+        iv.copy_from_slice((&context).try_into()?);
+        iv
+    };
+
+    aes_ofb128_encrypt(enc_key, &mut iv, in_out);
+    iv.zeroize();
+
+    Ok(context.into())
+}
+
+pub(super) fn decrypt_ofb_mode<'in_out>(
+    key: &SymmetricCipherKey,
+    context: DecryptionContext,
+    in_out: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
+    // it's the same in OFB, just providing a nice named wrapper to match
+    encrypt_ofb_mode(key, context.into(), in_out).map(|_| in_out)
 }

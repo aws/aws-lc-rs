@@ -61,7 +61,11 @@ fn step_encrypt(
             assert!(ciphertext.len() > plaintext.len());
             assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
         }
-        OperatingMode::CTR | OperatingMode::CFB128 => {
+        OperatingMode::CTR
+        | OperatingMode::CFB128
+        | OperatingMode::CFB8
+        | OperatingMode::CFB1
+        | OperatingMode::OFB => {
             assert_eq!(ciphertext.len(), plaintext.len());
         }
         _ => panic!("Unknown cipher mode"),
@@ -111,7 +115,11 @@ fn step_decrypt(
             assert!(ciphertext.len() > plaintext.len());
             assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
         }
-        OperatingMode::CTR | OperatingMode::CFB128 => {
+        OperatingMode::CTR
+        | OperatingMode::CFB128
+        | OperatingMode::CFB8
+        | OperatingMode::CFB1
+        | OperatingMode::OFB => {
             assert_eq!(ciphertext.len(), plaintext.len());
         }
         _ => panic!("Unknown cipher mode"),
@@ -1446,6 +1454,213 @@ des_cipher_rt!(
     ecb,
     "0123456789abcdef",
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+// NIST SP 800-38A, Appendix F.
+// <https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf>
+
+// Source: F.4.1
+cipher_kat!(
+    test_kat_aes_128_ofb_16_bytes,
+    &AES_128,
+    OperatingMode::OFB,
+    ofb,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172a",
+    "3b3fd92eb72dad20333449f8e83cfb4a"
+);
+
+// Source: F.4.3
+cipher_kat!(
+    test_kat_aes_192_ofb_16_bytes,
+    &AES_192,
+    OperatingMode::OFB,
+    ofb,
+    "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172a",
+    "cdc80d6fddf18cab34c25909c99a4174"
+);
+
+// Source: F.4.5
+cipher_kat!(
+    test_kat_aes_256_ofb_16_bytes,
+    &AES_256,
+    OperatingMode::OFB,
+    ofb,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172a",
+    "dc7e84bfda79164b7ecd8486985d3860"
+);
+
+// Source: F.3.7, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_128_cfb8_18_bytes,
+    &AES_128,
+    OperatingMode::CFB8,
+    cfb8,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d",
+    "3b79424c9c0dd436bace9e0ed4586a4f32b9"
+);
+
+// Source: F.3.9, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_192_cfb8_18_bytes,
+    &AES_192,
+    OperatingMode::CFB8,
+    cfb8,
+    "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d",
+    "cda2521ef0a905ca44cd057cbf0d47a0678a"
+);
+
+// Source: F.3.11, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_256_cfb8_18_bytes,
+    &AES_256,
+    OperatingMode::CFB8,
+    cfb8,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d",
+    "dc1f1a8520a64db55fcc8ac554844e889700"
+);
+
+// Source: F.3.1, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_128_cfb1_2_bytes,
+    &AES_128,
+    OperatingMode::CFB1,
+    cfb1,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "68b3"
+);
+
+// Source: F.3.3, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_192_cfb1_2_bytes,
+    &AES_192,
+    OperatingMode::CFB1,
+    cfb1,
+    "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "9359"
+);
+
+// Source: F.3.5, via AWS-LC cfb_test.cc
+cipher_kat!(
+    test_kat_aes_256_cfb1_2_bytes,
+    &AES_256,
+    OperatingMode::CFB1,
+    cfb1,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "9029"
+);
+
+// Source: F.3.1, via AWS-LC cfb_test.cc
+streaming_cipher_kat!(
+    test_kat_aes_128_cfb1_2_bytes_step1,
+    &AES_128,
+    OperatingMode::CFB1,
+    cfb1,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "68b3",
+    1,
+    1
+);
+
+// Source: F.3.3, via AWS-LC cfb_test.cc
+streaming_cipher_kat!(
+    test_kat_aes_192_cfb1_2_bytes_step1,
+    &AES_192,
+    OperatingMode::CFB1,
+    cfb1,
+    "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "9359",
+    1,
+    1
+);
+
+// Source: F.3.5, via AWS-LC cfb_test.cc
+streaming_cipher_kat!(
+    test_kat_aes_256_cfb1_2_bytes_step1,
+    &AES_256,
+    OperatingMode::CFB1,
+    cfb1,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1",
+    "9029",
+    1,
+    1
+);
+
+cipher_rt!(
+    test_rt_aes_128_cfb1_5_bytes,
+    &AES_128,
+    OperatingMode::CFB1,
+    cfb1,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "6bc1bee22e"
+);
+
+cipher_rt!(
+    test_rt_aes_256_cfb1_5_bytes,
+    &AES_256,
+    OperatingMode::CFB1,
+    cfb1,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "6bc1bee22e"
+);
+
+cipher_rt!(
+    test_rt_aes_128_cfb1_20_bytes,
+    &AES_128,
+    OperatingMode::CFB1,
+    cfb1,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a57"
+);
+
+cipher_rt!(
+    test_rt_aes_256_cfb1_20_bytes,
+    &AES_256,
+    OperatingMode::CFB1,
+    cfb1,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a57"
+);
+
+cipher_rt!(
+    test_rt_aes_128_ofb_17_bytes,
+    &AES_128,
+    OperatingMode::OFB,
+    ofb,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "6bc1bee22e409f96e93d7e117393172aae"
+);
+
+cipher_rt!(
+    test_rt_aes_256_ofb_17_bytes,
+    &AES_256,
+    OperatingMode::OFB,
+    ofb,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "6bc1bee22e409f96e93d7e117393172aae"
 );
 
 #[cfg(feature = "legacy-des")]
