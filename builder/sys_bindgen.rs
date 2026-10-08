@@ -106,7 +106,11 @@ const BLOCKED_TYPES: [&str; 20] = [
     "__sFILEX",
 ];
 
-// printf formats that depend on the target's BN_ULONG width.
+// printf formats expanded from the platform's PRIu64/PRIx64, which differ even
+// among 64-bit targets ("%lu" on Linux, "%llu" on Darwin and Windows). BN_ULONG
+// and BN_BITS2 also follow the word width, but they agree across the 64-bit
+// targets and BN_ULONG is referenced by BIGNUM, BN_MONT_CTX, and the BN_*_word
+// functions, so they stay.
 const BLOCKED_CONSTANTS: [&str; 3] = ["BN_DEC_FMT1", "BN_HEX_FMT1", "BN_HEX_FMT2"];
 
 fn configure_binding_scope(mut builder: bindgen::Builder, all_bindings: bool) -> bindgen::Builder {
@@ -190,6 +194,7 @@ pub(crate) fn generate_bindings(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::strip_binding_link_prefixes;
 
     const HEADER: &str = r"
 typedef __builtin_va_list va_list;
@@ -293,20 +298,32 @@ pub static mut OPENSSL_ia32cap_P: [u32; 4];
 
     #[test]
     fn test_universal_bindings_exclude_platform_specific_items() {
-        for target in TARGETS {
-            for prefix in [None, Some("aws_lc_0_45_0")] {
-                let bindings = generate_test_bindings(false, target, prefix);
-                assert!(declares_item(&bindings, "SHA256"), "{target}: {bindings}");
+        for prefix in [None, Some("aws_lc_0_45_0")] {
+            // Mirror generate_src_bindings: link-name decoration is the one
+            // remaining target-dependent output, and main.rs normalizes it.
+            let bindings: Vec<String> = TARGETS
+                .iter()
+                .map(|target| {
+                    strip_binding_link_prefixes(&generate_test_bindings(false, target, prefix))
+                })
+                .collect();
+            for (target, bindings) in TARGETS.iter().zip(&bindings) {
+                assert!(declares_item(bindings, "SHA256"), "{target}: {bindings}");
                 for name in BLOCKED_FUNCTIONS
                     .iter()
                     .chain(&BLOCKED_TYPES)
                     .chain(&BLOCKED_CONSTANTS)
                 {
                     assert!(
-                        !declares_item(&bindings, name),
+                        !declares_item(bindings, name),
                         "{target}: unexpected {name}: {bindings}"
                     );
                 }
+            }
+            // One universal_crypto.rs serves every target, so the output must
+            // not depend on the generation target.
+            for (target, other) in TARGETS.iter().zip(&bindings).skip(1) {
+                assert_eq!(other, &bindings[0], "{target} differs from {}", TARGETS[0]);
             }
         }
     }
