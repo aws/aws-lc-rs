@@ -380,6 +380,7 @@ export BINDGEN_EXTRA_CLANG_ARGS="-isysroot ${IOS_SDK_PATH}"
 
 cd "${REPO_ROOT}"
 
-cargo test --features bindgen,unstable --target aarch64-apple-ios-sim
+# Skip builder-test: its bindgen tests need libclang, absent in the simulator.
+cargo test --workspace --exclude builder-test --features bindgen,unstable --target aarch64-apple-ios-sim
 
-cargo test --release --features bindgen,unstable --target aarch64-apple-ios-sim
+cargo test --workspace --exclude builder-test --release --features bindgen,unstable --target aarch64-apple-ios-sim
