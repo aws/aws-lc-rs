@@ -412,6 +412,7 @@ BIO_dgram_set_peer
 BIO_do_connect
 BIO_dump
 BIO_eof
+bio_errno_is_retryable
 bio_errno_should_retry
 BIO_f_base64
 BIO_f_cipher
@@ -524,6 +525,7 @@ BIO_should_write
 BIO_shutdown_wr
 BIO_snprintf
 bio_sock_error_get_and_clear
+bio_socket_error_is_retryable
 bio_socket_nbio
 bio_socket_should_retry
 BIO_tell
@@ -1194,6 +1196,7 @@ DH_get0_pqg
 DH_get0_priv_key
 DH_get0_pub_key
 DH_get0_q
+dh_is_known_safe_prime_group
 DH_marshal_parameters
 DH_new
 DH_new_by_nid
@@ -1201,6 +1204,7 @@ DH_num_bits
 DH_parse_parameters
 dh_pkey_meth
 DH_set_length
+dh_set_rfc3526_prime
 DH_set0_key
 DH_set0_pqg
 DH_size
@@ -1219,7 +1223,6 @@ DIST_POINT_NAME_free
 DIST_POINT_NAME_it
 DIST_POINT_NAME_new
 DIST_POINT_new
-DIST_POINT_set_dpname
 dsa_asn1_meth
 DSA_bits
 dsa_check_key
@@ -1602,6 +1605,9 @@ ERR_save_state
 ERR_SAVE_STATE_free
 ERR_set_error_data
 ERR_set_mark
+ERR_suppress_errors_begin
+ERR_suppress_errors_end
+EVP_add_cipher
 EVP_add_cipher_alias
 EVP_add_digest
 EVP_aead_aes_128_cbc_sha1_tls
@@ -1815,6 +1821,7 @@ EVP_HPKE_CTX_setup_sender
 EVP_HPKE_CTX_setup_sender_with_seed_for_testing
 EVP_HPKE_CTX_zero
 EVP_hpke_hkdf_sha256
+EVP_hpke_hkdf_sha384
 EVP_HPKE_KDF_hkdf_md
 EVP_HPKE_KDF_id
 EVP_HPKE_KEM_enc_len
@@ -1832,6 +1839,9 @@ EVP_HPKE_KEY_new
 EVP_HPKE_KEY_private_key
 EVP_HPKE_KEY_public_key
 EVP_HPKE_KEY_zero
+EVP_hpke_mlkem1024
+EVP_hpke_mlkem512
+EVP_hpke_mlkem768
 EVP_hpke_x25519_hkdf_sha256
 EVP_keccak256
 EVP_marshal_digest_algorithm
@@ -2060,6 +2070,7 @@ EXTENDED_KEY_USAGE_new
 FIPS_is_entropy_cpu_jitter
 FIPS_mode
 FIPS_mode_set
+FIPS_module_name
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
 FIPS_version
@@ -2131,6 +2142,7 @@ HRSS_marshal_public_key
 HRSS_parse_public_key
 HRSS_poly3_invert
 HRSS_poly3_mul
+hw_rng_multiple8_with_retry_FOR_TESTING
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
 i2a_ASN1_OBJECT
@@ -2338,10 +2350,12 @@ KeccakSponge_Absorb
 KeccakSponge_AbsorbFinal
 KeccakSponge_Reset
 kem_asn1_meth
+KEM_check_key
 KEM_find_asn1_by_nid
 KEM_find_kem_by_nid
 KEM_KEY_free
 KEM_KEY_get0_kem
+KEM_KEY_get0_secret_key
 KEM_KEY_init
 KEM_KEY_new
 KEM_KEY_set_raw_key

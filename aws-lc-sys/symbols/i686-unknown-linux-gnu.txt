@@ -810,7 +810,6 @@ DIST_POINT_NAME_new
 DIST_POINT_free
 DIST_POINT_it
 DIST_POINT_new
-DIST_POINT_set_dpname
 DSA_SIG_free
 DSA_SIG_get0
 DSA_SIG_marshal
@@ -1054,6 +1053,8 @@ ERR_restore_state
 ERR_save_state
 ERR_set_error_data
 ERR_set_mark
+ERR_suppress_errors_begin
+ERR_suppress_errors_end
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
 EVP_AEAD_CTX_copy
@@ -1370,6 +1371,7 @@ EVP_VerifyFinal
 EVP_VerifyInit
 EVP_VerifyInit_ex
 EVP_VerifyUpdate
+EVP_add_cipher
 EVP_add_cipher_alias
 EVP_add_digest
 EVP_aead_aes_128_cbc_sha1_tls
@@ -1468,6 +1470,10 @@ EVP_hpke_aes_128_gcm
 EVP_hpke_aes_256_gcm
 EVP_hpke_chacha20_poly1305
 EVP_hpke_hkdf_sha256
+EVP_hpke_hkdf_sha384
+EVP_hpke_mlkem1024
+EVP_hpke_mlkem512
+EVP_hpke_mlkem768
 EVP_hpke_x25519_hkdf_sha256
 EVP_keccak256
 EVP_marshal_digest_algorithm
@@ -1510,6 +1516,7 @@ EXTENDED_KEY_USAGE_new
 FIPS_is_entropy_cpu_jitter
 FIPS_mode
 FIPS_mode_set
+FIPS_module_name
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
 FIPS_version
@@ -1567,12 +1574,14 @@ ISSUING_DIST_POINT_new
 KBKDF_ctr_hmac
 KEM_KEY_free
 KEM_KEY_get0_kem
+KEM_KEY_get0_secret_key
 KEM_KEY_init
 KEM_KEY_new
 KEM_KEY_set_raw_key
 KEM_KEY_set_raw_keypair_from_seed
 KEM_KEY_set_raw_public_key
 KEM_KEY_set_raw_secret_key
+KEM_check_key
 KEM_find_asn1_by_nid
 KEM_find_kem_by_nid
 Keccak1600_Absorb
@@ -2863,9 +2872,11 @@ asn1_utctime_to_tm
 awslc_api_version_num
 awslc_version_string
 bio_clear_socket_error
+bio_errno_is_retryable
 bio_errno_should_retry
 bio_ip_and_port_to_socket_and_addr
 bio_sock_error_get_and_clear
+bio_socket_error_is_retryable
 bio_socket_nbio
 bio_socket_should_retry
 bn_abs_sub_consttime
@@ -3092,7 +3103,9 @@ d2i_X509_fp
 dh_asn1_meth
 dh_check_params_fast
 dh_compute_key_padded_no_self_test
+dh_is_known_safe_prime_group
 dh_pkey_meth
+dh_set_rfc3526_prime
 disable_mocked_ube_detection_FOR_TESTING
 dsa_asn1_meth
 dsa_check_key
@@ -3227,6 +3240,7 @@ get_thread_and_global_tree_drbg_calls_FOR_TESTING
 have_hw_rng_aarch64_for_testing
 have_hw_rng_x86_64_for_testing
 hmac_asn1_meth
+hw_rng_multiple8_with_retry_FOR_TESTING
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
 i2a_ASN1_OBJECT
