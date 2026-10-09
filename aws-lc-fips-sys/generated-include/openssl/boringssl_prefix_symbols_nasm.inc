@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_14_2
+%define BORINGSSL_PREFIX aws_lc_fips_0_14_3
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -210,6 +210,7 @@
 %xdefine _ASN1_mbstring_copy _ %+ BORINGSSL_PREFIX %+ _ASN1_mbstring_copy
 %xdefine _ASN1_mbstring_ncopy _ %+ BORINGSSL_PREFIX %+ _ASN1_mbstring_ncopy
 %xdefine _ASN1_object_size _ %+ BORINGSSL_PREFIX %+ _ASN1_object_size
+%xdefine _ASN1_parse _ %+ BORINGSSL_PREFIX %+ _ASN1_parse
 %xdefine _ASN1_primitive_free _ %+ BORINGSSL_PREFIX %+ _ASN1_primitive_free
 %xdefine _ASN1_put_eoc _ %+ BORINGSSL_PREFIX %+ _ASN1_put_eoc
 %xdefine _ASN1_put_object _ %+ BORINGSSL_PREFIX %+ _ASN1_put_object
@@ -838,7 +839,6 @@
 %xdefine _DIST_POINT_free _ %+ BORINGSSL_PREFIX %+ _DIST_POINT_free
 %xdefine _DIST_POINT_it _ %+ BORINGSSL_PREFIX %+ _DIST_POINT_it
 %xdefine _DIST_POINT_new _ %+ BORINGSSL_PREFIX %+ _DIST_POINT_new
-%xdefine _DIST_POINT_set_dpname _ %+ BORINGSSL_PREFIX %+ _DIST_POINT_set_dpname
 %xdefine _DSA_SIG_free _ %+ BORINGSSL_PREFIX %+ _DSA_SIG_free
 %xdefine _DSA_SIG_get0 _ %+ BORINGSSL_PREFIX %+ _DSA_SIG_get0
 %xdefine _DSA_SIG_marshal _ %+ BORINGSSL_PREFIX %+ _DSA_SIG_marshal
@@ -2146,6 +2146,7 @@
 %xdefine _RSA_get0_p _ %+ BORINGSSL_PREFIX %+ _RSA_get0_p
 %xdefine _RSA_get0_pss_params _ %+ BORINGSSL_PREFIX %+ _RSA_get0_pss_params
 %xdefine _RSA_get0_q _ %+ BORINGSSL_PREFIX %+ _RSA_get0_q
+%xdefine _RSA_get0_ssa_pss_params _ %+ BORINGSSL_PREFIX %+ _RSA_get0_ssa_pss_params
 %xdefine _RSA_get_default_method _ %+ BORINGSSL_PREFIX %+ _RSA_get_default_method
 %xdefine _RSA_get_ex_data _ %+ BORINGSSL_PREFIX %+ _RSA_get_ex_data
 %xdefine _RSA_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _RSA_get_ex_new_index
@@ -2823,6 +2824,7 @@
 %xdefine _X509v3_get_ext_by_OBJ _ %+ BORINGSSL_PREFIX %+ _X509v3_get_ext_by_OBJ
 %xdefine _X509v3_get_ext_by_critical _ %+ BORINGSSL_PREFIX %+ _X509v3_get_ext_by_critical
 %xdefine _X509v3_get_ext_count _ %+ BORINGSSL_PREFIX %+ _X509v3_get_ext_count
+%xdefine _a2i_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _a2i_ASN1_INTEGER
 %xdefine _a2i_IPADDRESS _ %+ BORINGSSL_PREFIX %+ _a2i_IPADDRESS
 %xdefine _a2i_IPADDRESS_NC _ %+ BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine _abi_test_bad_unwind_temporary _ %+ BORINGSSL_PREFIX %+ _abi_test_bad_unwind_temporary
@@ -4314,6 +4316,7 @@
 %xdefine ASN1_mbstring_copy BORINGSSL_PREFIX %+ _ASN1_mbstring_copy
 %xdefine ASN1_mbstring_ncopy BORINGSSL_PREFIX %+ _ASN1_mbstring_ncopy
 %xdefine ASN1_object_size BORINGSSL_PREFIX %+ _ASN1_object_size
+%xdefine ASN1_parse BORINGSSL_PREFIX %+ _ASN1_parse
 %xdefine ASN1_primitive_free BORINGSSL_PREFIX %+ _ASN1_primitive_free
 %xdefine ASN1_put_eoc BORINGSSL_PREFIX %+ _ASN1_put_eoc
 %xdefine ASN1_put_object BORINGSSL_PREFIX %+ _ASN1_put_object
@@ -4942,7 +4945,6 @@
 %xdefine DIST_POINT_free BORINGSSL_PREFIX %+ _DIST_POINT_free
 %xdefine DIST_POINT_it BORINGSSL_PREFIX %+ _DIST_POINT_it
 %xdefine DIST_POINT_new BORINGSSL_PREFIX %+ _DIST_POINT_new
-%xdefine DIST_POINT_set_dpname BORINGSSL_PREFIX %+ _DIST_POINT_set_dpname
 %xdefine DSA_SIG_free BORINGSSL_PREFIX %+ _DSA_SIG_free
 %xdefine DSA_SIG_get0 BORINGSSL_PREFIX %+ _DSA_SIG_get0
 %xdefine DSA_SIG_marshal BORINGSSL_PREFIX %+ _DSA_SIG_marshal
@@ -6250,6 +6252,7 @@
 %xdefine RSA_get0_p BORINGSSL_PREFIX %+ _RSA_get0_p
 %xdefine RSA_get0_pss_params BORINGSSL_PREFIX %+ _RSA_get0_pss_params
 %xdefine RSA_get0_q BORINGSSL_PREFIX %+ _RSA_get0_q
+%xdefine RSA_get0_ssa_pss_params BORINGSSL_PREFIX %+ _RSA_get0_ssa_pss_params
 %xdefine RSA_get_default_method BORINGSSL_PREFIX %+ _RSA_get_default_method
 %xdefine RSA_get_ex_data BORINGSSL_PREFIX %+ _RSA_get_ex_data
 %xdefine RSA_get_ex_new_index BORINGSSL_PREFIX %+ _RSA_get_ex_new_index
@@ -6927,6 +6930,7 @@
 %xdefine X509v3_get_ext_by_OBJ BORINGSSL_PREFIX %+ _X509v3_get_ext_by_OBJ
 %xdefine X509v3_get_ext_by_critical BORINGSSL_PREFIX %+ _X509v3_get_ext_by_critical
 %xdefine X509v3_get_ext_count BORINGSSL_PREFIX %+ _X509v3_get_ext_count
+%xdefine a2i_ASN1_INTEGER BORINGSSL_PREFIX %+ _a2i_ASN1_INTEGER
 %xdefine a2i_IPADDRESS BORINGSSL_PREFIX %+ _a2i_IPADDRESS
 %xdefine a2i_IPADDRESS_NC BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine abi_test_bad_unwind_temporary BORINGSSL_PREFIX %+ _abi_test_bad_unwind_temporary
