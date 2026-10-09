@@ -185,6 +185,7 @@ ASN1_item_verify
 ASN1_mbstring_copy
 ASN1_mbstring_ncopy
 ASN1_object_size
+ASN1_parse
 ASN1_primitive_free
 ASN1_put_eoc
 ASN1_put_object
@@ -809,7 +810,6 @@ DIST_POINT_NAME_new
 DIST_POINT_free
 DIST_POINT_it
 DIST_POINT_new
-DIST_POINT_set_dpname
 DSA_SIG_free
 DSA_SIG_get0
 DSA_SIG_marshal
@@ -2113,6 +2113,7 @@ RSA_get0_n
 RSA_get0_p
 RSA_get0_pss_params
 RSA_get0_q
+RSA_get0_ssa_pss_params
 RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
@@ -2790,6 +2791,7 @@ X509v3_get_ext_by_NID
 X509v3_get_ext_by_OBJ
 X509v3_get_ext_by_critical
 X509v3_get_ext_count
+a2i_ASN1_INTEGER
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
 abi_test_clobber_d0
