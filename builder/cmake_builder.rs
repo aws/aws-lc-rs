@@ -5,11 +5,11 @@ use crate::cc_builder::{asm_debug_prefix_map_flag, CcBuilder};
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate, is_no_asm,
-    is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target, sanitizer,
-    set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env,
-    target_is_msvc, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
-    OutputLibType,
+    export_crate_compilers, get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate,
+    is_no_asm, is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target,
+    sanitizer, set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch,
+    target_env, target_is_msvc, target_os, test_clang_cl_command, test_nasm_command,
+    use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -113,6 +113,7 @@ impl CmakeBuilder {
             self.build_prefix.clone(),
             self.output_lib_type,
         );
+        export_crate_compilers();
         let cc_build = cc::Build::new();
         let (is_cl_like, build_options) =
             cc_builder.collect_universal_build_options(&cc_build, true);

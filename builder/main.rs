@@ -1126,6 +1126,18 @@ fn get_crate_cxx() -> Option<String> {
     host_or_target.or(optional_env_optional_crate_target("CXX"))
 }
 
+/// Exports the crate's compiler selection (e.g. `AWS_LC_SYS_CC`) as the
+/// target-specific `CC`/`CXX` that cc reads. Each `cc::Build` caches its env
+/// reads, so this must run before a builder's first compiler lookup.
+fn export_crate_compilers() {
+    if let Some(cc) = get_crate_cc() {
+        set_env_for_target("CC", &cc);
+    }
+    if let Some(cxx) = get_crate_cxx() {
+        set_env_for_target("CXX", &cxx);
+    }
+}
+
 fn get_crate_cflags() -> Option<String> {
     let host_or_target = if is_cross_compiling() {
         optional_env_optional_crate_target("TARGET_CFLAGS")
