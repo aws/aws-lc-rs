@@ -28,6 +28,12 @@
 //! the caller the responsibility of ensuring the digest really is the hash of
 //! the intended message.
 //!
+//! ML-DSA does not participate in that flow, because what it signs is not a hash
+//! of the message alone: it is a key-dependent representative `mu` derived from
+//! both the public key and the message, so a [`Digest`] cannot express it. The
+//! equivalent for ML-DSA is the "external mu" variant in [`crate::ml_dsa`],
+//! which also supports deriving `mu` incrementally over a streamed message.
+//!
 //! This module is optimized for signing messages that are available in full,
 //! rather than streaming or incrementally-hashed large messages.
 //!
@@ -513,6 +519,22 @@ impl ParsedPublicKey {
 
     pub(crate) fn key(&self) -> &LcPtr<EVP_PKEY> {
         &self.key
+    }
+
+    /// Returns the `PqdsaVerificationAlgorithm` this key was parsed under, or `None` if the
+    /// key is not a PQDSA key.
+    pub(crate) fn pqdsa_verification_algorithm(
+        &self,
+    ) -> Option<&'static PqdsaVerificationAlgorithm> {
+        if self.algorithm.type_id() != TypeId::of::<PqdsaVerificationAlgorithm>() {
+            return None;
+        }
+        // Same downcast as `parse_public_key` performs when selecting the parse routine.
+        #[allow(clippy::cast_ptr_alignment)]
+        Some(unsafe {
+            &*(self.algorithm as *const dyn VerificationAlgorithm)
+                .cast::<PqdsaVerificationAlgorithm>()
+        })
     }
 
     /// Constructs a `ParsedPublicKey` directly from an already-built RSA
