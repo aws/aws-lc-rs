@@ -1,3 +1,4 @@
+a2i_ASN1_INTEGER
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
 ACCESS_DESCRIPTION_free
@@ -106,6 +107,7 @@ ASN1_OCTET_STRING_free
 ASN1_OCTET_STRING_it
 ASN1_OCTET_STRING_new
 ASN1_OCTET_STRING_set
+ASN1_parse
 ASN1_PRINTABLE_free
 ASN1_PRINTABLE_it
 ASN1_PRINTABLE_new
@@ -2342,6 +2344,7 @@ RSA_get0_n
 RSA_get0_p
 RSA_get0_pss_params
 RSA_get0_q
+RSA_get0_ssa_pss_params
 RSA_is_opaque
 RSA_marshal_private_key
 RSA_marshal_public_key
