@@ -6,10 +6,10 @@ use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
     export_crate_compilers, get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate,
-    is_no_asm, is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target,
-    sanitizer, set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch,
-    target_env, target_is_msvc, target_os, test_clang_cl_command, test_nasm_command,
-    use_prebuilt_nasm, OutputLibType,
+    is_fips_failure_callback, is_no_asm, is_no_pregenerated_src, is_small, optional_env,
+    optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
+    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
+    test_clang_cl_command, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -233,6 +233,10 @@ impl CmakeBuilder {
         }
 
         Self::configure_sanitizer(&mut cmake_cfg);
+
+        if is_fips_failure_callback() {
+            cmake_cfg.cflag("-DAWSLC_FIPS_FAILURE_CALLBACK");
+        }
 
         if let Some(cflags) = get_crate_cflags() {
             let cflags = if is_fips_build() {
@@ -678,6 +682,31 @@ impl CmakeBuilder {
             .configure_arg("--no-warn-unused-cli")
             .build()
     }
+
+    /// Compiles the `AWS_LC_fips_failure_callback` definition and links it with
+    /// `+whole-archive`, because AWS-LC references it only weakly.
+    fn build_fips_failure_callback(&self) {
+        let lib_name = format!(
+            "{}_fips_failure_callback",
+            self.build_prefix.as_deref().unwrap_or("aws_lc_fips")
+        );
+        let lib_dir = self.out_dir.join("fips-failure-callback");
+        cc::Build::new()
+            .file(self.manifest_dir.join("fips_failure_callback.c"))
+            .std("c11")
+            .out_dir(&lib_dir)
+            .cargo_metadata(false)
+            .compile(&lib_name);
+        println!("cargo:rerun-if-changed=fips_failure_callback.c");
+        println!("cargo:rustc-link-search=native={}", lib_dir.display());
+        println!("cargo:rustc-link-lib=static:+whole-archive={lib_name}");
+        // Lets this crate's tests name prefixed AWS-LC symbols.
+        if let Some(prefix) = &self.build_prefix {
+            println!("cargo:rustc-env=AWS_LC_FIPS_SYS_SYMBOL_PREFIX={prefix}_");
+        } else {
+            println!("cargo:rustc-env=AWS_LC_FIPS_SYS_SYMBOL_PREFIX=");
+        }
+    }
 }
 
 impl crate::Builder for CmakeBuilder {
@@ -749,6 +778,10 @@ impl crate::Builder for CmakeBuilder {
                 self.output_lib_type.rust_link_lib_kind(),
                 Ssl.libname(&self.build_prefix)
             );
+        }
+
+        if is_fips_failure_callback() {
+            self.build_fips_failure_callback();
         }
 
         crate::emit_source_build_metadata(&self.manifest_dir, &self.build_prefix);

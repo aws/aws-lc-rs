@@ -57,6 +57,7 @@ include = [
     "/builder/**/*.c",
     "/builder/printenv.bat",
     "/Cargo.toml",
+    "/fips_failure_callback.c",
     "/generated-include/**",
     "/include/**",
     "/rust_wrapper.c",
@@ -70,6 +71,7 @@ asan = []
 ssl = []
 bindgen = []
 fips = []
+fips-failure-callback = []
 default = ["fips"]
 
 [build-dependencies]

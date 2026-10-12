@@ -82,6 +82,14 @@ crate is used for cryptographic implementations. This feature is mutually exclus
 feature - enabling both will result in a compile-time error. Use this feature when you need a
 compile-time guarantee that your build is using the non-FIPS cryptographic module.
 
+##### fips-failure-callback
+
+Implies `fips`. Builds AWS-LC with `AWSLC_FIPS_FAILURE_CALLBACK`, so a failed FIPS self-test or
+pairwise consistency test no longer aborts the process. The failure is latched instead:
+`try_fips_status` reports it and `fips_failure_message` returns AWS-LC's message. The application
+must then stop using the module. Only supported for static builds of AWS-LC from source on ELF
+targets (e.g. Linux). Consult your compliance requirements before shipping this configuration.
+
 ##### asan
 
 Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
