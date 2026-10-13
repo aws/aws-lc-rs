@@ -284,7 +284,7 @@
 //! }
 //! ```
 use crate::aws_lc::EVP_PKEY;
-pub use crate::rsa::signature::{RsaEncoding, RsaSignatureEncoding};
+pub use crate::rsa::signature::{RsaEncoding, RsaPssSaltLength, RsaSignatureEncoding};
 pub use crate::rsa::{
     KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
     PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
