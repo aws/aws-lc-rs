@@ -293,8 +293,8 @@ pub(crate) use debug::derive_debug_via_id;
 use std::ffi::CStr;
 
 use crate::aws_lc::{
-    CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, OpenSSL_version, ERR_GET_FUNC,
-    ERR_GET_LIB, ERR_GET_REASON, OPENSSL_VERSION,
+    BORINGSSL_self_test, CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode,
+    OpenSSL_version, ERR_GET_FUNC, ERR_GET_LIB, ERR_GET_REASON, OPENSSL_VERSION,
 };
 use std::sync::Once;
 
@@ -384,6 +384,28 @@ pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
     }
 }
 
+/// Runs the AWS-LC cryptographic algorithm self-tests on demand.
+///
+/// AWS-LC runs its known-answer self-tests automatically before first use. This re-runs all of
+/// them (`BORINGSSL_self_test`), for applications that must self-test periodically or on demand.
+///
+/// In a FIPS build a failed known-answer test is a FIPS failure: AWS-LC aborts the process before
+/// this function returns, so `Err` is only returned for setup failures (e.g. allocation). In a
+/// non-FIPS build a failure is logged to stderr and reported as `Err` without aborting.
+///
+/// A successful result does not indicate that the library is operating in FIPS mode; use
+/// [`try_fips_mode()`] for that.
+///
+/// # Errors
+/// [`error::Unspecified`] if a self-test could not be run or, in non-FIPS builds, if one fails.
+pub fn try_fips_self_test() -> Result<(), error::Unspecified> {
+    init();
+    match unsafe { BORINGSSL_self_test() } {
+        1 => Ok(()),
+        _ => Err(error::Unspecified),
+    }
+}
+
 #[allow(dead_code)]
 unsafe fn dump_error() {
     let err = ERR_get_error();
@@ -432,6 +454,7 @@ mod tests {
     #[test]
     fn test_fips() {
         assert!({ crate::try_fips_mode().is_err() });
+        assert_eq!(crate::try_fips_self_test(), Ok(()));
         // Re-enable with fixed test after upstream has merged RAGDOLL
         //assert!({ crate::try_fips_cpu_jitter_entropy().is_ok() });
     }
@@ -442,6 +465,7 @@ mod tests {
     fn test_fips() {
         #[cfg(not(feature = "asan"))]
         crate::fips_mode();
+        crate::try_fips_self_test().unwrap();
         if aws_lc::CFG_CPU_JITTER_ENTROPY() {
             crate::fips_cpu_jitter_entropy();
         }
