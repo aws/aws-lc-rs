@@ -78,7 +78,7 @@ pub use self::encryption::pkcs1::{Pkcs1PrivateDecryptingKey, Pkcs1PublicEncrypti
 pub use self::encryption::{EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey};
 pub use self::key::{KeyPair, KeyPairComponents, KeySize, PublicKey, PublicKeyComponents};
 #[allow(clippy::module_name_repetitions)]
-pub use self::signature::RsaParameters;
+pub use self::signature::{RsaParameters, RsaPssSaltLength};
 
 pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
