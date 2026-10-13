@@ -389,11 +389,15 @@ pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
 /// AWS-LC runs its known-answer self-tests automatically before first use. This re-runs all of
 /// them (`BORINGSSL_self_test`), for applications that must self-test periodically or on demand.
 ///
-/// In a FIPS build, AWS-LC handles a failed self-test as a FIPS failure and, by default, aborts the
-/// process before this function returns.
+/// In a FIPS build a failed known-answer test is a FIPS failure: AWS-LC aborts the process before
+/// this function returns, so `Err` is only returned for setup failures (e.g. allocation). In a
+/// non-FIPS build a failure is logged to stderr and reported as `Err` without aborting.
+///
+/// A successful result does not indicate that the library is operating in FIPS mode; use
+/// [`try_fips_mode()`] for that.
 ///
 /// # Errors
-/// [`error::Unspecified`] if any self-test fails.
+/// [`error::Unspecified`] if a self-test could not be run or, in non-FIPS builds, if one fails.
 pub fn try_fips_self_test() -> Result<(), error::Unspecified> {
     init();
     match unsafe { BORINGSSL_self_test() } {
