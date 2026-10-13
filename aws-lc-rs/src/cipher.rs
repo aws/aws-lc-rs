@@ -315,6 +315,9 @@ pub use crate::cipher::aes::AES_CTR_IV_LEN;
 /// The number of bytes for an AES-CFB initialization vector (IV)
 pub use crate::cipher::aes::AES_CFB_IV_LEN;
 
+/// The number of bytes for an AES-OFB initialization vector (IV)
+pub use crate::cipher::aes::AES_OFB_IV_LEN;
+
 /// The number of bytes for a DES/3DES-CBC initialization vector (IV).
 ///
 /// DES and 3DES are legacy algorithms and have been disallowed for encryption by

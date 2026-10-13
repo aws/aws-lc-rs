@@ -1495,6 +1495,42 @@ cipher_kat!(
     "dc7e84bfda79164b7ecd8486985d3860"
 );
 
+// Source: F.4.1, all four blocks
+cipher_kat!(
+    test_kat_aes_128_ofb_64_bytes,
+    &AES_128,
+    OperatingMode::OFB,
+    ofb,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+    "3b3fd92eb72dad20333449f8e83cfb4a7789508d16918f03f53c52dac54ed8259740051e9c5fecf64344f7a82260edcc304c6528f659c77866a510d9c1d6ae5e"
+);
+
+// Source: F.4.3, all four blocks
+cipher_kat!(
+    test_kat_aes_192_ofb_64_bytes,
+    &AES_192,
+    OperatingMode::OFB,
+    ofb,
+    "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+    "cdc80d6fddf18cab34c25909c99a4174fcc28b8d4c63837c09e81700c11004018d9a9aeac0f6596f559c6d4daf59a5f26d9f200857ca6c3e9cac524bd9acc92a"
+);
+
+// Source: F.4.5, all four blocks
+cipher_kat!(
+    test_kat_aes_256_ofb_64_bytes,
+    &AES_256,
+    OperatingMode::OFB,
+    ofb,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "000102030405060708090a0b0c0d0e0f",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+    "dc7e84bfda79164b7ecd8486985d38604febdc6740d20b3ac88f6ad82a4fb08d71ab47a086e86eedf39d1c5bba97c4080126141d67f37be8538f5a8be740e484"
+);
+
 // Source: F.3.7, via AWS-LC cfb_test.cc
 cipher_kat!(
     test_kat_aes_128_cfb8_18_bytes,
@@ -1607,6 +1643,42 @@ streaming_cipher_kat!(
     "9029",
     1,
     1
+);
+
+cipher_rt!(
+    test_rt_aes_128_cfb8_5_bytes,
+    &AES_128,
+    OperatingMode::CFB8,
+    cfb8,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "6bc1bee22e"
+);
+
+cipher_rt!(
+    test_rt_aes_256_cfb8_5_bytes,
+    &AES_256,
+    OperatingMode::CFB8,
+    cfb8,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "6bc1bee22e"
+);
+
+cipher_rt!(
+    test_rt_aes_128_cfb8_20_bytes,
+    &AES_128,
+    OperatingMode::CFB8,
+    cfb8,
+    "2b7e151628aed2a6abf7158809cf4f3c",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a57"
+);
+
+cipher_rt!(
+    test_rt_aes_256_cfb8_20_bytes,
+    &AES_256,
+    OperatingMode::CFB8,
+    cfb8,
+    "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a57"
 );
 
 cipher_rt!(
@@ -1842,6 +1914,45 @@ fn test_des_unsupported_modes_rejected() {
         assert!(
             StreamingEncryptingKey::cfb128(unbound).is_err(),
             "DES + CFB128 should be rejected (streaming encrypt)"
+        );
+
+        // CFB8 must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::cfb8(unbound).expect_err("DES + CFB8 should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::cfb8(unbound).expect_err("DES + CFB8 should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::cfb8(unbound).is_err(),
+            "DES + CFB8 should be rejected (streaming encrypt)"
+        );
+
+        // CFB1 must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::cfb1(unbound).expect_err("DES + CFB1 should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::cfb1(unbound).expect_err("DES + CFB1 should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::cfb1(unbound).is_err(),
+            "DES + CFB1 should be rejected (streaming encrypt)"
+        );
+
+        // OFB must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::ofb(unbound).expect_err("DES + OFB should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::ofb(unbound).expect_err("DES + OFB should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::ofb(unbound).is_err(),
+            "DES + OFB should be rejected (streaming encrypt)"
         );
     }
 }
