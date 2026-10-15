@@ -80,8 +80,22 @@ pub fn ERR_GET_FUNC(_packed_error: u32) -> i32 {
 }
 
 use core::ffi::{c_char, c_long, c_void};
-#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
-pub fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
+
+/// Returns a memory BIO's length and writes a pointer to its contents to `pp`.
+///
+/// # Safety
+///
+/// `b` must point to a valid memory BIO, and `pp` must be non-null, properly
+/// aligned, and valid for writing a `*mut c_char`. The data pointer written to
+/// `*pp` borrows the BIO's contents and must not be used after the BIO is modified
+/// or freed. `*pp` may be null (for example, when the BIO is empty), so check it
+/// before building a slice from it, even if the returned length is zero.
+///
+/// ```compile_fail,E0133
+/// aws_lc_fips_sys::BIO_get_mem_data(core::ptr::null_mut(), core::ptr::null_mut());
+/// ```
+#[allow(non_snake_case)]
+pub unsafe fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
     unsafe { BIO_ctrl(b, BIO_CTRL_INFO, 0, pp.cast::<c_void>()) }
 }
 
