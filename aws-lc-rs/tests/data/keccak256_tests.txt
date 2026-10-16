@@ -1,0 +1,40 @@
+# Keccak-256 cross-check vectors, computed with OpenSSL 3.6.5
+# ("openssl dgst -keccak-256"). The empty-input digest is the published
+# Ethereum keccak256("") constant; the last two are the ERC-20 event topic
+# hashes, derived from the event signatures.
+
+Hash = KECCAK256
+Input = ""
+Repeat = 1
+Output = c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
+
+Hash = KECCAK256
+Input = "abc"
+Repeat = 1
+Output = 4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45
+
+Hash = KECCAK256
+Input = "hello, world"
+Repeat = 1
+Output = 29bf7021020ea89dbd91ef52022b5a654b55ed418c9e7aba71ef3b43a51669f2
+
+# One byte more than the 136-byte block length, to cross a block boundary.
+Hash = KECCAK256
+Input = "a"
+Repeat = 137
+Output = d869f639c7046b4929fc92a4d988a8b22c55fbadb802c0c66ebcd484f1915f39
+
+Hash = KECCAK256
+Input = "a"
+Repeat = 1000000
+Output = fadae6b49f129bbb812be8407b7b2894f34aecf6dbd1f9b0f0c7e9853098fc96
+
+Hash = KECCAK256
+Input = "Transfer(address,address,uint256)"
+Repeat = 1
+Output = ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+
+Hash = KECCAK256
+Input = "Approval(address,address,uint256)"
+Repeat = 1
+Output = 8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925
