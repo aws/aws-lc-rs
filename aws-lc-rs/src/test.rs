@@ -181,6 +181,8 @@ impl TestCase {
             "SHA3_256" => Some(&digest::SHA3_256),
             "SHA3_384" => Some(&digest::SHA3_384),
             "SHA3_512" => Some(&digest::SHA3_512),
+            #[cfg(all(feature = "unstable", not(feature = "fips")))]
+            "KECCAK256" => Some(&crate::digest::sha::KECCAK256),
             _ => unreachable!("Unsupported digest algorithm: {}", name),
         }
     }

@@ -50,6 +50,15 @@ pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
 /// The length of the output of SHA3-512, in bytes.
 pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
 
+/// The length of a block for Keccak-256, in bytes.
+#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+const KECCAK256_BLOCK_LEN: usize = SHA3_256_BLOCK_LEN;
+
+/// The length of the output of Keccak-256, in bytes.
+#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg_attr(aws_lc_rs_docsrs, doc(cfg(not(feature = "fips"))))]
+pub const KECCAK256_OUTPUT_LEN: usize = 256 / 8;
+
 /// SHA-1, SHA-224, and SHA-256 are limited to an input size of 2^64-1 bits.
 /// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits according to the spec.
 /// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
@@ -197,6 +206,38 @@ pub const SHA3_512: Algorithm = Algorithm {
     id: AlgorithmID::SHA3_512,
 };
 
+/// Keccak-256, the original Keccak variant used by Ethereum.
+///
+/// Not SHA3-256: it applies the original `0x01` padding rather than the
+/// [FIPS 202] `0x06` padding, so the digests differ. Prefer [`SHA3_256`].
+///
+/// Unavailable with the `fips` feature: `aws-lc-fips-sys` does not expose
+/// `EVP_keccak256`. Reached through [`crate::unstable::digest`], so that the
+/// stable `digest` API does not change when `fips` is enabled.
+///
+/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+//
+// # FIPS
+// Keccak-256 is not FIPS-approved.
+//
+// When `aws-lc-fips-sys` supports Keccak-256, move it to the stable API: re-export it
+// from `digest` (deprecated alias in `unstable::digest`), make `mod sha` private again,
+// drop the Keccak-256 `cfg`/`doc(cfg)` gates, and add a `digest/tests/fips.rs` case
+// asserting `NonApproved`.
+#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg_attr(aws_lc_rs_docsrs, doc(cfg(not(feature = "fips"))))]
+#[allow(deprecated)]
+pub const KECCAK256: Algorithm = Algorithm {
+    output_len: KECCAK256_OUTPUT_LEN,
+    chaining_len: KECCAK256_OUTPUT_LEN,
+    block_len: KECCAK256_BLOCK_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
+
+    one_shot_hash: keccak256_digest,
+
+    id: AlgorithmID::KECCAK256,
+};
+
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
@@ -252,4 +293,12 @@ fn sha3_512_digest(msg: &[u8], output: &mut [u8]) {
     ctx.update(msg);
     let digest = ctx.finish();
     output[0..SHA3_512_OUTPUT_LEN].copy_from_slice(digest.as_ref());
+}
+
+#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+fn keccak256_digest(msg: &[u8], output: &mut [u8]) {
+    let mut ctx = Context::new(&KECCAK256);
+    ctx.update(msg);
+    let digest = ctx.finish();
+    output[0..KECCAK256_OUTPUT_LEN].copy_from_slice(digest.as_ref());
 }
