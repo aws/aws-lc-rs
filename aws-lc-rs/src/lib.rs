@@ -386,8 +386,9 @@ pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
 
 /// Runs the AWS-LC cryptographic algorithm self-tests on demand.
 ///
-/// AWS-LC runs its known-answer self-tests automatically before first use. This re-runs all of
-/// them (`BORINGSSL_self_test`), for applications that must self-test periodically or on demand.
+/// In FIPS builds, AWS-LC runs its known-answer self-tests automatically at power-on or before an
+/// algorithm's first use. This re-runs all of them (`BORINGSSL_self_test`) on demand; it does not
+/// re-run the module integrity test.
 ///
 /// In a FIPS build a failed known-answer test is a FIPS failure: AWS-LC aborts the process before
 /// this function returns, so `Err` is only returned for setup failures (e.g. allocation). In a
