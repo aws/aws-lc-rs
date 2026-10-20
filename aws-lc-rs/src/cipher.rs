@@ -1105,9 +1105,9 @@ impl EncryptingKey {
     /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
     /// of the block length.
     ///
-    /// For `OperatingMode::CFB8` and `OperatingMode::CFB1`, the IV must be unpredictable
-    /// and must not be reused with the same key. For `OperatingMode::OFB`, the IV must
-    /// not be reused with the same key.
+    /// For `OperatingMode::CBC` and the CFB modes (`CFB128`, `CFB8`, `CFB1`), the IV must be
+    /// unpredictable and must not be reused with the same key. For `OperatingMode::OFB`,
+    /// the IV must not be reused with the same key.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -2183,6 +2183,51 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_decrypting_key_rejects_invalid_context() {
+        type Constructor = fn(UnboundCipherKey) -> Result<DecryptingKey, Unspecified>;
+        let key = || UnboundCipherKey::new(&AES_128, &[0u8; 16]).unwrap();
+        let iv_modes: [(&str, Constructor); 6] = [
+            ("CBC", DecryptingKey::cbc),
+            ("CTR", DecryptingKey::ctr),
+            ("CFB128", DecryptingKey::cfb128),
+            ("CFB8", DecryptingKey::cfb8),
+            ("CFB1", DecryptingKey::cfb1),
+            ("OFB", DecryptingKey::ofb),
+        ];
+        for (name, constructor) in iv_modes {
+            let decrypting_key = constructor(key()).unwrap();
+            let mut in_out = [0u8; 16];
+            assert!(
+                decrypting_key
+                    .decrypt(&mut in_out, DecryptionContext::None)
+                    .is_err(),
+                "AES + {name} + DecryptionContext::None should be rejected"
+            );
+            #[cfg(feature = "legacy-des")]
+            assert!(
+                decrypting_key
+                    .decrypt(
+                        &mut in_out,
+                        DecryptionContext::Iv64(FixedLength::from([0u8; 8]))
+                    )
+                    .is_err(),
+                "AES + {name} + DecryptionContext::Iv64 should be rejected"
+            );
+        }
+
+        let decrypting_key = DecryptingKey::ecb(key()).unwrap();
+        assert!(
+            decrypting_key
+                .decrypt(
+                    &mut [0u8; 16],
+                    DecryptionContext::Iv128(FixedLength::from([0u8; 16]))
+                )
+                .is_err(),
+            "AES + ECB + DecryptionContext::Iv128 should be rejected"
+        );
     }
 
     #[cfg(feature = "legacy-des")]

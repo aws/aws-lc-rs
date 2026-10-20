@@ -379,7 +379,7 @@ fn aes_cfb8_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
 }
 
 /// Bounds one `AES_cfb1_encrypt` call so the byte-to-bit conversion cannot overflow,
-/// which it would above `usize::MAX / 8` - 512 MiB on a 32-bit target. Mirrors
+/// which it would above `usize::MAX / 8` = 512 MiB (on a 32-bit target). Mirrors
 /// `MAXBITCHUNK` in AWS-LC's `crypto/decrepit/cfb/cfb.c`.
 const MAX_CFB1_CHUNK_LEN: usize = 1 << (usize::BITS - 4);
 
