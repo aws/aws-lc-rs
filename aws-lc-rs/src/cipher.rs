@@ -352,6 +352,9 @@ pub enum OperatingMode {
     /// CFB 128-bit mode.
     CFB128,
 
+    /// Electronic Code Book (ECB) mode.
+    ECB,
+
     /// CFB 8-bit mode.
     CFB8,
 
@@ -363,9 +366,6 @@ pub enum OperatingMode {
 
     /// Output feedback (OFB) mode.
     OFB,
-
-    /// Electronic Code Book (ECB) mode.
-    ECB,
 }
 
 impl OperatingMode {
@@ -965,8 +965,10 @@ impl EncryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support CFB8 mode.
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support CFB8 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB8)
     }
@@ -980,8 +982,10 @@ impl EncryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support CFB1 mode.
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support CFB1 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB1)
     }
@@ -992,8 +996,10 @@ impl EncryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support OFB mode.
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support OFB mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::OFB)
     }
@@ -1099,6 +1105,10 @@ impl EncryptingKey {
     /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
     /// of the block length.
     ///
+    /// For `OperatingMode::CFB8` and `OperatingMode::CFB1`, the IV must be unpredictable
+    /// and must not be reused with the same key. For `OperatingMode::OFB`, the IV must
+    /// not be reused with the same key.
+    ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     ///   and `in_out.len()` is not. Otherwise returned if encryption fails.
@@ -1172,8 +1182,10 @@ impl DecryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support CFB8 mode.
+    /// * [`Unspecified`]: Returned if there is an error during decryption.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support CFB8 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB8)
     }
@@ -1187,8 +1199,10 @@ impl DecryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support CFB1 mode.
+    /// * [`Unspecified`]: Returned if there is an error during decryption.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support CFB1 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB1)
     }
@@ -1199,8 +1213,10 @@ impl DecryptingKey {
     // AES OFB, CFB1 and CFB8 are not FIPS-approved services, for any AES key size.
     //
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error constructing the key, or if
-    ///   `key`'s algorithm does not support OFB mode.
+    /// * [`Unspecified`]: Returned if there is an error during decryption.
+    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+    ///   support OFB mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::OFB)
     }
@@ -2173,8 +2189,8 @@ mod tests {
     #[test]
     #[allow(deprecated)]
     fn test_des_rejects_unsupported_modes() {
-        // DES/2TDEA/3TDEA only support CBC and ECB in this crate; CTR and CFB128
-        // must be rejected at construction time rather than at encrypt time.
+        // DES/2TDEA/3TDEA only support CBC and ECB in this crate; CTR, CFB128, CFB8,
+        // CFB1 and OFB must be rejected at construction time rather than at encrypt time.
 
         // Each constructor reports whether it accepted the key.
         type Constructor = fn(UnboundCipherKey) -> bool;
@@ -2192,7 +2208,7 @@ mod tests {
                 "0123456789abcdef23456789abcdef01456789abcdef0123",
             ),
         ];
-        let constructors: [(&str, Constructor); 8] = [
+        let constructors: [(&str, Constructor); 23] = [
             ("CTR (encrypt)", |k| EncryptingKey::ctr(k).is_ok()),
             ("CFB128 (encrypt)", |k| EncryptingKey::cfb128(k).is_ok()),
             ("CTR (decrypt)", |k| DecryptingKey::ctr(k).is_ok()),
@@ -2208,6 +2224,39 @@ mod tests {
             }),
             ("CFB128 (streaming decrypt)", |k| {
                 StreamingDecryptingKey::cfb128(k, DecryptionContext::None).is_ok()
+            }),
+            ("CFB8 (encrypt)", |k| EncryptingKey::cfb8(k).is_ok()),
+            ("CFB8 (decrypt)", |k| DecryptingKey::cfb8(k).is_ok()),
+            ("CFB8 (streaming encrypt)", |k| {
+                StreamingEncryptingKey::cfb8(k).is_ok()
+            }),
+            ("CFB8 (streaming encrypt, context)", |k| {
+                StreamingEncryptingKey::less_safe_cfb8(k, EncryptionContext::None).is_ok()
+            }),
+            ("CFB8 (streaming decrypt)", |k| {
+                StreamingDecryptingKey::cfb8(k, DecryptionContext::None).is_ok()
+            }),
+            ("CFB1 (encrypt)", |k| EncryptingKey::cfb1(k).is_ok()),
+            ("CFB1 (decrypt)", |k| DecryptingKey::cfb1(k).is_ok()),
+            ("CFB1 (streaming encrypt)", |k| {
+                StreamingEncryptingKey::cfb1(k).is_ok()
+            }),
+            ("CFB1 (streaming encrypt, context)", |k| {
+                StreamingEncryptingKey::less_safe_cfb1(k, EncryptionContext::None).is_ok()
+            }),
+            ("CFB1 (streaming decrypt)", |k| {
+                StreamingDecryptingKey::cfb1(k, DecryptionContext::None).is_ok()
+            }),
+            ("OFB (encrypt)", |k| EncryptingKey::ofb(k).is_ok()),
+            ("OFB (decrypt)", |k| DecryptingKey::ofb(k).is_ok()),
+            ("OFB (streaming encrypt)", |k| {
+                StreamingEncryptingKey::ofb(k).is_ok()
+            }),
+            ("OFB (streaming encrypt, context)", |k| {
+                StreamingEncryptingKey::less_safe_ofb(k, EncryptionContext::None).is_ok()
+            }),
+            ("OFB (streaming decrypt)", |k| {
+                StreamingDecryptingKey::ofb(k, DecryptionContext::None).is_ok()
             }),
         ];
 

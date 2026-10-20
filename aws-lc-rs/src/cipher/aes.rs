@@ -480,8 +480,8 @@ pub(super) fn decrypt_ofb_mode<'in_out>(
 #[cfg(test)]
 mod tests {
     use super::{cfb1_cipher_in_chunks, MAX_CFB1_CHUNK_LEN};
+    use crate::aws_lc::{AES_DECRYPT, AES_ENCRYPT};
     use crate::cipher::key::SymmetricCipherKey;
-    use aws_lc::AES_ENCRYPT;
 
     /// `MAX_CFB1_CHUNK_LEN` is 2^60 on a 64-bit target, so a small bound is used to
     /// reach the loop at all.
@@ -491,30 +491,31 @@ mod tests {
             0x2bu8, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf,
             0x4f, 0x3c,
         ];
+        let key = SymmetricCipherKey::aes128(&key_bytes).unwrap();
+        let SymmetricCipherKey::Aes128 { enc_key, .. } = &key else {
+            unreachable!()
+        };
         let plaintext: Vec<u8> = (0..64u8).collect();
 
-        let one_shot = {
-            let key = SymmetricCipherKey::aes128(&key_bytes).unwrap();
-            let SymmetricCipherKey::Aes128 { enc_key, .. } = &key else {
-                unreachable!()
-            };
+        let run = |input: &[u8], enc: i32, chunk_len: usize| {
             let mut iv = [0u8; 16];
-            let mut buf = plaintext.clone();
-            cfb1_cipher_in_chunks(enc_key, &mut iv, &mut buf, AES_ENCRYPT, MAX_CFB1_CHUNK_LEN);
-            buf
+            let mut buf = input.to_vec();
+            cfb1_cipher_in_chunks(enc_key, &mut iv, &mut buf, enc, chunk_len);
+            (buf, iv)
         };
 
+        let (ciphertext, final_iv) = run(&plaintext, AES_ENCRYPT, MAX_CFB1_CHUNK_LEN);
+
         for chunk_len in [1usize, 2, 3, 7, 16, 17, 63, 64] {
-            let key = SymmetricCipherKey::aes128(&key_bytes).unwrap();
-            let SymmetricCipherKey::Aes128 { enc_key, .. } = &key else {
-                unreachable!()
-            };
-            let mut iv = [0u8; 16];
-            let mut buf = plaintext.clone();
-            cfb1_cipher_in_chunks(enc_key, &mut iv, &mut buf, AES_ENCRYPT, chunk_len);
             assert_eq!(
-                buf, one_shot,
-                "chunking at {chunk_len} bytes changed the ciphertext"
+                run(&plaintext, AES_ENCRYPT, chunk_len),
+                (ciphertext.clone(), final_iv),
+                "chunked encryption at {chunk_len} bytes changed the ciphertext or final IV"
+            );
+            assert_eq!(
+                run(&ciphertext, AES_DECRYPT, chunk_len),
+                (plaintext.clone(), final_iv),
+                "chunked decryption at {chunk_len} bytes changed the plaintext or final IV"
             );
         }
     }
