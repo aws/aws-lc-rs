@@ -145,6 +145,11 @@ fn is_disable_prebuilt_nasm() -> bool {
     is_fips_build() || env::var("CARGO_FEATURE_DISABLE_PREBUILT_NASM").is_ok()
 }
 
+/// Whether the `unstable` feature (forwarded from aws-lc-rs) is enabled.
+pub(crate) fn is_unstable() -> bool {
+    env::var("CARGO_FEATURE_UNSTABLE").is_ok()
+}
+
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }

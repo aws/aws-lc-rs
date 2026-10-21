@@ -209,15 +209,29 @@ Bindings are resolved in this order:
    `bindings.rs`. A misconfigured path is a hard error.
 2. **`<install_dir>/share/rust/aws_lc_bindings.rs`** — populated by AWS-LC's
    CMake install when built with `-DGENERATE_RUST_BINDINGS=ON`
-   (AWS-LC v1.68.0+, see [aws-lc#2999](https://github.com/aws/aws-lc/pull/2999)).
+   (AWS-LC v1.68.0+ and FIPS 4.x v4.0.0+, see
+   [aws-lc#2999](https://github.com/aws/aws-lc/pull/2999) and
+   [aws-lc#3048](https://github.com/aws/aws-lc/pull/3048)).
 
 If neither is available the build fails with guidance on how to proceed.
 
 ### Version compatibility
 
-The installed AWS-LC version must be at least **v5.7.0**. This floor is independent
+The installed AWS-LC version must be at least **v4.2.0**. This admits both AWS-LC
+mainline (5.x) and the FIPS 4.x LTS branch (`fips-2025-09-12-lts`, 4.2.0+);
+AWS-LC's mainline and LTS version lines never overlap. This floor is independent
 of the bundled version and is declared as the `MINIMUM_AWS_LC_VERSION` constant in
-`builder/system_library.rs`. To bypass this check (not recommended), set
+`builder/system_library.rs`.
+
+When `aws-lc-rs` is built with its `unstable` feature, the minimum rises to
+**v5.6.0** (`MINIMUM_AWS_LC_VERSION_UNSTABLE`): unstable APIs may depend on
+recent mainline releases that the LTS branch lacks (currently Keccak-256,
+added in AWS-LC v5.6.0). A system install that only
+satisfies the default floor is then rejected -- a hard error when selected via
+`AWS_LC_SYS_SYSTEM_DIR`, or skipped in favor of a source build when it was
+merely auto-detected.
+
+To bypass these checks (not recommended), set
 `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
 ### Limitations

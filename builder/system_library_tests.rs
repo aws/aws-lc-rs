@@ -815,7 +815,9 @@ fn test_probe_succeeds_on_valid_install() {
 #[cfg(not(feature = "fips"))]
 fn test_probe_rejects_versions_below_minimum() {
     let _env = setup_test_env();
-    for version in ["1.68.0", "5.6.0"] {
+    // Legacy mainline (1.x), the FIPS 3.x line, and the 4.x release just
+    // below the floor must all be rejected.
+    for version in ["1.68.0", "3.2.0", "4.1.1"] {
         let fx = fake_valid_install();
         write_base_h(
             &fx.root.join("include"),
@@ -826,7 +828,7 @@ fn test_probe_rejects_versions_below_minimum() {
         let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
         let err = sys.probe().unwrap_err();
         assert!(err.contains("AWS-LC version too old"), "{err}");
-        assert!(err.contains("minimum supported 5.7.0"), "{err}");
+        assert!(err.contains("minimum supported 4.2.0"), "{err}");
     }
 }
 
@@ -834,14 +836,51 @@ fn test_probe_rejects_versions_below_minimum() {
 #[cfg(not(feature = "fips"))]
 fn test_probe_accepts_minimum_version() {
     let _env = setup_test_env();
+    // The floor itself (FIPS 4.x LTS) and a mainline (5.x) release.
+    for version in ["4.2.0", "5.6.0"] {
+        let fx = fake_valid_install();
+        write_base_h(
+            &fx.root.join("include"),
+            &format!(
+                "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"{version}\"\n"
+            ),
+        );
+        let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
+        sys.probe().unwrap_or_else(|err| {
+            panic!("AWS-LC {version} should satisfy the minimum version check: {err}")
+        });
+    }
+}
+
+/// With the `unstable` feature enabled, the stricter mainline floor applies:
+/// the FIPS 4.x LTS release that satisfies the default floor is rejected (with
+/// a message naming the feature), while the unstable floor itself is accepted.
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_applies_unstable_minimum_version() {
+    let _env = setup_test_env();
+    let _unstable = EnvGuard::new("CARGO_FEATURE_UNSTABLE", "1");
+
     let fx = fake_valid_install();
     write_base_h(
         &fx.root.join("include"),
-        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"5.7.0\"\n",
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"4.2.0\"\n",
+    );
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
+    let err = sys.probe().unwrap_err();
+    assert!(err.contains("AWS-LC version too old"), "{err}");
+    assert!(err.contains("minimum supported 5.6.0"), "{err}");
+    assert!(err.contains("`unstable` feature"), "{err}");
+    assert!(err.contains("4.2.0 without it"), "{err}");
+
+    let fx = fake_valid_install();
+    write_base_h(
+        &fx.root.join("include"),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"5.6.0\"\n",
     );
     let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
     sys.probe()
-        .expect("AWS-LC 5.7.0 should satisfy the minimum version check");
+        .expect("AWS-LC 5.6.0 should satisfy the unstable minimum version check");
 }
 
 #[test]
