@@ -77,12 +77,15 @@ impl PrivateDecryptingKey {
     /// * `KeySize::Rsa8192`
     ///
     /// ## Deprecated
-    /// This is equivalent to `KeyPair::generate`.
+    /// This is equivalent to `PrivateDecryptingKey::generate`.
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
     #[cfg(feature = "fips")]
-    #[deprecated(since = "1.12.3")]
+    #[deprecated(
+        since = "1.12.3",
+        note = "Equivalent to `PrivateDecryptingKey::generate`; use that instead."
+    )]
     pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
         Self::generate(size)
     }
