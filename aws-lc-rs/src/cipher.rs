@@ -1173,12 +1173,19 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    ///   and `in_out.len()` is not. Also returned if decryption fails.
+    ///   and `in_out.len()` is not. Also returned if `context` is not valid for this key's
+    ///   algorithm and mode, or if decryption fails.
     pub fn decrypt<'in_out>(
         &self,
         in_out: &'in_out mut [u8],
         context: DecryptionContext,
     ) -> Result<&'in_out mut [u8], Unspecified> {
+        if !self
+            .algorithm()
+            .is_valid_decryption_context(self.mode, &context)
+        {
+            return Err(Unspecified);
+        }
         decrypt(self.algorithm, &self.key, self.mode, in_out, context)
     }
 }
@@ -2168,4 +2175,46 @@ mod tests {
         "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
         "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87"
     );
+
+    #[test]
+    #[allow(deprecated)]
+    fn test_ecb_rejects_iv_context_after_dispatch() {
+        // The public entry points validate the context before dispatching, so
+        // this calls the internal `encrypt`/`decrypt` directly to check that the
+        // ECB helpers also return an error, rather than panic, for an IV context.
+        let cases: &[(&'static Algorithm, &str)] = &[
+            (&AES_128, "000102030405060708090a0b0c0d0e0f"),
+            #[cfg(feature = "legacy-des")]
+            (
+                &DES_EDE3_FOR_LEGACY_USE_ONLY,
+                "0123456789abcdef23456789abcdef01456789abcdef0123",
+            ),
+        ];
+        for &(algorithm, key_hex) in cases {
+            let key_bytes = from_hex(key_hex).unwrap();
+            let encrypting_key =
+                EncryptingKey::ecb(UnboundCipherKey::new(algorithm, &key_bytes).unwrap()).unwrap();
+            let decrypting_key =
+                DecryptingKey::ecb(UnboundCipherKey::new(algorithm, &key_bytes).unwrap()).unwrap();
+            let mut in_out = vec![0u8; algorithm.block_len()];
+            let iv = [0u8; IV_LEN_128_BIT];
+
+            assert!(encrypt(
+                algorithm,
+                &encrypting_key.key,
+                OperatingMode::ECB,
+                &mut in_out,
+                EncryptionContext::Iv128(FixedLength::from(iv)),
+            )
+            .is_err());
+            assert!(decrypt(
+                algorithm,
+                &decrypting_key.key,
+                OperatingMode::ECB,
+                &mut in_out,
+                DecryptionContext::Iv128(FixedLength::from(iv)),
+            )
+            .is_err());
+        }
+    }
 }

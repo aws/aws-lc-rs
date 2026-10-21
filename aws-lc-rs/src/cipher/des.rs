@@ -97,14 +97,13 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
     Ok(in_out)
 }
 
-#[allow(clippy::unnecessary_wraps)]
 pub(super) fn encrypt_ecb_mode(
     key: &SymmetricCipherKey,
     context: EncryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
     if !matches!(context, EncryptionContext::None) {
-        unreachable!();
+        return Err(Unspecified);
     }
 
     let mut in_out_iter = in_out.chunks_exact_mut(DES_BLOCK_LEN);
@@ -128,14 +127,14 @@ pub(super) fn encrypt_ecb_mode(
     Ok(context.into())
 }
 
-#[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
+#[allow(clippy::needless_pass_by_value)]
 pub(super) fn decrypt_ecb_mode<'in_out>(
     key: &SymmetricCipherKey,
     context: DecryptionContext,
     in_out: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
     if !matches!(context, DecryptionContext::None) {
-        unreachable!();
+        return Err(Unspecified);
     }
 
     // The inner scope ends the mutable borrow of `in_out` held by

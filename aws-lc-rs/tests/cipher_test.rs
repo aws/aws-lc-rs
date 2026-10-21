@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::cipher::{
-    DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
+    Algorithm, DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
     StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
@@ -11,6 +11,7 @@ use aws_lc_rs::cipher::{
 use aws_lc_rs::cipher::{
     DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY, DES_FOR_LEGACY_USE_ONLY,
 };
+use aws_lc_rs::error::Unspecified;
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
@@ -1859,4 +1860,77 @@ des_padded_cipher_rt!(
 fn test_streaming_cipher_traits() {
     test::compile_time_assert_send::<StreamingEncryptingKey>();
     test::compile_time_assert_send::<StreamingDecryptingKey>();
+}
+
+type DecryptingKeyConstructor = fn(UnboundCipherKey) -> Result<DecryptingKey, Unspecified>;
+type DecryptionContextConstructor = fn() -> DecryptionContext;
+
+/// Asserts that `DecryptingKey::decrypt` returns an error, rather than panicking,
+/// for every `DecryptionContext` variant except `valid_context`. The valid
+/// variant must be accepted, so the check cannot pass by rejecting everything.
+fn assert_decrypt_validates_context(
+    algorithm: &'static Algorithm,
+    key_bytes: &[u8],
+    modes: &[(DecryptingKeyConstructor, &str)],
+) {
+    let contexts: &[(&str, DecryptionContextConstructor)] = &[
+        ("None", || DecryptionContext::None),
+        ("Iv128", || {
+            DecryptionContext::Iv128(FixedLength::from([0u8; IV_LEN_128_BIT]))
+        }),
+        #[cfg(feature = "legacy-des")]
+        ("Iv64", || {
+            DecryptionContext::Iv64(FixedLength::from([0u8; 8]))
+        }),
+    ];
+    for &(new_key, valid_context) in modes {
+        let key = new_key(UnboundCipherKey::new(algorithm, key_bytes).unwrap()).unwrap();
+        for &(context_name, new_context) in contexts {
+            let mut in_out = vec![0u8; algorithm.block_len()];
+            let result = key.decrypt(&mut in_out, new_context());
+            assert_eq!(
+                result.is_ok(),
+                context_name == valid_context,
+                "{algorithm:?} {:?} decrypt with {context_name} context",
+                key.mode(),
+            );
+        }
+    }
+}
+
+#[test]
+fn test_decrypt_rejects_mismatched_context() {
+    assert_decrypt_validates_context(
+        &AES_128,
+        &from_hex("000102030405060708090a0b0c0d0e0f").unwrap(),
+        &[
+            (DecryptingKey::cbc, "Iv128"),
+            (DecryptingKey::ctr, "Iv128"),
+            (DecryptingKey::cfb128, "Iv128"),
+            (DecryptingKey::ecb, "None"),
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_decrypt_rejects_mismatched_context() {
+    for (algorithm, key_hex) in [
+        (&DES_FOR_LEGACY_USE_ONLY, "0123456789abcdef"),
+        (
+            &DES_EDE_FOR_LEGACY_USE_ONLY,
+            "0123456789abcdef23456789abcdef01",
+        ),
+        (
+            &DES_EDE3_FOR_LEGACY_USE_ONLY,
+            "0123456789abcdef23456789abcdef01456789abcdef0123",
+        ),
+    ] {
+        assert_decrypt_validates_context(
+            algorithm,
+            &from_hex(key_hex).unwrap(),
+            &[(DecryptingKey::cbc, "Iv64"), (DecryptingKey::ecb, "None")],
+        );
+    }
 }
