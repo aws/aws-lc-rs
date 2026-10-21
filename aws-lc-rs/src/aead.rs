@@ -432,7 +432,7 @@ impl<N: NonceSequence> SealingKey<N> {
     //
     /// # Errors
     /// See `seal_in_place_append_tag`
-    #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
+    #[deprecated(since = "1.0.0", note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     pub fn seal_in_place<A, InOut>(
         &mut self,
@@ -830,7 +830,7 @@ impl LessSafeKey {
     // # FIPS
     // This method must not be used.
     //
-    #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
+    #[deprecated(since = "1.0.0", note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     #[allow(clippy::missing_errors_doc)]
     pub fn seal_in_place<A, InOut>(

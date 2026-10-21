@@ -169,7 +169,7 @@ impl KeyPair {
     /// # Errors
     /// * `Unspecified`: Any key generation failure.
     #[cfg(feature = "fips")]
-    #[deprecated]
+    #[deprecated(since = "1.12.3")]
     pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
         Self::generate(size)
     }

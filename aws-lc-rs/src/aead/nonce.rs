@@ -51,7 +51,7 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
 }
 
 #[allow(useless_deprecated)] // https://github.com/rust-lang/rust/issues/39935
-#[deprecated]
+#[deprecated(since = "1.6.0")]
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
     #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {

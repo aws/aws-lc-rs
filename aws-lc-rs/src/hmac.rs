@@ -107,16 +107,16 @@ use core::mem::MaybeUninit;
 use core::ptr::null_mut;
 
 /// A deprecated alias for `Tag`.
-#[deprecated]
+#[deprecated(since = "1.0.0")]
 pub type Signature = Tag;
 /// Renamed to `Context`.
-#[deprecated]
+#[deprecated(since = "1.0.0")]
 pub type SigningContext = Context;
 /// Renamed to `Key`.
-#[deprecated]
+#[deprecated(since = "1.0.0")]
 pub type SigningKey = Key;
 /// Merged into `Key`.
-#[deprecated]
+#[deprecated(since = "1.0.0")]
 pub type VerificationKey = Key;
 
 /// An HMAC algorithm.

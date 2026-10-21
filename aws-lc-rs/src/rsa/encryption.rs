@@ -82,7 +82,7 @@ impl PrivateDecryptingKey {
     /// # Errors
     /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
     #[cfg(feature = "fips")]
-    #[deprecated]
+    #[deprecated(since = "1.12.3")]
     pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
         Self::generate(size)
     }

@@ -180,6 +180,7 @@ pub const DES_EDE3_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 /// CMAC using 3-key Triple DES (DES-EDE3). For legacy interoperability only;
 /// new designs must use an AES-based algorithm.
 #[deprecated(
+    since = "1.17.0",
     note = "Use `DES_EDE3_FOR_LEGACY_USE_ONLY` instead, which aligns with the naming used in the `cipher` module. The two constants are interchangeable."
 )]
 pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = DES_EDE3_FOR_LEGACY_USE_ONLY;
