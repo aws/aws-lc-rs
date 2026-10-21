@@ -328,11 +328,12 @@ fn test_minimum_aws_lc_version_not_newer_than_bundled() {
         return;
     };
     let bundled = extract_version(&base_h, &content).unwrap();
-    assert!(
-        version_at_least(&bundled, MINIMUM_AWS_LC_VERSION).unwrap(),
-        "MINIMUM_AWS_LC_VERSION ({MINIMUM_AWS_LC_VERSION}) must not exceed the bundled \
-         aws-lc-sys version ({bundled})",
-    );
+    for (name, minimum) in DECLARED_MINIMUM_VERSIONS {
+        assert!(
+            version_at_least(&bundled, minimum).unwrap(),
+            "{name} ({minimum}) must not exceed the bundled aws-lc-sys version ({bundled})",
+        );
+    }
 }
 
 #[test]
@@ -811,24 +812,94 @@ fn test_probe_succeeds_on_valid_install() {
     sys.probe().expect("probe should be idempotent");
 }
 
+// -------------------------------------------------------------------------
+// Minimum-version floors
+//
+// These tests derive their boundary values from MINIMUM_AWS_LC_VERSION and
+// MINIMUM_AWS_LC_VERSION_UNSTABLE so that bumping a floor requires no test
+// edits.
+// -------------------------------------------------------------------------
+
+/// Every declared non-FIPS floor, by constant name.
+const DECLARED_MINIMUM_VERSIONS: [(&str, &str); 2] = [
+    ("MINIMUM_AWS_LC_VERSION", MINIMUM_AWS_LC_VERSION),
+    (
+        "MINIMUM_AWS_LC_VERSION_UNSTABLE",
+        MINIMUM_AWS_LC_VERSION_UNSTABLE,
+    ),
+];
+
+/// Returns a well-formed version strictly below `version`, for boundary tests.
+fn version_just_below(version: &str) -> String {
+    let parts: Vec<u32> = version
+        .split('.')
+        .map(|p| p.parse().expect("numeric version component"))
+        .collect();
+    let [major, minor, patch] = parts[..] else {
+        panic!("expected MAJOR.MINOR.PATCH, got {version}");
+    };
+    let below = if patch > 0 {
+        format!("{major}.{minor}.{}", patch - 1)
+    } else if minor > 0 {
+        format!("{major}.{}.0", minor - 1)
+    } else {
+        format!("{}.0.0", major - 1)
+    };
+    assert!(!version_at_least(&below, version).unwrap());
+    below
+}
+
+fn write_base_h_with_version(include_dir: &Path, version: &str) {
+    write_base_h(
+        include_dir,
+        &format!("#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"{version}\"\n"),
+    );
+}
+
+/// The `unstable` floor must never be looser than the default floor.
+#[test]
+fn test_unstable_minimum_is_at_least_default_minimum() {
+    assert!(version_at_least(MINIMUM_AWS_LC_VERSION_UNSTABLE, MINIMUM_AWS_LC_VERSION).unwrap());
+}
+
+/// The README documents the floors in a table whose rows name the declaring
+/// constant; keep it from drifting when a floor is bumped.
+#[test]
+fn test_readme_documents_minimum_versions() {
+    let readme = Path::new(env!("CARGO_MANIFEST_DIR")).join("../aws-lc-sys/README.md");
+    let content = std::fs::read_to_string(&readme)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", readme.display()));
+    for (name, value) in DECLARED_MINIMUM_VERSIONS {
+        let needle = format!("`{name}`");
+        let row = content
+            .lines()
+            .find(|line| line.starts_with('|') && line.contains(&needle))
+            .unwrap_or_else(|| panic!("README table has no row for {name}"));
+        assert!(
+            row.split('|').map(str::trim).any(|cell| cell == value),
+            "README row for {name} does not list {value}: {row}"
+        );
+    }
+}
+
 #[test]
 #[cfg(not(feature = "fips"))]
 fn test_probe_rejects_versions_below_minimum() {
     let _env = setup_test_env();
-    // Legacy mainline (1.x), the FIPS 3.x line, and the 4.x release just
-    // below the floor must all be rejected.
-    for version in ["1.68.0", "3.2.0", "4.1.1"] {
+    let just_below = version_just_below(MINIMUM_AWS_LC_VERSION);
+    // Legacy mainline (1.x), the FIPS 3.x line, and the release just below
+    // the floor must all be rejected. Floors only move up, so the fixed
+    // legacy values stay valid.
+    for version in ["1.68.0", "3.2.0", just_below.as_str()] {
         let fx = fake_valid_install();
-        write_base_h(
-            &fx.root.join("include"),
-            &format!(
-                "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"{version}\"\n"
-            ),
-        );
+        write_base_h_with_version(&fx.root.join("include"), version);
         let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
         let err = sys.probe().unwrap_err();
         assert!(err.contains("AWS-LC version too old"), "{err}");
-        assert!(err.contains("minimum supported 4.2.0"), "{err}");
+        assert!(
+            err.contains(&format!("minimum supported {MINIMUM_AWS_LC_VERSION}")),
+            "{err}"
+        );
     }
 }
 
@@ -836,15 +907,10 @@ fn test_probe_rejects_versions_below_minimum() {
 #[cfg(not(feature = "fips"))]
 fn test_probe_accepts_minimum_version() {
     let _env = setup_test_env();
-    // The floor itself (FIPS 4.x LTS) and a mainline (5.x) release.
-    for version in ["4.2.0", "5.6.0"] {
+    // The default floor itself, and the (higher or equal) unstable floor.
+    for version in [MINIMUM_AWS_LC_VERSION, MINIMUM_AWS_LC_VERSION_UNSTABLE] {
         let fx = fake_valid_install();
-        write_base_h(
-            &fx.root.join("include"),
-            &format!(
-                "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"{version}\"\n"
-            ),
-        );
+        write_base_h_with_version(&fx.root.join("include"), version);
         let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
         sys.probe().unwrap_or_else(|err| {
             panic!("AWS-LC {version} should satisfy the minimum version check: {err}")
@@ -852,9 +918,9 @@ fn test_probe_accepts_minimum_version() {
     }
 }
 
-/// With the `unstable` feature enabled, the stricter mainline floor applies:
-/// the FIPS 4.x LTS release that satisfies the default floor is rejected (with
-/// a message naming the feature), while the unstable floor itself is accepted.
+/// With the `unstable` feature enabled, the stricter floor applies: a version
+/// just below it is rejected with a message naming the feature and the default
+/// floor, while the unstable floor itself is accepted.
 #[test]
 #[cfg(not(feature = "fips"))]
 fn test_probe_applies_unstable_minimum_version() {
@@ -862,25 +928,33 @@ fn test_probe_applies_unstable_minimum_version() {
     let _unstable = EnvGuard::new("CARGO_FEATURE_UNSTABLE", "1");
 
     let fx = fake_valid_install();
-    write_base_h(
+    write_base_h_with_version(
         &fx.root.join("include"),
-        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"4.2.0\"\n",
+        &version_just_below(MINIMUM_AWS_LC_VERSION_UNSTABLE),
     );
     let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
     let err = sys.probe().unwrap_err();
     assert!(err.contains("AWS-LC version too old"), "{err}");
-    assert!(err.contains("minimum supported 5.6.0"), "{err}");
+    assert!(
+        err.contains(&format!(
+            "minimum supported {MINIMUM_AWS_LC_VERSION_UNSTABLE}"
+        )),
+        "{err}"
+    );
     assert!(err.contains("`unstable` feature"), "{err}");
-    assert!(err.contains("4.2.0 without it"), "{err}");
+    assert!(
+        err.contains(&format!("{MINIMUM_AWS_LC_VERSION} without it")),
+        "{err}"
+    );
 
     let fx = fake_valid_install();
-    write_base_h(
-        &fx.root.join("include"),
-        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"5.6.0\"\n",
-    );
+    write_base_h_with_version(&fx.root.join("include"), MINIMUM_AWS_LC_VERSION_UNSTABLE);
     let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
-    sys.probe()
-        .expect("AWS-LC 5.6.0 should satisfy the unstable minimum version check");
+    sys.probe().unwrap_or_else(|err| {
+        panic!(
+            "AWS-LC {MINIMUM_AWS_LC_VERSION_UNSTABLE} should satisfy the unstable minimum version check: {err}"
+        )
+    });
 }
 
 #[test]

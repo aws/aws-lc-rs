@@ -217,19 +217,28 @@ If neither is available the build fails with guidance on how to proceed.
 
 ### Version compatibility
 
-The installed AWS-LC version must be at least **v4.2.0**. This admits both AWS-LC
-mainline (5.x) and the FIPS 4.x LTS branch (`fips-2025-09-12-lts`, 4.2.0+);
-AWS-LC's mainline and LTS version lines never overlap. This floor is independent
-of the bundled version and is declared as the `MINIMUM_AWS_LC_VERSION` constant in
-`builder/system_library.rs`.
+The installed AWS-LC must be at least the minimum version below for the
+`aws-lc-rs` features in use. These floors are independent of the bundled
+version; each is declared by the named constant in `builder/system_library.rs`
+and proven by CI.
 
-When `aws-lc-rs` is built with its `unstable` feature, the minimum rises to
-**v5.6.0** (`MINIMUM_AWS_LC_VERSION_UNSTABLE`): unstable APIs may depend on
-recent mainline releases that the LTS branch lacks (currently Keccak-256,
-added in AWS-LC v5.6.0). A system install that only
-satisfies the default floor is then rejected -- a hard error when selected via
-`AWS_LC_SYS_SYSTEM_DIR`, or skipped in favor of a source build when it was
-merely auto-detected.
+| `aws-lc-rs` features | Minimum AWS-LC version | Declared by                       |
+|----------------------|------------------------|-----------------------------------|
+| default              | 4.2.0                  | `MINIMUM_AWS_LC_VERSION`          |
+| `unstable`           | 5.7.0                  | `MINIMUM_AWS_LC_VERSION_UNSTABLE` |
+
+The default floor admits both AWS-LC mainline (5.x) and the FIPS 4.x LTS branch
+(`fips-2025-09-12-lts`); AWS-LC's mainline and LTS version lines never overlap.
+System installs from the FIPS LTS branch are assumed to include all applicable
+security fixes.
+
+The `unstable` floor is higher because unstable APIs may depend on recent
+mainline releases that the LTS branch lacks (currently Keccak-256, added in
+AWS-LC v5.6.0). The v5.7.0 minimum also includes the `EVP_DecryptUpdate`
+output-boundary fix ([aws-lc#3460](https://github.com/aws/aws-lc/pull/3460)).
+An install that satisfies only the default floor is then rejected -- a hard
+error when selected via `AWS_LC_SYS_SYSTEM_DIR`, or skipped in favor of a
+source build when it was merely auto-detected.
 
 To bypass these checks (not recommended), set
 `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.

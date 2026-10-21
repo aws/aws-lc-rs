@@ -452,29 +452,40 @@ fn crypto_link_kind(lib_type: &OutputLibType, fips_build: bool) -> &str {
 // Header validation / version extraction
 // =============================================================================
 
-/// Minimum AWS-LC version supported via the system-library path, for the
-/// non-FIPS `aws-lc-sys` crate with default features.
+// Minimum AWS-LC versions supported via the system-library path, for the
+// non-FIPS `aws-lc-sys` crate. These are declared floors (not derived from the
+// bundled submodule) whose support is proven by CI.
+//
+// To bump a floor, update three things together:
+//   1. the constant below;
+//   2. the `ref` of its leg in the `test-minimum-version` matrix in
+//      `.github/workflows/system-lib-tests.yml` (CI verifies the pinned build
+//      reports exactly the declared version);
+//   3. its row in the table in `aws-lc-sys/README.md` (checked by
+//      `test_readme_documents_minimum_versions`).
+// The unit tests derive their boundary values from the constants and need no
+// edits.
+
+/// Floor with default features.
 ///
 /// `4.2.0` is a release on the FIPS 4.x LTS branch (`fips-2025-09-12-lts`,
 /// cut from mainline at v1.61.0), so installs built from that branch are
 /// accepted alongside mainline (5.x). Mainline and LTS version lines never
 /// overlap (see AWS-LC's `VERSIONING.md`), so a plain tuple comparison
-/// suffices. A declared floor (not derived from the bundled submodule) whose
-/// support is proven by CI; bump it and the CI pin together.
-/// See `.github/workflows/system-lib-tests.yml`.
+/// suffices.
 const MINIMUM_AWS_LC_VERSION: &str = "4.2.0";
 
-/// Minimum AWS-LC version supported via the system-library path when the
-/// `unstable` feature is enabled.
+/// Floor when the `unstable` feature is enabled; never lower than
+/// `MINIMUM_AWS_LC_VERSION`.
 ///
 /// Unstable aws-lc-rs APIs wrap functionality that lands on AWS-LC mainline
 /// first and may be absent from the FIPS LTS branch, so this floor tracks
-/// mainline (5.x) rather than `MINIMUM_AWS_LC_VERSION`. `5.6.0` is the first
-/// release with Keccak-256 (`EVP_keccak256`, aws/aws-lc#3245), which backs the
-/// unstable Keccak-256 digest (aws/aws-lc-rs#1266). Bump it whenever an
-/// unstable API starts depending on a newer mainline release. Like the
-/// default floor, it is proven by CI and must move with its CI pin.
-const MINIMUM_AWS_LC_VERSION_UNSTABLE: &str = "5.6.0";
+/// mainline (5.x). `5.6.0` is the first release with Keccak-256
+/// (`EVP_keccak256`, aws/aws-lc#3245), which backs the unstable Keccak-256
+/// digest (aws/aws-lc-rs#1266). The `5.7.0` floor also includes the
+/// `EVP_DecryptUpdate` output-boundary fix (aws/aws-lc#3460). Bump it whenever
+/// an unstable API or required fix depends on a newer mainline release.
+const MINIMUM_AWS_LC_VERSION_UNSTABLE: &str = "5.7.0";
 
 /// The library-version floor in effect for this build.
 fn minimum_aws_lc_version() -> &'static str {

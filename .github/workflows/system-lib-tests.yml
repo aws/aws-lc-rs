@@ -448,7 +448,9 @@ jobs:
   # Proves the declared minimums: build AWS-LC at each floor declared in
   # builder/system_library.rs and run the full test suite against it with the
   # version check enabled. A failure means the minimum is unsupported and must
-  # be raised together with this pin.
+  # be raised together with this pin. Each leg's `ref` must build exactly the
+  # version its `constant` declares; a step below verifies this so the pin and
+  # the constant cannot drift apart.
   # ---------------------------------------------------------------------------
   test-minimum-version:
     if: github.repository_owner == 'aws'
@@ -458,18 +460,19 @@ jobs:
       fail-fast: false
       matrix:
         floor:
-          # Keep in sync with MINIMUM_AWS_LC_VERSION in builder/system_library.rs.
           # 4.2.0 is on the FIPS 4.x LTS branch (fips-2025-09-12-lts); upstream
           # has not tagged it, so pin the "Prepare v4.2.0" commit (aws/aws-lc#3467).
-          - name: "default features, 4.2.0"
+          - name: "default features"
+            constant: MINIMUM_AWS_LC_VERSION
             ref: "191eafc5f430ac4d1ad9224f4f4ad96916538fa7"
             cargo_args: "-p aws-lc-rs --lib"
             # This install sits below the `unstable` floor; prove it is rejected.
             verify_unstable_rejection: true
-          # Keep in sync with MINIMUM_AWS_LC_VERSION_UNSTABLE in builder/system_library.rs.
-          # 5.6.0 is the first mainline release with Keccak-256 (aws/aws-lc#3245).
-          - name: "unstable feature, 5.6.0"
-            ref: "v5.6.0"
+          # 5.7.0 includes Keccak-256 (aws/aws-lc#3245) and the
+          # EVP_DecryptUpdate output-boundary fix (aws/aws-lc#3460).
+          - name: "unstable feature"
+            constant: MINIMUM_AWS_LC_VERSION_UNSTABLE
+            ref: "v5.7.0"
             cargo_args: "-p aws-lc-rs --features unstable --lib"
             verify_unstable_rejection: false
     steps:
@@ -510,6 +513,19 @@ jobs:
             -DGENERATE_RUST_BINDINGS=ON \
             -DCMAKE_INSTALL_PREFIX="${PWD}/install-min"
           cmake --build build-min --target install -j
+
+      - name: Verify the pinned build is exactly the declared minimum
+        env:
+          FLOOR_CONSTANT: ${{ matrix.floor.constant }}
+          FLOOR_REF: ${{ matrix.floor.ref }}
+        run: |
+          declared="$(sed -nE "s/^const ${FLOOR_CONSTANT}: &str = \"([^\"]+)\";.*/\1/p" builder/system_library.rs)"
+          installed="$(sed -nE 's/^#define AWSLC_VERSION_NUMBER_STRING "([^"]+)".*/\1/p' install-min/include/openssl/base.h)"
+          echo "${FLOOR_CONSTANT}=${declared:-<not found>} installed=${installed:-<not found>}"
+          if [ -z "${declared}" ] || [ "${declared}" != "${installed}" ]; then
+            echo "::error::Pinned ref ${FLOOR_REF} builds AWS-LC ${installed}, but ${FLOOR_CONSTANT} declares ${declared}. Bump them together."
+            exit 1
+          fi
 
       - name: Run aws-lc-rs tests against the minimum install (version check enabled)
         env:
