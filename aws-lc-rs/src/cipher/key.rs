@@ -222,7 +222,7 @@ impl SymmetricCipherKey {
         //         do not maintain DES parity bits, so we accept this)
         //  -2  => key is a weak or semi-weak DES key; reject it
         // Any other non-zero value is treated as a failure.
-        match unsafe { DES_set_key(key_bytes.as_ptr() as *const DES_cblock, ks.as_mut_ptr()) } {
+        match unsafe { DES_set_key(key_bytes.as_ptr().cast::<DES_cblock>(), ks.as_mut_ptr()) } {
             0 | -1 => Ok(unsafe { ks.assume_init() }),
             _ => Err(KeyRejected::unspecified()),
         }

@@ -276,6 +276,7 @@ pub use crate::cipher::aes::AES_256_KEY_LEN;
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[deprecated(
+    since = "1.17.0",
     note = "Single DES is a legacy algorithm retained for interoperability only. Prefer an AES-based algorithm."
 )]
 pub use crate::cipher::des::DES_KEY_LEN;
@@ -287,6 +288,7 @@ pub use crate::cipher::des::DES_KEY_LEN;
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[deprecated(
+    since = "1.17.0",
     note = "2-key Triple DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
 )]
 pub use crate::cipher::des::DES_EDE_KEY_LEN;
@@ -298,6 +300,7 @@ pub use crate::cipher::des::DES_EDE_KEY_LEN;
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[deprecated(
+    since = "1.17.0",
     note = "3DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
 )]
 pub use crate::cipher::des::DES_EDE3_KEY_LEN;
@@ -320,6 +323,7 @@ pub use crate::cipher::aes::AES_CFB_IV_LEN;
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[deprecated(
+    since = "1.17.0",
     note = "DES/3DES are legacy algorithms retained for interoperability only; NIST SP 800-131A Rev. 2 disallows their use for encryption. Prefer an AES-based algorithm."
 )]
 pub use crate::cipher::des::DES_CBC_IV_LEN;
@@ -388,12 +392,12 @@ impl OperatingMode {
             },
             #[cfg(feature = "legacy-des")]
             #[allow(deprecated)]
-            (OperatingMode::CTR, AlgorithmId::DesForLegacyUseOnly)
-            | (OperatingMode::CTR, AlgorithmId::DesEdeForLegacyUseOnly)
-            | (OperatingMode::CTR, AlgorithmId::DesEde3ForLegacyUseOnly)
-            | (OperatingMode::CFB128, AlgorithmId::DesForLegacyUseOnly)
-            | (OperatingMode::CFB128, AlgorithmId::DesEdeForLegacyUseOnly)
-            | (OperatingMode::CFB128, AlgorithmId::DesEde3ForLegacyUseOnly) => {
+            (
+                OperatingMode::CTR | OperatingMode::CFB128,
+                AlgorithmId::DesForLegacyUseOnly
+                | AlgorithmId::DesEdeForLegacyUseOnly
+                | AlgorithmId::DesEde3ForLegacyUseOnly,
+            ) => {
                 // `supports_mode()` rejects these combinations at key-construction
                 // time, so this branch is unreachable in practice.
                 unreachable!("DES does not support CTR or CFB128 modes")
@@ -484,6 +488,7 @@ pub enum AlgorithmId {
     #[cfg(feature = "legacy-des")]
     #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
     #[deprecated(
+        since = "1.17.0",
         note = "Single DES is a legacy algorithm retained for interoperability only. Prefer an AES-based algorithm."
     )]
     DesForLegacyUseOnly,
@@ -495,6 +500,7 @@ pub enum AlgorithmId {
     #[cfg(feature = "legacy-des")]
     #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
     #[deprecated(
+        since = "1.17.0",
         note = "2-key Triple DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
     )]
     DesEdeForLegacyUseOnly,
@@ -506,6 +512,7 @@ pub enum AlgorithmId {
     #[cfg(feature = "legacy-des")]
     #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
     #[deprecated(
+        since = "1.17.0",
         note = "3DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
     )]
     DesEde3ForLegacyUseOnly,
@@ -553,6 +560,7 @@ pub const AES_256: Algorithm = Algorithm {
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
 #[deprecated(
+    since = "1.17.0",
     note = "Single DES is a legacy algorithm retained for interoperability only. Prefer an AES-based algorithm."
 )]
 pub const DES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
@@ -580,6 +588,7 @@ pub const DES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
 #[deprecated(
+    since = "1.17.0",
     note = "2-key Triple DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
 )]
 pub const DES_EDE_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
@@ -642,6 +651,7 @@ pub const DES_EDE_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
 #[deprecated(
+    since = "1.17.0",
     note = "3DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
 )]
 pub const DES_EDE3_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
@@ -1163,12 +1173,19 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    ///   and `in_out.len()` is not. Also returned if decryption fails.
+    ///   and `in_out.len()` is not. Also returned if `context` is not valid for this key's
+    ///   algorithm and mode, or if decryption fails.
     pub fn decrypt<'in_out>(
         &self,
         in_out: &'in_out mut [u8],
         context: DecryptionContext,
     ) -> Result<&'in_out mut [u8], Unspecified> {
+        if !self
+            .algorithm()
+            .is_valid_decryption_context(self.mode, &context)
+        {
+            return Err(Unspecified);
+        }
         decrypt(self.algorithm, &self.key, self.mode, in_out, context)
     }
 }
@@ -1730,7 +1747,7 @@ mod tests {
         let distinct = "23456789abcdef01";
         for weak in &weak_keys {
             // Weak K1, non-weak K2.
-            let key = from_hex(&format!("{}{}", weak, distinct)).unwrap();
+            let key = from_hex(&format!("{weak}{distinct}")).unwrap();
             assert!(
                 UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
                     .and_then(EncryptingKey::cbc)
@@ -1738,7 +1755,7 @@ mod tests {
                 "expected weak DES K1 = {weak} to be rejected in 2TDEA"
             );
             // Non-weak K1, weak K2.
-            let key = from_hex(&format!("{}{}", distinct, weak)).unwrap();
+            let key = from_hex(&format!("{distinct}{weak}")).unwrap();
             assert!(
                 UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
                     .and_then(EncryptingKey::cbc)
@@ -1854,14 +1871,14 @@ mod tests {
         ];
         let distinct = "0123456789abcdef";
         for semi_weak in &semi_weak_keys {
-            let key = from_hex(&format!("{}{}", semi_weak, distinct)).unwrap();
+            let key = from_hex(&format!("{semi_weak}{distinct}")).unwrap();
             assert!(
                 UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
                     .and_then(EncryptingKey::cbc)
                     .is_err(),
                 "expected semi-weak DES K1 = {semi_weak} to be rejected in 2TDEA"
             );
-            let key = from_hex(&format!("{}{}", distinct, semi_weak)).unwrap();
+            let key = from_hex(&format!("{distinct}{semi_weak}")).unwrap();
             assert!(
                 UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
                     .and_then(EncryptingKey::cbc)
@@ -1916,159 +1933,54 @@ mod tests {
     fn test_des_rejects_unsupported_modes() {
         // DES/2TDEA/3TDEA only support CBC and ECB in this crate; CTR and CFB128
         // must be rejected at construction time rather than at encrypt time.
-        let key1 = from_hex("0123456789abcdef").unwrap();
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(EncryptingKey::ctr)
-                .is_err(),
-            "DES + CTR (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(EncryptingKey::cfb128)
-                .is_err(),
-            "DES + CFB128 (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(DecryptingKey::ctr)
-                .is_err(),
-            "DES + CTR (decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(DecryptingKey::cfb128)
-                .is_err(),
-            "DES + CFB128 (decrypt) should be rejected"
-        );
 
-        let key2 = from_hex("0123456789abcdef23456789abcdef01").unwrap();
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(EncryptingKey::ctr)
-                .is_err(),
-            "2TDEA + CTR (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(EncryptingKey::cfb128)
-                .is_err(),
-            "2TDEA + CFB128 (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(DecryptingKey::ctr)
-                .is_err(),
-            "2TDEA + CTR (decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(DecryptingKey::cfb128)
-                .is_err(),
-            "2TDEA + CFB128 (decrypt) should be rejected"
-        );
+        // Each constructor reports whether it accepted the key.
+        type Constructor = fn(UnboundCipherKey) -> bool;
 
-        let key3 = from_hex("0123456789abcdef23456789abcdef01456789abcdef0123").unwrap();
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(EncryptingKey::ctr)
-                .is_err(),
-            "3TDEA + CTR (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(EncryptingKey::cfb128)
-                .is_err(),
-            "3TDEA + CFB128 (encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(DecryptingKey::ctr)
-                .is_err(),
-            "3TDEA + CTR (decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(DecryptingKey::cfb128)
-                .is_err(),
-            "3TDEA + CFB128 (decrypt) should be rejected"
-        );
+        let algorithms: [(&str, &'static Algorithm, &str); 3] = [
+            ("DES", &DES_FOR_LEGACY_USE_ONLY, "0123456789abcdef"),
+            (
+                "2TDEA",
+                &DES_EDE_FOR_LEGACY_USE_ONLY,
+                "0123456789abcdef23456789abcdef01",
+            ),
+            (
+                "3TDEA",
+                &DES_EDE3_FOR_LEGACY_USE_ONLY,
+                "0123456789abcdef23456789abcdef01456789abcdef0123",
+            ),
+        ];
+        let constructors: [(&str, Constructor); 8] = [
+            ("CTR (encrypt)", |k| EncryptingKey::ctr(k).is_ok()),
+            ("CFB128 (encrypt)", |k| EncryptingKey::cfb128(k).is_ok()),
+            ("CTR (decrypt)", |k| DecryptingKey::ctr(k).is_ok()),
+            ("CFB128 (decrypt)", |k| DecryptingKey::cfb128(k).is_ok()),
+            ("CTR (streaming encrypt)", |k| {
+                StreamingEncryptingKey::ctr(k).is_ok()
+            }),
+            ("CFB128 (streaming encrypt)", |k| {
+                StreamingEncryptingKey::cfb128(k).is_ok()
+            }),
+            ("CTR (streaming decrypt)", |k| {
+                StreamingDecryptingKey::ctr(k, DecryptionContext::None).is_ok()
+            }),
+            ("CFB128 (streaming decrypt)", |k| {
+                StreamingDecryptingKey::cfb128(k, DecryptionContext::None).is_ok()
+            }),
+        ];
 
-        // Streaming constructors must also reject unsupported modes.
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(StreamingEncryptingKey::ctr)
-                .is_err(),
-            "DES + CTR (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(StreamingEncryptingKey::cfb128)
-                .is_err(),
-            "DES + CFB128 (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
-                .is_err(),
-            "DES + CTR (streaming decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
-                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
-                .is_err(),
-            "DES + CFB128 (streaming decrypt) should be rejected"
-        );
-
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(StreamingEncryptingKey::ctr)
-                .is_err(),
-            "2TDEA + CTR (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(StreamingEncryptingKey::cfb128)
-                .is_err(),
-            "2TDEA + CFB128 (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
-                .is_err(),
-            "2TDEA + CTR (streaming decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
-                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
-                .is_err(),
-            "2TDEA + CFB128 (streaming decrypt) should be rejected"
-        );
-
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(StreamingEncryptingKey::ctr)
-                .is_err(),
-            "3TDEA + CTR (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(StreamingEncryptingKey::cfb128)
-                .is_err(),
-            "3TDEA + CFB128 (streaming encrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
-                .is_err(),
-            "3TDEA + CTR (streaming decrypt) should be rejected"
-        );
-        assert!(
-            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
-                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
-                .is_err(),
-            "3TDEA + CFB128 (streaming decrypt) should be rejected"
-        );
+        for (alg_name, algorithm, key_hex) in algorithms {
+            let key_bytes = from_hex(key_hex).unwrap();
+            for (mode_name, construct) in constructors {
+                // `UnboundCipherKey::new` only checks the key length, so the
+                // rejection below must come from the mode check.
+                let key = UnboundCipherKey::new(algorithm, &key_bytes).unwrap();
+                assert!(
+                    !construct(key),
+                    "{alg_name} + {mode_name} should be rejected"
+                );
+            }
+        }
     }
 
     #[cfg(feature = "legacy-des")]
@@ -2263,4 +2175,46 @@ mod tests {
         "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
         "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87"
     );
+
+    #[test]
+    #[allow(deprecated)]
+    fn test_ecb_rejects_iv_context_after_dispatch() {
+        // The public entry points validate the context before dispatching, so
+        // this calls the internal `encrypt`/`decrypt` directly to check that the
+        // ECB helpers also return an error, rather than panic, for an IV context.
+        let cases: &[(&'static Algorithm, &str)] = &[
+            (&AES_128, "000102030405060708090a0b0c0d0e0f"),
+            #[cfg(feature = "legacy-des")]
+            (
+                &DES_EDE3_FOR_LEGACY_USE_ONLY,
+                "0123456789abcdef23456789abcdef01456789abcdef0123",
+            ),
+        ];
+        for &(algorithm, key_hex) in cases {
+            let key_bytes = from_hex(key_hex).unwrap();
+            let encrypting_key =
+                EncryptingKey::ecb(UnboundCipherKey::new(algorithm, &key_bytes).unwrap()).unwrap();
+            let decrypting_key =
+                DecryptingKey::ecb(UnboundCipherKey::new(algorithm, &key_bytes).unwrap()).unwrap();
+            let mut in_out = vec![0u8; algorithm.block_len()];
+            let iv = [0u8; IV_LEN_128_BIT];
+
+            assert!(encrypt(
+                algorithm,
+                &encrypting_key.key,
+                OperatingMode::ECB,
+                &mut in_out,
+                EncryptionContext::Iv128(FixedLength::from(iv)),
+            )
+            .is_err());
+            assert!(decrypt(
+                algorithm,
+                &decrypting_key.key,
+                OperatingMode::ECB,
+                &mut in_out,
+                DecryptionContext::Iv128(FixedLength::from(iv)),
+            )
+            .is_err());
+        }
+    }
 }

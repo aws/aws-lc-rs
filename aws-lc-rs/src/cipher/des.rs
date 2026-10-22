@@ -66,6 +66,7 @@ pub(super) fn encrypt_cbc_mode(
     Ok(context.into())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub(super) fn decrypt_cbc_mode<'in_out>(
     key: &SymmetricCipherKey,
     context: DecryptionContext,
@@ -102,7 +103,7 @@ pub(super) fn encrypt_ecb_mode(
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
     if !matches!(context, EncryptionContext::None) {
-        unreachable!();
+        return Err(Unspecified);
     }
 
     let mut in_out_iter = in_out.chunks_exact_mut(DES_BLOCK_LEN);
@@ -126,13 +127,14 @@ pub(super) fn encrypt_ecb_mode(
     Ok(context.into())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub(super) fn decrypt_ecb_mode<'in_out>(
     key: &SymmetricCipherKey,
     context: DecryptionContext,
     in_out: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
     if !matches!(context, DecryptionContext::None) {
-        unreachable!();
+        return Err(Unspecified);
     }
 
     // The inner scope ends the mutable borrow of `in_out` held by
@@ -189,7 +191,7 @@ fn des3_cbc_encrypt(
             ks1,
             ks2,
             ks3,
-            iv.as_mut_ptr() as *mut DES_cblock,
+            iv.as_mut_ptr().cast::<DES_cblock>(),
             enc,
         );
     });
@@ -202,8 +204,8 @@ fn des3_ecb_encrypt(
     block: &mut [u8],
     enc: i32,
 ) {
-    let input_block = block.as_ptr() as *const DES_cblock;
-    let output_block = block.as_mut_ptr() as *mut DES_cblock;
+    let input_block = block.as_ptr().cast::<DES_cblock>();
+    let output_block = block.as_mut_ptr().cast::<DES_cblock>();
     // DES is not FIPS-approved; `indicator_check!` will observe that the
     // underlying call does not increment the approved-operation counter and
     // correctly mark the service indicator as unapproved in FIPS builds.
@@ -236,15 +238,15 @@ fn des_cbc_encrypt(
             in_out.as_mut_ptr(),
             in_out.len(),
             ks,
-            iv.as_mut_ptr() as *mut DES_cblock,
+            iv.as_mut_ptr().cast::<DES_cblock>(),
             enc,
         );
     });
 }
 
 fn des_ecb_encrypt(ks: &DES_key_schedule, block: &mut [u8], enc: i32) {
-    let input_block = block.as_ptr() as *const DES_cblock;
-    let output_block = block.as_mut_ptr() as *mut DES_cblock;
+    let input_block = block.as_ptr().cast::<DES_cblock>();
+    let output_block = block.as_mut_ptr().cast::<DES_cblock>();
     // DES is not FIPS-approved; `indicator_check!` will observe that the
     // underlying call does not increment the approved-operation counter and
     // correctly mark the service indicator as unapproved in FIPS builds.
