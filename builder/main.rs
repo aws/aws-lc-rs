@@ -145,6 +145,39 @@ fn is_disable_prebuilt_nasm() -> bool {
     is_fips_build() || env::var("CARGO_FEATURE_DISABLE_PREBUILT_NASM").is_ok()
 }
 
+/// The `fips-failure-callback` feature of aws-lc-fips-sys.
+pub(crate) fn is_fips_failure_callback() -> bool {
+    is_fips_crate() && env::var("CARGO_FEATURE_FIPS_FAILURE_CALLBACK").is_ok()
+}
+
+/// AWS-LC supports `AWSLC_FIPS_FAILURE_CALLBACK` only for static ELF builds,
+/// and only a source build can guarantee it was compiled with the flag.
+fn assert_fips_failure_callback_supported() {
+    if !is_fips_failure_callback() {
+        return;
+    }
+    let target_os = target_os();
+    assert!(
+        !matches!(
+            target_os.as_str(),
+            "windows" | "macos" | "ios" | "tvos" | "watchos" | "visionos"
+        ),
+        "The `fips-failure-callback` feature requires an ELF target, not '{target_os}'."
+    );
+    assert!(
+        OutputLibType::default() == OutputLibType::Static,
+        "The `fips-failure-callback` feature requires a static AWS-LC build; unset {static_var}=0.",
+        static_var = crate_env_var_name("STATIC"),
+    );
+    assert!(
+        get_system_dir_path().is_none() && use_system() != Some(true),
+        "The `fips-failure-callback` feature requires building AWS-LC from source; \
+         unset {system_dir} and {use_system}.",
+        system_dir = crate_env_var_name("SYSTEM_DIR"),
+        use_system = crate_env_var_name("USE_SYSTEM"),
+    );
+}
+
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }
@@ -732,8 +765,9 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
     // No explicit SYSTEM_DIR. Unless the user opted out with USE_SYSTEM=0, try
     // to auto-detect a usable system AWS-LC. Detection is non-fatal: an
     // unsuitable (or absent) install falls through to the source build, unless
-    // USE_SYSTEM=1 demands one.
-    if use_system() != Some(false) {
+    // USE_SYSTEM=1 demands one. A system install cannot guarantee the FIPS
+    // failure callback build flag, so it is never auto-detected for that feature.
+    if use_system() != Some(false) && !is_fips_failure_callback() {
         if let Some(system_lib) = system_detect::detect_system_awslc(manifest_dir) {
             // Mirror the explicit path's global state so is_bindgen_required()
             // and the other get_system_dir_path() consumers agree we are
@@ -1341,6 +1375,7 @@ fn main() {
 
     let prefix = (!is_no_prefix()).then(prefix_string);
 
+    assert_fips_failure_callback_supported();
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
     emit_warning(format!("Building with: {}", builder.name()));
     emit_warning(format!("Symbol Prefix: {prefix:?}"));

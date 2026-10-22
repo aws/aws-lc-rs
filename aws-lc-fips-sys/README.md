@@ -61,6 +61,19 @@ for the latest status of the static or dynamic AWS-LC Cryptographic Module. Plea
 for relevant security policies and information on supported operating environments.
 We will also update our release notes and documentation to reflect any changes in FIPS certification status.
 
+### FIPS failure callback
+
+By default, AWS-LC aborts the process when a FIPS self-test or pairwise consistency test fails.
+The `fips-failure-callback` feature builds AWS-LC with `AWSLC_FIPS_FAILURE_CALLBACK` and links a
+definition of `AWS_LC_fips_failure_callback` that latches the failure instead. Query it with
+`aws_lc_fips_sys_failure_detected` and `aws_lc_fips_sys_failure_message` (or `try_fips_status` and
+`fips_failure_message` in aws-lc-rs), and stop using the module once a failure is reported.
+
+The feature requires a static build of AWS-LC from source on an ELF target (e.g. Linux); the build
+fails if `AWS_LC_FIPS_SYS_STATIC=0` or a system-installed AWS-LC is requested. The callback symbol is
+not prefixed, so at most one version of aws-lc-fips-sys in a binary can enable the feature, and the
+application must not define `AWS_LC_fips_failure_callback` itself.
+
 ## Building and Bindings
 
 This crate contains source code from a FIPS branch of AWS-LC for building and for bindings generation. A

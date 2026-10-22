@@ -66,6 +66,30 @@ jobs:
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
+  fips-failure-callback-test:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs fips-failure-callback-tests
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '>=1.18'
+      - name: Run aws-lc-fips-sys tests
+        working-directory: ./aws-lc-fips-sys
+        run: cargo test --features fips-failure-callback
+      - name: Run aws-lc-rs tests
+        working-directory: ./aws-lc-rs
+        run: cargo test --no-default-features --all-targets --features fips-failure-callback,unstable
   windows-fips-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs windows-fips-tests

@@ -84,6 +84,14 @@
 //! feature - enabling both will result in a compile-time error. Use this feature when you need a
 //! compile-time guarantee that your build is using the non-FIPS cryptographic module.
 //!
+//! #### fips-failure-callback
+//!
+//! Implies `fips`. Builds AWS-LC with `AWSLC_FIPS_FAILURE_CALLBACK`, so a failed FIPS self-test or
+//! pairwise consistency test no longer aborts the process. The failure is latched instead:
+//! `try_fips_status` reports it and `fips_failure_message` returns AWS-LC's message. The application
+//! must then stop using the module. Only supported for static builds of AWS-LC from source on ELF
+//! targets (e.g. Linux). Consult your compliance requirements before shipping this configuration.
+//!
 //! #### asan
 //!
 //! Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
@@ -293,8 +301,8 @@ pub(crate) use debug::derive_debug_via_id;
 use std::ffi::CStr;
 
 use crate::aws_lc::{
-    CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, OpenSSL_version, ERR_GET_FUNC,
-    ERR_GET_LIB, ERR_GET_REASON, OPENSSL_VERSION,
+    BORINGSSL_self_test, CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode,
+    OpenSSL_version, ERR_GET_FUNC, ERR_GET_LIB, ERR_GET_REASON, OPENSSL_VERSION,
 };
 use std::sync::Once;
 
@@ -384,6 +392,67 @@ pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
     }
 }
 
+/// Runs the AWS-LC cryptographic algorithm self-tests on demand.
+///
+/// In FIPS builds, AWS-LC runs its known-answer self-tests automatically at power-on or before an
+/// algorithm's first use. This re-runs all of them (`BORINGSSL_self_test`) on demand; it does not
+/// re-run the module integrity test.
+///
+/// In a FIPS build, a known-answer mismatch is a FIPS failure and, by default, AWS-LC aborts the
+/// process before this function returns. Other failures during a self-test (e.g. allocation, or an
+/// operation returning an error) are reported as `Err`. In a non-FIPS build nothing aborts; every
+/// failure is reported as `Err`.
+///
+/// With the `fips-failure-callback` feature, a known-answer mismatch does not abort: this returns
+/// `Err` and the failure is also latched for `try_fips_status`.
+///
+/// A successful result does not indicate that the library is operating in FIPS mode; use
+/// [`try_fips_mode()`] for that.
+///
+/// # Errors
+/// [`error::Unspecified`] if any self-test fails or cannot be completed. Treat any `Err` as a
+/// self-test failure.
+pub fn try_fips_self_test() -> Result<(), error::Unspecified> {
+    init();
+    match unsafe { BORINGSSL_self_test() } {
+        1 => Ok(()),
+        _ => Err(error::Unspecified),
+    }
+}
+
+#[cfg(feature = "fips-failure-callback")]
+/// Indicates whether AWS-LC has reported a FIPS failure.
+///
+/// With the `fips-failure-callback` feature, a failed FIPS self-test or pairwise consistency
+/// test no longer aborts the process: AWS-LC fails the operation, and the failure is latched for
+/// the life of the process. The application is then responsible for stopping all use of the
+/// module once this returns an error. See [`fips_failure_message`] for the reason.
+///
+/// # Errors
+/// [`error::Unspecified`] if a FIPS failure has occurred.
+pub fn try_fips_status() -> Result<(), error::Unspecified> {
+    init();
+    match unsafe { aws_lc::aws_lc_fips_sys_failure_detected() } {
+        0 => Ok(()),
+        _ => Err(error::Unspecified),
+    }
+}
+
+#[cfg(feature = "fips-failure-callback")]
+/// The message AWS-LC reported with the first FIPS failure, or `None` if there has been none.
+///
+/// Also `None` briefly while another thread is still recording a failure, and if the message is
+/// not valid UTF-8; [`try_fips_status`] is the authoritative failure signal.
+#[must_use]
+pub fn fips_failure_message() -> Option<&'static str> {
+    let message = unsafe { aws_lc::aws_lc_fips_sys_failure_message() };
+    if message.is_null() {
+        return None;
+    }
+    // SAFETY: a non-null message is NUL-terminated and never changes or is freed.
+    unsafe { CStr::from_ptr(message) }.to_str().ok()
+}
+
 #[allow(dead_code)]
 unsafe fn dump_error() {
     let err = ERR_get_error();
@@ -432,6 +501,7 @@ mod tests {
     #[test]
     fn test_fips() {
         assert!({ crate::try_fips_mode().is_err() });
+        assert_eq!(crate::try_fips_self_test(), Ok(()));
         // Re-enable with fixed test after upstream has merged RAGDOLL
         //assert!({ crate::try_fips_cpu_jitter_entropy().is_ok() });
     }
@@ -442,6 +512,12 @@ mod tests {
     fn test_fips() {
         #[cfg(not(feature = "asan"))]
         crate::fips_mode();
+        crate::try_fips_self_test().unwrap();
+        #[cfg(feature = "fips-failure-callback")]
+        {
+            assert_eq!(crate::try_fips_status(), Ok(()));
+            assert_eq!(crate::fips_failure_message(), None);
+        }
         if aws_lc::CFG_CPU_JITTER_ENTROPY() {
             crate::fips_cpu_jitter_entropy();
         }

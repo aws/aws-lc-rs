@@ -47,6 +47,9 @@ non-fips = ["aws-lc-sys"]
 # require FIPS
 fips = ["dep:aws-lc-fips-sys"]
 
+# FIPS failures are latched for `try_fips_status` instead of aborting the process
+fips-failure-callback = ["fips", "aws-lc-fips-sys/fips-failure-callback"]
+
 [dependencies]
 untrusted = { workspace = true, optional = true }
 aws-lc-sys = { version = "0.46.0", path = "../aws-lc-sys", default-features = false, optional = true }

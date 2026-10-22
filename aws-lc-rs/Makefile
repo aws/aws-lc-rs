@@ -55,6 +55,7 @@ test:
 	cargo test --no-default-features --all-targets --features aws-lc-sys,unstable
 	cargo test --no-default-features --all-targets --features fips
 	cargo test --no-default-features --all-targets --features fips,unstable
+	cargo test --no-default-features --all-targets --features fips-failure-callback,unstable
 	cargo test --no-default-features --all-targets --features aws-lc-sys,ring-sig-verify
 	cargo test --no-default-features --all-targets --features aws-lc-sys,ring-io
 	cargo test --no-default-features --all-targets --features aws-lc-sys,alloc
