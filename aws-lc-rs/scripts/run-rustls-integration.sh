@@ -197,11 +197,12 @@ function setup_upstream() {
 
   pushd "$dest" > /dev/null
   add_aws_lc_patch "Cargo.toml" "$ROOT"
-  if [[ $latest_release != "1" ]]; then
-    rm -f Cargo.lock
-    cargo update
-  else
+  # Keep upstream's committed Cargo.lock: its pre-release deps (e.g. rustls-ring
+  # and rustls 0.24.0-dev.N) only build together at the locked versions.
+  if [[ -f Cargo.lock ]]; then
     cargo update -p aws-lc-rs -p aws-lc-sys
+  else
+    cargo generate-lockfile
   fi
 }
 
