@@ -284,7 +284,10 @@ pub struct Algorithm {
     ///
     /// This function isn't actually used in *aws-lc-rs*, and is only
     /// kept for compatibility with the original *ring* implementation.
-    #[deprecated]
+    #[deprecated(
+        since = "1.1.0",
+        note = "Unused by aws-lc-rs; retained for ring compatibility. Use `output_len()` to size an HMAC key."
+    )]
     pub chaining_len: usize,
 
     /// The internal block length.
@@ -317,7 +320,10 @@ impl Algorithm {
     ///
     /// This function isn't actually used in *aws-lc-rs*, and is only
     /// kept for compatibility with the original *ring* implementation.
-    #[deprecated]
+    #[deprecated(
+        since = "1.5.0",
+        note = "Unused by aws-lc-rs; retained for ring compatibility. Use `output_len()` to size an HMAC key."
+    )]
     #[inline]
     #[must_use]
     pub fn chaining_len(&self) -> usize {

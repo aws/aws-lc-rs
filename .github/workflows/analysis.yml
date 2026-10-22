@@ -49,6 +49,8 @@ jobs:
         features:
           - "--features bindgen,unstable"
           - "--features bindgen,unstable,fips"
+          - "--features bindgen,unstable,legacy-des"
+          - "--features bindgen,unstable,fips,legacy-des"
           - "--no-default-features --features aws-lc-sys"
     steps:
       - uses: actions/checkout@v7

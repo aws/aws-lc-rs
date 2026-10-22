@@ -50,8 +50,17 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
     }
 }
 
+/// Deprecated. Encodes each `u32` as little-endian.
+///
+/// Prefer [`Nonce::assume_unique_for_key`] with explicitly encoded bytes, e.g.
+/// built with [`u32::to_le_bytes`].
+// `#[deprecated]` on an impl has no effect on users (no warning, and rustdoc
+// does not render it), so the doc comment above is what directs them.
 #[allow(useless_deprecated)] // https://github.com/rust-lang/rust/issues/39935
-#[deprecated]
+#[deprecated(
+    since = "1.6.0",
+    note = "Use `Nonce::assume_unique_for_key` with explicitly encoded bytes."
+)]
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
     #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {

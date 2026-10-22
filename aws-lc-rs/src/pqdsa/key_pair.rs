@@ -222,7 +222,7 @@ impl PqdsaKeyPair {
     /// # Errors
     /// Returns `Unspecified` if serialization fails.
     #[cfg(feature = "unstable")]
-    #[deprecated(note = "use `PqdsaKeyPair::to_pkcs8v1`")]
+    #[deprecated(since = "1.18.0", note = "use `PqdsaKeyPair::to_pkcs8v1`")]
     pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
         self.to_pkcs8v1()
     }

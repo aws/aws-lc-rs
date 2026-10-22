@@ -13,5 +13,5 @@
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(not(feature = "fips"))))]
 pub mod digest;
 
-#[deprecated(note = "use `aws_lc_rs::signature` instead")]
+#[deprecated(since = "1.18.0", note = "use `aws_lc_rs::signature` instead")]
 pub mod signature;
