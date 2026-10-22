@@ -1922,39 +1922,39 @@ fn test_des_unsupported_modes_rejected() {
         );
 
         // CFB8 must be rejected
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         EncryptingKey::cfb8(unbound).expect_err("DES + CFB8 should be rejected");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         DecryptingKey::cfb8(unbound).expect_err("DES + CFB8 should be rejected (decrypt)");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         assert!(
             StreamingEncryptingKey::cfb8(unbound).is_err(),
             "DES + CFB8 should be rejected (streaming encrypt)"
         );
 
         // CFB1 must be rejected
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         EncryptingKey::cfb1(unbound).expect_err("DES + CFB1 should be rejected");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         DecryptingKey::cfb1(unbound).expect_err("DES + CFB1 should be rejected (decrypt)");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         assert!(
             StreamingEncryptingKey::cfb1(unbound).is_err(),
             "DES + CFB1 should be rejected (streaming encrypt)"
         );
 
         // OFB must be rejected
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         EncryptingKey::ofb(unbound).expect_err("DES + OFB should be rejected");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         DecryptingKey::ofb(unbound).expect_err("DES + OFB should be rejected (decrypt)");
 
-        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        let unbound = UnboundCipherKey::new(alg, &key_bytes).unwrap();
         assert!(
             StreamingEncryptingKey::ofb(unbound).is_err(),
             "DES + OFB should be rejected (streaming encrypt)"
