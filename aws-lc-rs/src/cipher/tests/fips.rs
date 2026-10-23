@@ -212,6 +212,170 @@ block_api!(
     FipsServiceStatus::Approved
 );
 
+// AES OFB, CFB1 and CFB8 are not FIPS-approved services.
+
+block_api!(
+    block_aes_128_ofb,
+    &AES_128,
+    EncryptingKey::ofb,
+    DecryptingKey::ofb,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_192_ofb,
+    &AES_192,
+    EncryptingKey::ofb,
+    DecryptingKey::ofb,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_256_ofb,
+    &AES_256,
+    EncryptingKey::ofb,
+    DecryptingKey::ofb,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_128_cfb8,
+    &AES_128,
+    EncryptingKey::cfb8,
+    DecryptingKey::cfb8,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_192_cfb8,
+    &AES_192,
+    EncryptingKey::cfb8,
+    DecryptingKey::cfb8,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_256_cfb8,
+    &AES_256,
+    EncryptingKey::cfb8,
+    DecryptingKey::cfb8,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_128_cfb1,
+    &AES_128,
+    EncryptingKey::cfb1,
+    DecryptingKey::cfb1,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_192_cfb1,
+    &AES_192,
+    EncryptingKey::cfb1,
+    DecryptingKey::cfb1,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+block_api!(
+    block_aes_256_cfb1,
+    &AES_256,
+    EncryptingKey::cfb1,
+    DecryptingKey::cfb1,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_128_ofb,
+    &AES_128,
+    StreamingEncryptingKey::ofb,
+    StreamingDecryptingKey::ofb,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_192_ofb,
+    &AES_192,
+    StreamingEncryptingKey::ofb,
+    StreamingDecryptingKey::ofb,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_256_ofb,
+    &AES_256,
+    StreamingEncryptingKey::ofb,
+    StreamingDecryptingKey::ofb,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_128_cfb8,
+    &AES_128,
+    StreamingEncryptingKey::cfb8,
+    StreamingDecryptingKey::cfb8,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_192_cfb8,
+    &AES_192,
+    StreamingEncryptingKey::cfb8,
+    StreamingDecryptingKey::cfb8,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_256_cfb8,
+    &AES_256,
+    StreamingEncryptingKey::cfb8,
+    StreamingDecryptingKey::cfb8,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_128_cfb1,
+    &AES_128,
+    StreamingEncryptingKey::cfb1,
+    StreamingDecryptingKey::cfb1,
+    &TEST_KEY_128_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_192_cfb1,
+    &AES_192,
+    StreamingEncryptingKey::cfb1,
+    StreamingDecryptingKey::cfb1,
+    &TEST_KEY_192_BIT,
+    FipsServiceStatus::NonApproved
+);
+
+streaming_api!(
+    streaming_aes_256_cfb1,
+    &AES_256,
+    StreamingEncryptingKey::cfb1,
+    StreamingDecryptingKey::cfb1,
+    &TEST_KEY_256_BIT,
+    FipsServiceStatus::NonApproved
+);
+
 #[cfg(feature = "legacy-des")]
 block_api!(
     block_des_cbc_pkcs7,

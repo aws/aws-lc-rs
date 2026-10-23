@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, AES_DECRYPT,
-    AES_ENCRYPT, AES_KEY,
+    AES_cbc_encrypt, AES_cfb128_encrypt, AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ctr128_encrypt,
+    AES_ecb_encrypt, AES_ofb128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY,
 };
 use crate::cipher::block::Block;
 use crate::error::Unspecified;
@@ -31,6 +31,9 @@ pub const AES_CTR_IV_LEN: usize = 16;
 
 /// The number of bytes for an AES-CFB initialization vector (IV)
 pub const AES_CFB_IV_LEN: usize = 16;
+
+/// The number of bytes for an AES-OFB initialization vector (IV)
+pub const AES_OFB_IV_LEN: usize = 16;
 
 pub const AES_BLOCK_LEN: usize = 16;
 
@@ -148,8 +151,9 @@ pub(super) fn encrypt_cfb_mode(
     };
 
     let cfb_encrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_encrypt,
+        OperatingMode::CFB8 => aes_cfb8_encrypt,
+        OperatingMode::CFB1 => aes_cfb1_encrypt,
         _ => unreachable!(),
     };
 
@@ -180,8 +184,9 @@ pub(super) fn decrypt_cfb_mode<'in_out>(
     };
 
     let cfb_decrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_decrypt,
+        OperatingMode::CFB8 => aes_cfb8_decrypt,
+        OperatingMode::CFB1 => aes_cfb1_decrypt,
         _ => unreachable!(),
     };
 
@@ -337,4 +342,175 @@ fn aes_cfb128_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             AES_DECRYPT,
         );
     });
+}
+
+// AWS-LC does not update the FIPS service indicator for these AES modes, so they report as non-approved.
+fn aes_cfb8_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    indicator_check!(unsafe {
+        AES_cfb8_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_ENCRYPT,
+        );
+    });
+}
+
+fn aes_cfb8_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    indicator_check!(unsafe {
+        AES_cfb8_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+            AES_DECRYPT,
+        );
+    });
+}
+
+/// Bounds one `AES_cfb1_encrypt` call so the byte-to-bit conversion cannot overflow,
+/// which it would above `usize::MAX / 8` = 512 MiB (on a 32-bit target). Mirrors
+/// `MAXBITCHUNK` in AWS-LC's `crypto/decrepit/cfb/cfb.c`.
+const MAX_CFB1_CHUNK_LEN: usize = 1 << (usize::BITS - 4);
+
+/// `iv` is the feedback register and carries the state across chunks, so splitting the
+/// input does not change the result. `AES_cfb1_encrypt` serves both directions.
+fn cfb1_cipher(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8], enc: i32) {
+    cfb1_cipher_in_chunks(key, iv, in_out, enc, MAX_CFB1_CHUNK_LEN);
+}
+
+/// Chunk length is a parameter so tests can reach the multi-chunk path.
+fn cfb1_cipher_in_chunks(
+    key: &AES_KEY,
+    iv: &mut [u8],
+    in_out: &mut [u8],
+    enc: i32,
+    chunk_len: usize,
+) {
+    debug_assert!(chunk_len > 0 && chunk_len <= MAX_CFB1_CHUNK_LEN);
+    let mut num: i32 = 0;
+    indicator_check!({
+        for chunk in in_out.chunks_mut(chunk_len) {
+            unsafe {
+                AES_cfb1_encrypt(
+                    chunk.as_ptr(),
+                    chunk.as_mut_ptr(),
+                    chunk.len() * 8,
+                    key,
+                    iv.as_mut_ptr(),
+                    &mut num,
+                    enc,
+                );
+            }
+        }
+    });
+}
+
+fn aes_cfb1_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    cfb1_cipher(key, iv, in_out, AES_ENCRYPT);
+}
+
+fn aes_cfb1_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    cfb1_cipher(key, iv, in_out, AES_DECRYPT);
+}
+
+/// `AES_ofb128_encrypt` takes no direction argument: the keystream does not
+/// depend on the data, so OFB encryption and decryption are the same operation.
+fn aes_ofb128_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    let mut num: i32 = 0;
+    indicator_check!(unsafe {
+        AES_ofb128_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            &mut num,
+        );
+    });
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub(super) fn encrypt_ofb_mode(
+    key: &SymmetricCipherKey,
+    context: EncryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
+    };
+
+    let mut iv = {
+        let mut iv = [0u8; AES_OFB_IV_LEN];
+        iv.copy_from_slice((&context).try_into()?);
+        iv
+    };
+
+    aes_ofb128_encrypt(enc_key, &mut iv, in_out);
+    iv.zeroize();
+
+    Ok(context.into())
+}
+
+pub(super) fn decrypt_ofb_mode<'in_out>(
+    key: &SymmetricCipherKey,
+    context: DecryptionContext,
+    in_out: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
+    // it's the same in OFB, just providing a nice named wrapper to match
+    encrypt_ofb_mode(key, context.into(), in_out).map(|_| in_out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{cfb1_cipher_in_chunks, MAX_CFB1_CHUNK_LEN};
+    use crate::aws_lc::{AES_DECRYPT, AES_ENCRYPT};
+    use crate::cipher::key::SymmetricCipherKey;
+
+    /// `MAX_CFB1_CHUNK_LEN` is 2^60 on a 64-bit target, so a small bound is used to
+    /// reach the loop at all.
+    #[test]
+    fn cfb1_chunking_does_not_change_the_result() {
+        let key_bytes = [
+            0x2bu8, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf,
+            0x4f, 0x3c,
+        ];
+        let key = SymmetricCipherKey::aes128(&key_bytes).unwrap();
+        let SymmetricCipherKey::Aes128 { enc_key, .. } = &key else {
+            unreachable!()
+        };
+        let plaintext: Vec<u8> = (0..64u8).collect();
+
+        let run = |input: &[u8], enc: i32, chunk_len: usize| {
+            let mut iv = [0u8; 16];
+            let mut buf = input.to_vec();
+            cfb1_cipher_in_chunks(enc_key, &mut iv, &mut buf, enc, chunk_len);
+            (buf, iv)
+        };
+
+        let (ciphertext, final_iv) = run(&plaintext, AES_ENCRYPT, MAX_CFB1_CHUNK_LEN);
+
+        for chunk_len in [1usize, 2, 3, 7, 16, 17, 63, 64] {
+            assert_eq!(
+                run(&plaintext, AES_ENCRYPT, chunk_len),
+                (ciphertext.clone(), final_iv),
+                "chunked encryption at {chunk_len} bytes changed the ciphertext or final IV"
+            );
+            assert_eq!(
+                run(&ciphertext, AES_DECRYPT, chunk_len),
+                (plaintext.clone(), final_iv),
+                "chunked decryption at {chunk_len} bytes changed the plaintext or final IV"
+            );
+        }
+    }
 }

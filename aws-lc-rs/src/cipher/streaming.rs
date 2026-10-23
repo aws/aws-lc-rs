@@ -419,6 +419,121 @@ impl StreamingEncryptingKey {
         Self::new(key, OperatingMode::CFB128, context)
     }
 
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB8 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB8 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn cfb8(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB8)?;
+        Self::less_safe_cfb8(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB8 cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// `context` must be an `EncryptionContext::Iv128`.
+    /// The IV must be unpredictable and must not be reused with the same key.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB8 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn less_safe_cfb8(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB1 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB1 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn cfb1(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB1)?;
+        Self::less_safe_cfb1(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB1 cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// `context` must be an `EncryptionContext::Iv128`.
+    /// The IV must be unpredictable and must not be reused with the same key.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB1 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn less_safe_cfb1(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the OFB cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support OFB mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn ofb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key.algorithm().new_encryption_context(OperatingMode::OFB)?;
+        Self::less_safe_ofb(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the OFB cipher mode
+    /// with the provided `context`.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// `context` must be an `EncryptionContext::Iv128`.
+    /// The IV must not be reused with the same key.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support OFB mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn less_safe_ofb(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB, context)
+    }
+
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
     /// with pkcs7 padding.
     /// The resulting ciphertext will be longer than the plaintext; padding is added
@@ -686,6 +801,45 @@ impl StreamingDecryptingKey {
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CFB8 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB8 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn cfb8(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB8, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CFB1 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// This API is byte-oriented: lengths are counted in bytes, and each byte
+    /// is processed as eight successive 1-bit segments.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support CFB1 mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn cfb1(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB1, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the OFB cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+    /// returned if `key`'s algorithm does not support OFB mode (e.g.
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    pub fn ofb(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::OFB, context)
     }
 
     /// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
@@ -1037,11 +1191,13 @@ mod tests {
     helper_stream_step_encrypt_test!(ctr);
     helper_stream_step_encrypt_test!(cfb128);
     helper_stream_step_encrypt_test!(ecb_pkcs7);
+    helper_stream_step_encrypt_test!(cfb1);
 
     helper_stream_step_encrypt_test!(cbc_pkcs7, less_safe);
     helper_stream_step_encrypt_test!(ctr, less_safe);
     helper_stream_step_encrypt_test!(cfb128, less_safe);
     helper_stream_step_encrypt_test!(ecb_pkcs7, less_safe);
+    helper_stream_step_encrypt_test!(cfb1, less_safe);
 
     fn run_step_matrix(test: impl Fn(usize, usize)) {
         for i in 13..=21 {
@@ -1116,6 +1272,11 @@ mod tests {
         helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes
     );
     step_roundtrip_tests!(
+        test_step_cfb1,
+        cfb1,
+        helper_test_cfb1_stream_encrypt_step_n_bytes
+    );
+    step_roundtrip_tests!(
         test_step_cbc_less_safe,
         cbc_pkcs7,
         helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe
@@ -1134,6 +1295,11 @@ mod tests {
         test_step_ecb_pkcs7_less_safe,
         ecb_pkcs7,
         helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe
+    );
+    step_roundtrip_tests!(
+        test_step_cfb1_less_safe,
+        cfb1,
+        helper_test_cfb1_stream_encrypt_step_n_bytes_less_safe
     );
 
     #[derive(Clone, Copy)]
@@ -1533,6 +1699,9 @@ mod tests {
             OperatingMode::CBC,
             OperatingMode::CTR,
             OperatingMode::CFB128,
+            OperatingMode::CFB8,
+            OperatingMode::CFB1,
+            OperatingMode::OFB,
         ] {
             let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
             assert!(
@@ -1571,6 +1740,9 @@ mod tests {
             OperatingMode::CBC,
             OperatingMode::CTR,
             OperatingMode::CFB128,
+            OperatingMode::CFB8,
+            OperatingMode::CFB1,
+            OperatingMode::OFB,
         ] {
             let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
             let context = EncryptionContext::Iv64(FixedLength::new().unwrap());
