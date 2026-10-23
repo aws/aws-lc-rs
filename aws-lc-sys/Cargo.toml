@@ -66,6 +66,10 @@ bindgen = ["dep:bindgen"] # Generate the bindings on the targeted platform as a 
 disable-prebuilt-nasm = []
 prebuilt-nasm = []
 all-bindings = []
+# Enabled by aws-lc-rs's `unstable` feature. Unstable APIs may depend on
+# recent AWS-LC mainline releases, so this raises the minimum version a
+# system-installed AWS-LC must satisfy (see builder/system_library.rs).
+unstable = []
 default = ['all-bindings']
 fips = ['dep:bindgen']
 
