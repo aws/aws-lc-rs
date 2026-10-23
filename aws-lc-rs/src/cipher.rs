@@ -429,8 +429,7 @@ impl OperatingMode {
                 | AlgorithmId::DesEde3ForLegacyUseOnly,
             ) => {
                 // `supports_mode()` rejects these combinations at key-construction
-                // time, so this branch is unreachable in practice. AWS-LC declares
-                // no DES OFB or CFB ciphers at all.
+                // time, so this branch is unreachable in practice.
                 unreachable!("DES does not support CTR, CFB or OFB modes")
             }
         };

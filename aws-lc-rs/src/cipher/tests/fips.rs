@@ -212,9 +212,7 @@ block_api!(
     FipsServiceStatus::Approved
 );
 
-// AES OFB, CFB1 and CFB8 are not FIPS-approved services. These tests pin that
-// NonApproved status so a future change to AWS-LC's service indicator does not
-// go unnoticed.
+// AES OFB, CFB1 and CFB8 are not FIPS-approved services.
 
 block_api!(
     block_aes_128_ofb,

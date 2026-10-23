@@ -344,10 +344,7 @@ fn aes_cfb128_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
     });
 }
 
-// AWS-LC's FIPS service indicator covers only the AES ECB, CBC and CTR modes, so none of
-// the calls in the helpers below increment the approved-operation counter.
-// `indicator_check!` observes that and marks the service indicator unapproved in FIPS
-// builds.
+// AWS-LC does not update the FIPS service indicator for these AES modes, so they report as non-approved.
 fn aes_cfb8_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
     let mut num: i32 = 0;
     indicator_check!(unsafe {
@@ -390,9 +387,6 @@ fn cfb1_cipher(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8], enc: i32) {
 }
 
 /// Chunk length is a parameter so tests can reach the multi-chunk path.
-///
-/// `chunk_len` must be non-zero, since `chunks_mut` panics otherwise, and must not
-/// exceed [`MAX_CFB1_CHUNK_LEN`], which is what keeps `chunk.len() * 8` in range.
 fn cfb1_cipher_in_chunks(
     key: &AES_KEY,
     iv: &mut [u8],
