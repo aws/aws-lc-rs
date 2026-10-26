@@ -203,13 +203,13 @@ impl CcBuilder {
 
     /// A new `cc::Build` for compiling the library or probing the compiler.
     ///
-    /// Each one is a clone of the same `cc::Build`, so they share its caches: cc
-    /// identifies the compiler and checks its default flags once for all of them,
-    /// where a fresh `cc::Build` repeats those compiler invocations. Before cc 1.2.57
-    /// they also share their environment reads, so every caller runs after the
-    /// builder has exported the crate's compiler and `CFLAGS` overrides, and the
-    /// builds that change `CFLAGS` around themselves (jitterentropy and the memcmp
-    /// probe) keep a fresh `cc::Build`.
+    /// Clones share the template's caches, so cc identifies the compiler once for
+    /// all of them. With cc < 1.2.57 clones also share env reads: call this only
+    /// after the crate's `CC`/`CFLAGS` are exported (by `prepare_builder`, or by
+    /// the `CMake` build before `apply_universal_build_options`), and not for builds
+    /// that alter `CFLAGS` (jitterentropy, the memcmp probe). Never use the
+    /// template directly: on cc 1.6+ that would snapshot the environment for every
+    /// later clone.
     fn new_build(&self) -> cc::Build {
         self.build_template.clone()
     }
