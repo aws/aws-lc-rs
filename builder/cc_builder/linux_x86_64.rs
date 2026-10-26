@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri Oct  9 17:50:54 UTC 2026
+// Mon Oct 26 18:37:48 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_dsa/mldsa/native/x86_64/src/mldsa_intt_avx2_asm.S",
@@ -83,9 +83,25 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/edwards25519_scalarmulbase_alt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/edwards25519_scalarmuldouble.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/edwards25519_scalarmuldouble_alt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_caddq.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_chknorm.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_decompose_32.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_decompose_88.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_intt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_ntt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_nttunpack.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_pointwise.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_pointwise_acc_l4.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_pointwise_acc_l5.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_pointwise_acc_l7.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_polyz_unpack_17.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_polyz_unpack_19.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_poly_use_hint_32.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_poly_use_hint_88.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_reduce.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_rej_uniform_eta2_VARIABLE_TIME.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_rej_uniform_eta4_VARIABLE_TIME.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/x86_att/mldsa/mldsa_rej_uniform_VARIABLE_TIME.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p256/bignum_montinv_p256.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p256/p256_montjscalarmul.S",
     "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p256/p256_montjscalarmul_alt.S",

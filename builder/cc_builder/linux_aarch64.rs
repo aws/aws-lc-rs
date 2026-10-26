@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri Oct  9 17:50:54 UTC 2026
+// Mon Oct 26 18:37:48 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/mldsa_intt_aarch64_asm.S",
@@ -49,6 +49,8 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "generated-src/linux-aarch64/crypto/fipsmodule/sha512-armv8.S",
     "generated-src/linux-aarch64/crypto/fipsmodule/vpaes-armv8.S",
     "generated-src/linux-aarch64/crypto/test/trampoline-armv8.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/aes-xts/aes_xts_decrypt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/aes-xts/aes_xts_encrypt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/curve25519/bignum_madd_n25519.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/curve25519/bignum_madd_n25519_alt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/curve25519/bignum_mod_n25519.S",
@@ -77,6 +79,23 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "third_party/s2n-bignum/s2n-bignum-imported/arm/generic/bignum_mul.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/generic/bignum_optsub.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/generic/bignum_sqr.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_caddq.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_chknorm.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_decompose_32.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_decompose_88.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_intt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_ntt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_pointwise.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_pointwise_acc_l4.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_pointwise_acc_l5.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_pointwise_acc_l7.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_polyz_unpack_17.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_polyz_unpack_19.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_poly_use_hint_32.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_poly_use_hint_88.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_rej_uniform_eta2_VARIABLE_TIME.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_rej_uniform_eta4_VARIABLE_TIME.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/mldsa/mldsa_rej_uniform_VARIABLE_TIME.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/p256/bignum_montinv_p256.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/p256/p256_montjscalarmul.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/p256/p256_montjscalarmul_alt.S",
