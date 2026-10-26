@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_14_3
+#define BORINGSSL_PREFIX aws_lc_fips_0_14_4
 #endif // BORINGSSL_PREFIX
 
 
@@ -1084,6 +1084,8 @@
 #define ERR_save_state BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ERR_save_state)
 #define ERR_set_error_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ERR_set_error_data)
 #define ERR_set_mark BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ERR_set_mark)
+#define ERR_suppress_errors_begin BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ERR_suppress_errors_begin)
+#define ERR_suppress_errors_end BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ERR_suppress_errors_end)
 #define EVP_AEAD_CTX_aead BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_AEAD_CTX_aead)
 #define EVP_AEAD_CTX_cleanup BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_AEAD_CTX_cleanup)
 #define EVP_AEAD_CTX_deserialize_state BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_AEAD_CTX_deserialize_state)
