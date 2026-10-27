@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_46_0
+%define BORINGSSL_PREFIX aws_lc_0_47_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -4034,8 +4034,11 @@
 %xdefine _rsa_private_transform _ %+ BORINGSSL_PREFIX %+ _rsa_private_transform
 %xdefine _rsa_private_transform_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_private_transform_no_self_test
 %xdefine _rsa_pss_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
+%xdefine _rsa_pss_max_saltlen _ %+ BORINGSSL_PREFIX %+ _rsa_pss_max_saltlen
 %xdefine _rsa_sign_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
+%xdefine _rsa_verify_PKCS1_PSS_mgf1 _ %+ BORINGSSL_PREFIX %+ _rsa_verify_PKCS1_PSS_mgf1
 %xdefine _rsa_verify_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
+%xdefine _rsa_verify_pss_mgf1 _ %+ BORINGSSL_PREFIX %+ _rsa_verify_pss_mgf1
 %xdefine _rsa_verify_raw_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_verify_raw_no_self_test
 %xdefine _rsaz_1024_gather5_avx2 _ %+ BORINGSSL_PREFIX %+ _rsaz_1024_gather5_avx2
 %xdefine _rsaz_1024_mul_avx2 _ %+ BORINGSSL_PREFIX %+ _rsaz_1024_mul_avx2
@@ -8206,8 +8209,11 @@
 %xdefine rsa_private_transform BORINGSSL_PREFIX %+ _rsa_private_transform
 %xdefine rsa_private_transform_no_self_test BORINGSSL_PREFIX %+ _rsa_private_transform_no_self_test
 %xdefine rsa_pss_asn1_meth BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
+%xdefine rsa_pss_max_saltlen BORINGSSL_PREFIX %+ _rsa_pss_max_saltlen
 %xdefine rsa_sign_no_self_test BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
+%xdefine rsa_verify_PKCS1_PSS_mgf1 BORINGSSL_PREFIX %+ _rsa_verify_PKCS1_PSS_mgf1
 %xdefine rsa_verify_no_self_test BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
+%xdefine rsa_verify_pss_mgf1 BORINGSSL_PREFIX %+ _rsa_verify_pss_mgf1
 %xdefine rsa_verify_raw_no_self_test BORINGSSL_PREFIX %+ _rsa_verify_raw_no_self_test
 %xdefine rsaz_1024_gather5_avx2 BORINGSSL_PREFIX %+ _rsaz_1024_gather5_avx2
 %xdefine rsaz_1024_mul_avx2 BORINGSSL_PREFIX %+ _rsaz_1024_mul_avx2

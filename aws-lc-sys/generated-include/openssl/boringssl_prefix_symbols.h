@@ -6,7 +6,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_46_0
+#define BORINGSSL_PREFIX aws_lc_0_47_0
 #endif // BORINGSSL_PREFIX
 
 
@@ -4037,8 +4037,11 @@
 #define rsa_private_transform BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_private_transform)
 #define rsa_private_transform_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_private_transform_no_self_test)
 #define rsa_pss_asn1_meth BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_pss_asn1_meth)
+#define rsa_pss_max_saltlen BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_pss_max_saltlen)
 #define rsa_sign_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_sign_no_self_test)
+#define rsa_verify_PKCS1_PSS_mgf1 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_verify_PKCS1_PSS_mgf1)
 #define rsa_verify_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_verify_no_self_test)
+#define rsa_verify_pss_mgf1 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_verify_pss_mgf1)
 #define rsa_verify_raw_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_verify_raw_no_self_test)
 #define rsaz_1024_gather5_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsaz_1024_gather5_avx2)
 #define rsaz_1024_mul_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsaz_1024_mul_avx2)

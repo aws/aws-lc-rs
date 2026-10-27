@@ -3655,8 +3655,11 @@ rsa_invalidate_key
 rsa_private_transform
 rsa_private_transform_no_self_test
 rsa_pss_asn1_meth
+rsa_pss_max_saltlen
 rsa_sign_no_self_test
+rsa_verify_PKCS1_PSS_mgf1
 rsa_verify_no_self_test
+rsa_verify_pss_mgf1
 rsa_verify_raw_no_self_test
 rsaz_1024_gather5_avx2
 rsaz_1024_mul_avx2

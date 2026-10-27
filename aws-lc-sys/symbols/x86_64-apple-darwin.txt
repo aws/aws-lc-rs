@@ -3101,6 +3101,7 @@ RSA_private_key_to_bytes
 rsa_private_transform
 rsa_private_transform_no_self_test
 rsa_pss_asn1_meth
+rsa_pss_max_saltlen
 RSA_PSS_PARAMS_free
 RSA_PSS_PARAMS_it
 RSA_PSS_PARAMS_new
@@ -3124,7 +3125,9 @@ RSA_up_ref
 RSA_verify
 rsa_verify_no_self_test
 RSA_verify_PKCS1_PSS
+rsa_verify_PKCS1_PSS_mgf1
 RSA_verify_PKCS1_PSS_mgf1
+rsa_verify_pss_mgf1
 RSA_verify_pss_mgf1
 RSA_verify_raw
 rsa_verify_raw_no_self_test
