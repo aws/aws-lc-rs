@@ -42,6 +42,8 @@ pub(crate) struct CcBuilder {
     build_prefix: Option<String>,
     output_lib_type: OutputLibType,
     compiler_features: Cell<Vec<CompilerFeature>>,
+    /// Never used itself; see [`CcBuilder::new_build`].
+    build_template: cc::Build,
 }
 
 use std::fs;
@@ -195,7 +197,21 @@ impl CcBuilder {
             build_prefix,
             output_lib_type,
             compiler_features: Cell::new(vec![]),
+            build_template: cc::Build::new(),
         }
+    }
+
+    /// A new `cc::Build` for compiling the library or probing the compiler.
+    ///
+    /// Clones share the template's caches, so cc identifies the compiler once for
+    /// all of them. With cc < 1.2.57 clones also share env reads: call this only
+    /// after the crate's `CC`/`CFLAGS` are exported (by `prepare_builder`, or by
+    /// the `CMake` build before `apply_universal_build_options`), and not for builds
+    /// that alter `CFLAGS` (jitterentropy, the memcmp probe). Never use the
+    /// template directly: on cc 1.6+ that would snapshot the environment for every
+    /// later clone.
+    fn new_build(&self) -> cc::Build {
+        self.build_template.clone()
     }
 
     pub(crate) fn collect_universal_build_options(
@@ -292,7 +308,7 @@ impl CcBuilder {
 
     pub fn collect_cc_only_build_options(&self) -> Vec<BuildOption> {
         let mut build_options: Vec<BuildOption> = Vec::new();
-        let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
+        let is_cl_like = compiler_is_cl_like(&self.new_build().get_compiler());
         if !is_cl_like {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             // On emscripten, `-pthread` forces a shared-memory wasm module
@@ -359,7 +375,7 @@ impl CcBuilder {
     }
 
     pub fn create_builder(&self) -> cc::Build {
-        let mut cc_build = cc::Build::new();
+        let mut cc_build = self.new_build();
         let build_options = self.collect_cc_only_build_options();
         for option in build_options {
             option.apply_cc(&mut cc_build);
@@ -790,7 +806,7 @@ impl CcBuilder {
             emit_warning("######");
             emit_warning("######");
         }
-        let mut cc_build = cc::Build::default();
+        let mut cc_build = self.new_build();
         cc_build
             .file(source_file)
             .warnings_into_errors(true)
