@@ -78,7 +78,7 @@ pub use self::encryption::pkcs1::{Pkcs1PrivateDecryptingKey, Pkcs1PublicEncrypti
 pub use self::encryption::{EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey};
 pub use self::key::{KeyPair, KeyPairComponents, KeySize, PublicKey, PublicKeyComponents};
 #[allow(clippy::module_name_repetitions)]
-pub use self::signature::RsaParameters;
+pub use self::signature::{RsaParameters, RsaPssSaltLength};
 
 pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
@@ -139,6 +139,23 @@ mod tests {
         assert_eq!(
             "{ RSA_PSS_2048_8192_SHA256 }",
             format!("{:?}", signature::RSA_PSS_2048_8192_SHA256)
+        );
+
+        assert_eq!(
+            "{ RSA_PSS_SHA256, RSA-PSS salt length: Custom(123) }",
+            format!(
+                "{:?}",
+                signature::RSA_PSS_SHA256
+                    .with_pss_salt_length(signature::RsaPssSaltLength::Custom(123)),
+            ),
+        );
+        assert_eq!(
+            "{ RSA_PSS_2048_8192_SHA256, RSA-PSS salt length: Max }",
+            format!(
+                "{:?}",
+                signature::RSA_PSS_2048_8192_SHA256
+                    .with_pss_salt_length(signature::RsaPssSaltLength::Max),
+            ),
         );
     }
 }

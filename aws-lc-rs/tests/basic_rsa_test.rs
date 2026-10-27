@@ -1,10 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use aws_lc_rs::digest::{self, SHA256};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::rsa::{Pkcs1PublicEncryptingKey, PublicEncryptingKey};
-use aws_lc_rs::signature;
-use aws_lc_rs::signature::RsaKeyPair;
+use aws_lc_rs::signature::{
+    self, KeyPair, RsaKeyPair, RsaParameters, RsaPssSaltLength, RsaPublicKeyComponents,
+    RsaSignatureEncoding,
+};
 use aws_lc_rs::test::from_dirty_hex;
 
 #[test]
@@ -167,6 +170,578 @@ fn test_rsa_verify() {
         let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
         assert!(actual_result.is_ok(), "Rejected by: {alg:?}");
     }
+}
+
+#[test]
+fn test_sign_psssaltlen_custom() {
+    const ALG: RsaSignatureEncoding =
+        signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const WRONG_VERIF_ALG1: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_VERIF_ALG2: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(0xFFFE));
+
+    let private_key = from_dirty_hex(
+        r"308204a40201000282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd
+        72cc516954905e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e
+        1b05093d3f130f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c
+        65ed64e1924ffd04d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02
+        380582f3188bb94ebbf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad
+        8713bb6b835cb08098ed15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a
+        043fb7fb78d0203260445028201000997634c477c1a039d44c810b2aaa3c7862b0b88d3708272e1e15f66fc9
+        389709f8a11f3ea6a5af7effa2d01c189c50f0d5bcbe3fa272e56cfc4a4e1d388a9dcd65df8628902556c8b6
+        bb6a641709b5a35dd2622c73d4640bfa1359d0e76e1f219f8e33eb9bd0b59ec198eb2fccaae0346bd8b401e1
+        2e3c67cb629569c185a2e0f35a2f741644c1cca5ebb139d77a89a2953fc5e30048c0e619f07c8d21d1e56b8a
+        f07193d0fdf3f49cd49f2ef3138b5138862f1470bd2d16e34a2b9e7777a6c8c8d4cb94b4e8b5d616cd539375
+        3e7b0f31cc7da559ba8e98d888914e334773baf498ad88d9631eb5fe32e53a4145bf0ba548bf2b0a50c63f67
+        b14e398a34b0d02818100f364e16ef12017ec95b192308c01e087cee619ab50a5d537cc01841dc92b30bcef0
+        d9f2c6bbd5dc10bdf5b9f6c354a4f9f210520caa72b4f5c36b8d33f10324c55956141891e45b84b49f59ea5b
+        fac6ffa38900aca5099afcd02f6a8257c41ce5bb2e4153832b5c22f91eb389fa2035c3cf9b3374531c483cb3
+        0ceb007259b1d02818100d95c0995fabdfcbccfe63e0f3262f806869ab571e1793e97234cbb9bd4b6872a769
+        5389955cf6ce7245345a5df8021f7d9519563afbc2667f5311fad093de2c02cd069109b630d68e3bf767f8a7
+        88a6add7ab199f2d8f6a40b7c1910d9dab52ac80d0d333aacab321a9309dc884ddd4db637a0c1115ae3c08ef
+        a683f99eb733102818100d4f7ef9f9be947ba9d1b3bce59e5608839a1e464553e1b6d113d0f636758bbb473a
+        89f9949836ead40b6f314eee3ac2244d7b6f379e83f30e17783ad68d5086897889c051c26e1558a4a220bfc2
+        42995860644b5d7a3ef513ac612b9c6c0a2021bb6b9cde7dbd21fe5858746c79563e9bab7d06b43aab43a0a5
+        cafab4519a6610281803db2386f174f2ea3ef4b6bd1601749ce2d6afa8be35f051178621f16a23ad36eba03c
+        073136389241969e5b87edb0fcbcf1a0bd6e1aee97bae1f2d97aabe19b17dbe7d9492cdb68a0897f572350e8
+        46c669660dc978c5068da598524fca8a136358d3e5f8f6ad5cf78d9089c93f473189162ce0f8c4902a19902b
+        633b3e6926d02818100ddc971183dcf3450c43e06ba2af32379eedeb2d678513fb706b75a006098154041f4b
+        09e6be385d4b25d80ec241c899e4a986a17b0a121daab91a1e4fc5a1802a7074df3fb3f7661f0e1c97799e36
+        d21de937cc4209585db30a56af0a228e001036ed792625e5368ce101574a2e9767f07338949f0afdf358cecd
+        18c6d6f3f55",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let key_pair = RsaKeyPair::from_der(&private_key).unwrap();
+    let rng = SystemRandom::default();
+
+    let mut sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair.sign(&ALG, &rng, &msg, sig.as_mut_slice()).unwrap();
+
+    // Due to the padding, the output is not deterministic, but can still be verified.
+    assert!(sig.iter().any(|&b| b != 0));
+    signature::UnparsedPublicKey::new(&VERIF_ALG, key_pair.public_key().as_ref())
+        .verify(&msg, &sig)
+        .unwrap();
+
+    // Also, attempting to verify with a wrong PSS salt length should not work.
+    signature::UnparsedPublicKey::new(
+        &signature::RSA_PSS_2048_8192_SHA256,
+        key_pair.public_key().as_ref(),
+    )
+    .verify(&msg, &sig)
+    .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG1, key_pair.public_key().as_ref())
+        .verify(&msg, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG2, key_pair.public_key().as_ref())
+        .verify(&msg, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_sign_digest_psssaltlen_custom() {
+    const ALG: RsaSignatureEncoding =
+        signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const WRONG_VERIF_ALG1: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_VERIF_ALG2: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(0xFFFE));
+
+    let private_key = from_dirty_hex(
+        r"308204a40201000282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd
+        72cc516954905e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e
+        1b05093d3f130f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c
+        65ed64e1924ffd04d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02
+        380582f3188bb94ebbf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad
+        8713bb6b835cb08098ed15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a
+        043fb7fb78d0203260445028201000997634c477c1a039d44c810b2aaa3c7862b0b88d3708272e1e15f66fc9
+        389709f8a11f3ea6a5af7effa2d01c189c50f0d5bcbe3fa272e56cfc4a4e1d388a9dcd65df8628902556c8b6
+        bb6a641709b5a35dd2622c73d4640bfa1359d0e76e1f219f8e33eb9bd0b59ec198eb2fccaae0346bd8b401e1
+        2e3c67cb629569c185a2e0f35a2f741644c1cca5ebb139d77a89a2953fc5e30048c0e619f07c8d21d1e56b8a
+        f07193d0fdf3f49cd49f2ef3138b5138862f1470bd2d16e34a2b9e7777a6c8c8d4cb94b4e8b5d616cd539375
+        3e7b0f31cc7da559ba8e98d888914e334773baf498ad88d9631eb5fe32e53a4145bf0ba548bf2b0a50c63f67
+        b14e398a34b0d02818100f364e16ef12017ec95b192308c01e087cee619ab50a5d537cc01841dc92b30bcef0
+        d9f2c6bbd5dc10bdf5b9f6c354a4f9f210520caa72b4f5c36b8d33f10324c55956141891e45b84b49f59ea5b
+        fac6ffa38900aca5099afcd02f6a8257c41ce5bb2e4153832b5c22f91eb389fa2035c3cf9b3374531c483cb3
+        0ceb007259b1d02818100d95c0995fabdfcbccfe63e0f3262f806869ab571e1793e97234cbb9bd4b6872a769
+        5389955cf6ce7245345a5df8021f7d9519563afbc2667f5311fad093de2c02cd069109b630d68e3bf767f8a7
+        88a6add7ab199f2d8f6a40b7c1910d9dab52ac80d0d333aacab321a9309dc884ddd4db637a0c1115ae3c08ef
+        a683f99eb733102818100d4f7ef9f9be947ba9d1b3bce59e5608839a1e464553e1b6d113d0f636758bbb473a
+        89f9949836ead40b6f314eee3ac2244d7b6f379e83f30e17783ad68d5086897889c051c26e1558a4a220bfc2
+        42995860644b5d7a3ef513ac612b9c6c0a2021bb6b9cde7dbd21fe5858746c79563e9bab7d06b43aab43a0a5
+        cafab4519a6610281803db2386f174f2ea3ef4b6bd1601749ce2d6afa8be35f051178621f16a23ad36eba03c
+        073136389241969e5b87edb0fcbcf1a0bd6e1aee97bae1f2d97aabe19b17dbe7d9492cdb68a0897f572350e8
+        46c669660dc978c5068da598524fca8a136358d3e5f8f6ad5cf78d9089c93f473189162ce0f8c4902a19902b
+        633b3e6926d02818100ddc971183dcf3450c43e06ba2af32379eedeb2d678513fb706b75a006098154041f4b
+        09e6be385d4b25d80ec241c899e4a986a17b0a121daab91a1e4fc5a1802a7074df3fb3f7661f0e1c97799e36
+        d21de937cc4209585db30a56af0a228e001036ed792625e5368ce101574a2e9767f07338949f0afdf358cecd
+        18c6d6f3f55",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let msg_hash = digest::digest(&SHA256, &msg);
+    let key_pair = RsaKeyPair::from_der(&private_key).unwrap();
+
+    let mut sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair
+        .sign_digest(&ALG, &msg_hash, sig.as_mut_slice())
+        .unwrap();
+
+    // Due to the padding, the output is not deterministic, but can still be verified.
+    assert!(sig.iter().any(|&b| b != 0));
+    signature::UnparsedPublicKey::new(&VERIF_ALG, key_pair.public_key().as_ref())
+        .verify_digest(&msg_hash, &sig)
+        .unwrap();
+
+    // Also, attempting to verify with a wrong PSS salt length should not work.
+    signature::UnparsedPublicKey::new(
+        &signature::RSA_PSS_2048_8192_SHA256,
+        key_pair.public_key().as_ref(),
+    )
+    .verify_digest(&msg_hash, &sig)
+    .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG1, key_pair.public_key().as_ref())
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG2, key_pair.public_key().as_ref())
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_rsa_verify_psssaltlen_custom() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const WRONG_ALG1: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_ALG2: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(122));
+    const WRONG_ALG3: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(124));
+
+    let public_key = from_dirty_hex(
+        "3082010a0282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc5169549
+         05e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130
+         f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd0
+         4d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94eb
+         bf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098e
+         d15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d0203260445",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    // Self-generated, but externally cross-checked using `openssl dgst -sha256
+    // -verify pub.pem -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:123
+    // -signature sig.bin msg.bin`: it works.
+    let sig = from_dirty_hex(
+        "0a66fb00d7853243824473e88f4d9aff7abfcbe5bc08f6188fabc391a8ca3c024458f7a15866c1f5e9a817e512
+         0f84d9a7a0332f97a9d58f4c5188c97f5447ce2a8afba505a8d4250a51234eab7c4983dd01cd7f8af1f32e9cd8
+         32d6c28791f985b255e6031ad4658ba1a04c0bf6b6f4bc0d79e4be10920d96a3015c936aa0291a054d849cc3ce
+         b013eb243423789e2dd3bcb7cfcbf2c637a31f80af3060b93e3abc43712babe1da79999a22ca488a3e4418a61f
+         4a206ca3641c2b2850be6b5c5c9ddeef6a85a198ce653d829a9ec6d5c6267a4ef9622ed6b3e0552e3c418cb549
+         a60175e1f003412b790c31e1bbd5aeada044e79dd6649b126e9058a60dcd08",
+    );
+
+    // Verifying using the correct algorithm should work.
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .verify(&msg, &sig)
+        .unwrap();
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .parse()
+        .unwrap()
+        .verify_sig(&msg, &sig)
+        .unwrap();
+
+    // However, verifying with an incorrect PSS salt length should not.
+    signature::UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG1, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG2, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG3, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_rsa_verify_digest_psssaltlen_custom() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    const WRONG_ALG1: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_ALG2: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(122));
+    const WRONG_ALG3: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(124));
+
+    let public_key = from_dirty_hex(
+        "3082010a0282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc5169549
+         05e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130
+         f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd0
+         4d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94eb
+         bf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098e
+         d15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d0203260445",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let msg_hash = digest::digest(&SHA256, &msg);
+    // Same as the above.
+    let sig = from_dirty_hex(
+        "0a66fb00d7853243824473e88f4d9aff7abfcbe5bc08f6188fabc391a8ca3c024458f7a15866c1f5e9a817e512
+         0f84d9a7a0332f97a9d58f4c5188c97f5447ce2a8afba505a8d4250a51234eab7c4983dd01cd7f8af1f32e9cd8
+         32d6c28791f985b255e6031ad4658ba1a04c0bf6b6f4bc0d79e4be10920d96a3015c936aa0291a054d849cc3ce
+         b013eb243423789e2dd3bcb7cfcbf2c637a31f80af3060b93e3abc43712babe1da79999a22ca488a3e4418a61f
+         4a206ca3641c2b2850be6b5c5c9ddeef6a85a198ce653d829a9ec6d5c6267a4ef9622ed6b3e0552e3c418cb549
+         a60175e1f003412b790c31e1bbd5aeada044e79dd6649b126e9058a60dcd08",
+    );
+
+    // Verifying using the correct algorithm should work.
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap();
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .parse()
+        .unwrap()
+        .verify_digest_sig(&msg_hash, &sig)
+        .unwrap();
+
+    // However, verifying with an incorrect PSS salt length should not.
+    signature::UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG1, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG2, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG3, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_sign_psssaltlen_max() {
+    const ALG: RsaSignatureEncoding =
+        signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(0xFFFE));
+
+    let private_key = from_dirty_hex(
+        r"308204a40201000282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd
+        72cc516954905e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e
+        1b05093d3f130f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c
+        65ed64e1924ffd04d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02
+        380582f3188bb94ebbf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad
+        8713bb6b835cb08098ed15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a
+        043fb7fb78d0203260445028201000997634c477c1a039d44c810b2aaa3c7862b0b88d3708272e1e15f66fc9
+        389709f8a11f3ea6a5af7effa2d01c189c50f0d5bcbe3fa272e56cfc4a4e1d388a9dcd65df8628902556c8b6
+        bb6a641709b5a35dd2622c73d4640bfa1359d0e76e1f219f8e33eb9bd0b59ec198eb2fccaae0346bd8b401e1
+        2e3c67cb629569c185a2e0f35a2f741644c1cca5ebb139d77a89a2953fc5e30048c0e619f07c8d21d1e56b8a
+        f07193d0fdf3f49cd49f2ef3138b5138862f1470bd2d16e34a2b9e7777a6c8c8d4cb94b4e8b5d616cd539375
+        3e7b0f31cc7da559ba8e98d888914e334773baf498ad88d9631eb5fe32e53a4145bf0ba548bf2b0a50c63f67
+        b14e398a34b0d02818100f364e16ef12017ec95b192308c01e087cee619ab50a5d537cc01841dc92b30bcef0
+        d9f2c6bbd5dc10bdf5b9f6c354a4f9f210520caa72b4f5c36b8d33f10324c55956141891e45b84b49f59ea5b
+        fac6ffa38900aca5099afcd02f6a8257c41ce5bb2e4153832b5c22f91eb389fa2035c3cf9b3374531c483cb3
+        0ceb007259b1d02818100d95c0995fabdfcbccfe63e0f3262f806869ab571e1793e97234cbb9bd4b6872a769
+        5389955cf6ce7245345a5df8021f7d9519563afbc2667f5311fad093de2c02cd069109b630d68e3bf767f8a7
+        88a6add7ab199f2d8f6a40b7c1910d9dab52ac80d0d333aacab321a9309dc884ddd4db637a0c1115ae3c08ef
+        a683f99eb733102818100d4f7ef9f9be947ba9d1b3bce59e5608839a1e464553e1b6d113d0f636758bbb473a
+        89f9949836ead40b6f314eee3ac2244d7b6f379e83f30e17783ad68d5086897889c051c26e1558a4a220bfc2
+        42995860644b5d7a3ef513ac612b9c6c0a2021bb6b9cde7dbd21fe5858746c79563e9bab7d06b43aab43a0a5
+        cafab4519a6610281803db2386f174f2ea3ef4b6bd1601749ce2d6afa8be35f051178621f16a23ad36eba03c
+        073136389241969e5b87edb0fcbcf1a0bd6e1aee97bae1f2d97aabe19b17dbe7d9492cdb68a0897f572350e8
+        46c669660dc978c5068da598524fca8a136358d3e5f8f6ad5cf78d9089c93f473189162ce0f8c4902a19902b
+        633b3e6926d02818100ddc971183dcf3450c43e06ba2af32379eedeb2d678513fb706b75a006098154041f4b
+        09e6be385d4b25d80ec241c899e4a986a17b0a121daab91a1e4fc5a1802a7074df3fb3f7661f0e1c97799e36
+        d21de937cc4209585db30a56af0a228e001036ed792625e5368ce101574a2e9767f07338949f0afdf358cecd
+        18c6d6f3f55",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let key_pair = RsaKeyPair::from_der(&private_key).unwrap();
+    let rng = SystemRandom::default();
+
+    let mut sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair.sign(&ALG, &rng, &msg, sig.as_mut_slice()).unwrap();
+
+    // Due to the padding, the output is not deterministic, but can still be verified.
+    assert!(sig.iter().any(|&b| b != 0));
+    signature::UnparsedPublicKey::new(&VERIF_ALG, key_pair.public_key().as_ref())
+        .verify(&msg, &sig)
+        .unwrap();
+
+    // Also, attempting to verify with a wrong PSS salt length should not work.
+    signature::UnparsedPublicKey::new(
+        &signature::RSA_PSS_2048_8192_SHA256,
+        key_pair.public_key().as_ref(),
+    )
+    .verify(&msg, &sig)
+    .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG, key_pair.public_key().as_ref())
+        .verify(&msg, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_sign_digest_psssaltlen_max() {
+    const ALG: RsaSignatureEncoding =
+        signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_VERIF_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(0xFFFE));
+
+    let private_key = from_dirty_hex(
+        r"308204a40201000282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd
+        72cc516954905e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e
+        1b05093d3f130f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c
+        65ed64e1924ffd04d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02
+        380582f3188bb94ebbf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad
+        8713bb6b835cb08098ed15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a
+        043fb7fb78d0203260445028201000997634c477c1a039d44c810b2aaa3c7862b0b88d3708272e1e15f66fc9
+        389709f8a11f3ea6a5af7effa2d01c189c50f0d5bcbe3fa272e56cfc4a4e1d388a9dcd65df8628902556c8b6
+        bb6a641709b5a35dd2622c73d4640bfa1359d0e76e1f219f8e33eb9bd0b59ec198eb2fccaae0346bd8b401e1
+        2e3c67cb629569c185a2e0f35a2f741644c1cca5ebb139d77a89a2953fc5e30048c0e619f07c8d21d1e56b8a
+        f07193d0fdf3f49cd49f2ef3138b5138862f1470bd2d16e34a2b9e7777a6c8c8d4cb94b4e8b5d616cd539375
+        3e7b0f31cc7da559ba8e98d888914e334773baf498ad88d9631eb5fe32e53a4145bf0ba548bf2b0a50c63f67
+        b14e398a34b0d02818100f364e16ef12017ec95b192308c01e087cee619ab50a5d537cc01841dc92b30bcef0
+        d9f2c6bbd5dc10bdf5b9f6c354a4f9f210520caa72b4f5c36b8d33f10324c55956141891e45b84b49f59ea5b
+        fac6ffa38900aca5099afcd02f6a8257c41ce5bb2e4153832b5c22f91eb389fa2035c3cf9b3374531c483cb3
+        0ceb007259b1d02818100d95c0995fabdfcbccfe63e0f3262f806869ab571e1793e97234cbb9bd4b6872a769
+        5389955cf6ce7245345a5df8021f7d9519563afbc2667f5311fad093de2c02cd069109b630d68e3bf767f8a7
+        88a6add7ab199f2d8f6a40b7c1910d9dab52ac80d0d333aacab321a9309dc884ddd4db637a0c1115ae3c08ef
+        a683f99eb733102818100d4f7ef9f9be947ba9d1b3bce59e5608839a1e464553e1b6d113d0f636758bbb473a
+        89f9949836ead40b6f314eee3ac2244d7b6f379e83f30e17783ad68d5086897889c051c26e1558a4a220bfc2
+        42995860644b5d7a3ef513ac612b9c6c0a2021bb6b9cde7dbd21fe5858746c79563e9bab7d06b43aab43a0a5
+        cafab4519a6610281803db2386f174f2ea3ef4b6bd1601749ce2d6afa8be35f051178621f16a23ad36eba03c
+        073136389241969e5b87edb0fcbcf1a0bd6e1aee97bae1f2d97aabe19b17dbe7d9492cdb68a0897f572350e8
+        46c669660dc978c5068da598524fca8a136358d3e5f8f6ad5cf78d9089c93f473189162ce0f8c4902a19902b
+        633b3e6926d02818100ddc971183dcf3450c43e06ba2af32379eedeb2d678513fb706b75a006098154041f4b
+        09e6be385d4b25d80ec241c899e4a986a17b0a121daab91a1e4fc5a1802a7074df3fb3f7661f0e1c97799e36
+        d21de937cc4209585db30a56af0a228e001036ed792625e5368ce101574a2e9767f07338949f0afdf358cecd
+        18c6d6f3f55",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let msg_hash = digest::digest(&SHA256, &msg);
+    let key_pair = RsaKeyPair::from_der(&private_key).unwrap();
+
+    let mut sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair
+        .sign_digest(&ALG, &msg_hash, sig.as_mut_slice())
+        .unwrap();
+
+    // Due to the padding, the output is not deterministic, but can still be verified.
+    assert!(sig.iter().any(|&b| b != 0));
+    signature::UnparsedPublicKey::new(&VERIF_ALG, key_pair.public_key().as_ref())
+        .verify_digest(&msg_hash, &sig)
+        .unwrap();
+
+    // Also, attempting to verify with a wrong PSS salt length should not work.
+    signature::UnparsedPublicKey::new(
+        &signature::RSA_PSS_2048_8192_SHA256,
+        key_pair.public_key().as_ref(),
+    )
+    .verify_digest(&msg_hash, &sig)
+    .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_VERIF_ALG, key_pair.public_key().as_ref())
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_rsa_verify_psssaltlen_max() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+
+    let public_key = from_dirty_hex(
+        "3082010a0282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc5169549
+         05e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130
+         f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd0
+         4d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94eb
+         bf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098e
+         d15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d0203260445",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    // Self-generated, but externally cross-checked using `openssl dgst -sha256
+    // -verify pub.pem -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:max
+    // -signature sig.bin msg.bin`: it works.
+    let sig = from_dirty_hex(
+        "40188fc17f10e571cc202d6f3331312108f3c8a7a57e8dac377f100d0d35b607f0aee4c2bded2f3c6ad1d96144
+         bcff63dfc28760272248c388dcd110c9f0fb164a68923c1958cfa9e969b28a577a737ab46814fe6308707a8dbe
+         635df8c74baa128fc93cd58a5b01a0295893e24074051cbdb9f92e799784bbe654b5d1e1c58156622fffe58b63
+         25efea3971a029c7b710204e38d03f439b8fdfa63f5fb84d877f6e43ed5e89cbb224224fba6e74ffafa1bda4f9
+         b025209adbe0664eced1ac428203e494efe9a32421d3a095178daec8e6e35e845a8b2b9b3d1b37f510239c79c4
+         8aa95a1e7f53c329dd39b09be0e85df51d533183abfb3faf895e1659be3b3c",
+    );
+
+    // Verifying using the correct algorithm should work.
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .verify(&msg, &sig)
+        .unwrap();
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .parse()
+        .unwrap()
+        .verify_sig(&msg, &sig)
+        .unwrap();
+
+    // However, verifying with an incorrect PSS salt length should not.
+    signature::UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG, &public_key)
+        .verify(&msg, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_rsa_verify_digest_psssaltlen_max() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    const WRONG_ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+
+    let public_key = from_dirty_hex(
+        "3082010a0282010100cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc5169549
+         05e9fef908d45e13006adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130
+         f984c07a772a3683f4dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd0
+         4d30b2142cc262f6e0048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94eb
+         bf05d31487a09aff01fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098e
+         d15ba31ee4ba728a8c8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d0203260445",
+    );
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    let msg_hash = digest::digest(&SHA256, &msg);
+    // Same as the above.
+    let sig = from_dirty_hex(
+        "40188fc17f10e571cc202d6f3331312108f3c8a7a57e8dac377f100d0d35b607f0aee4c2bded2f3c6ad1d96144
+         bcff63dfc28760272248c388dcd110c9f0fb164a68923c1958cfa9e969b28a577a737ab46814fe6308707a8dbe
+         635df8c74baa128fc93cd58a5b01a0295893e24074051cbdb9f92e799784bbe654b5d1e1c58156622fffe58b63
+         25efea3971a029c7b710204e38d03f439b8fdfa63f5fb84d877f6e43ed5e89cbb224224fba6e74ffafa1bda4f9
+         b025209adbe0664eced1ac428203e494efe9a32421d3a095178daec8e6e35e845a8b2b9b3d1b37f510239c79c4
+         8aa95a1e7f53c329dd39b09be0e85df51d533183abfb3faf895e1659be3b3c",
+    );
+
+    // Verifying using the correct algorithm should work.
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap();
+    signature::UnparsedPublicKey::new(&ALG, &public_key)
+        .parse()
+        .unwrap()
+        .verify_digest_sig(&msg_hash, &sig)
+        .unwrap();
+
+    // However, verifying with an incorrect PSS salt length should not.
+    signature::UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+    signature::UnparsedPublicKey::new(&WRONG_ALG, &public_key)
+        .verify_digest(&msg_hash, &sig)
+        .unwrap_err();
+}
+
+#[test]
+fn test_rsa_primitive_verification_psssaltlen_custom() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
+    let n = from_dirty_hex(
+        "cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc516954905e9fef908d45e1300
+         6adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130f984c07a772a3683f4
+         dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd04d30b2142cc262f6e0
+         048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94ebbf05d31487a09aff01
+         fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098ed15ba31ee4ba728a8c
+         8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d",
+    );
+    let e = from_dirty_hex("260445");
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    // Same as previously.
+    let sig = from_dirty_hex(
+        "0a66fb00d7853243824473e88f4d9aff7abfcbe5bc08f6188fabc391a8ca3c024458f7a15866c1f5e9a817e512
+         0f84d9a7a0332f97a9d58f4c5188c97f5447ce2a8afba505a8d4250a51234eab7c4983dd01cd7f8af1f32e9cd8
+         32d6c28791f985b255e6031ad4658ba1a04c0bf6b6f4bc0d79e4be10920d96a3015c936aa0291a054d849cc3ce
+         b013eb243423789e2dd3bcb7cfcbf2c637a31f80af3060b93e3abc43712babe1da79999a22ca488a3e4418a61f
+         4a206ca3641c2b2850be6b5c5c9ddeef6a85a198ce653d829a9ec6d5c6267a4ef9622ed6b3e0552e3c418cb549
+         a60175e1f003412b790c31e1bbd5aeada044e79dd6649b126e9058a60dcd08",
+    );
+
+    let public_key = RsaPublicKeyComponents { n: &n, e: &e };
+    public_key.verify(&ALG, &msg, &sig).unwrap();
+}
+
+#[test]
+fn test_rsa_primitive_verification_psssaltlen_max() {
+    const ALG: RsaParameters =
+        signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Max);
+    let n = from_dirty_hex(
+        "cea80475324c1dc8347827818da58bac069d3419c614a6ea1ac6a3b510dcd72cc516954905e9fef908d45e1300
+         6adf27d467a7d83c111d1a5df15ef293771aefb920032a5bb989f8e4f5e1b05093d3f130f984c07a772a3683f4
+         dc6fb28a96815b32123ccdd13954f19d5b8b24a103e771a34c328755c65ed64e1924ffd04d30b2142cc262f6e0
+         048fef6dbc652f21479ea1c4b1d66d28f4d46ef7185e390cbfa2e02380582f3188bb94ebbf05d31487a09aff01
+         fcbb4cd4bfd1f0a833b38c11813c84360bb53c7d4481031c40bad8713bb6b835cb08098ed15ba31ee4ba728a8c
+         8e10f7294e1b4163b7aee57277bfd881a6f9d43e02c6925aa3a043fb7fb78d",
+    );
+    let e = from_dirty_hex("260445");
+    let msg = from_dirty_hex(
+        "5af283b1b76ab2a695d794c23b35ca7371fc779e92ebf589e304c7f923d8cf976304c19818fcd89d6f07c8d8e0
+         8bf371068bdf28ae6ee83b2e02328af8c0e2f96e528e16f852f1fc5455e4772e288a68f159ca6bdcf902b858a1
+         f94789b3163823e2d0717ff56689eec7d0e54d93f520d96e1eb04515abc70ae90578ff38d31b",
+    );
+    // Same as previously.
+    let sig = from_dirty_hex(
+        "40188fc17f10e571cc202d6f3331312108f3c8a7a57e8dac377f100d0d35b607f0aee4c2bded2f3c6ad1d96144
+         bcff63dfc28760272248c388dcd110c9f0fb164a68923c1958cfa9e969b28a577a737ab46814fe6308707a8dbe
+         635df8c74baa128fc93cd58a5b01a0295893e24074051cbdb9f92e799784bbe654b5d1e1c58156622fffe58b63
+         25efea3971a029c7b710204e38d03f439b8fdfa63f5fb84d877f6e43ed5e89cbb224224fba6e74ffafa1bda4f9
+         b025209adbe0664eced1ac428203e494efe9a32421d3a095178daec8e6e35e845a8b2b9b3d1b37f510239c79c4
+         8aa95a1e7f53c329dd39b09be0e85df51d533183abfb3faf895e1659be3b3c",
+    );
+
+    let public_key = RsaPublicKeyComponents { n: &n, e: &e };
+    public_key.verify(&ALG, &msg, &sig).unwrap();
 }
 
 #[test]
