@@ -17,6 +17,7 @@ use core::fmt::{Debug, Formatter};
 use std::ffi::c_int;
 
 /// A PQDSA (Post-Quantum Digital Signature Algorithm) key pair, used for signing and verification.
+#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct PqdsaKeyPair {
     algorithm: &'static PqdsaSigningAlgorithm,

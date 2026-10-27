@@ -28,6 +28,7 @@ use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 
 /// An ECDSA key pair, used for signing.
+#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,

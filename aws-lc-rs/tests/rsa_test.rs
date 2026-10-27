@@ -24,6 +24,7 @@ use std::collections::HashSet;
 fn rsa_traits() {
     test::compile_time_assert_send::<RsaKeyPair>();
     test::compile_time_assert_sync::<RsaKeyPair>();
+    test::compile_time_assert_clone::<RsaKeyPair>();
     test::compile_time_assert_send::<RsaSubjectPublicKey>();
     test::compile_time_assert_sync::<RsaSubjectPublicKey>();
     test::compile_time_assert_send::<RsaPublicKeyComponents<&[u8]>>();
@@ -95,6 +96,29 @@ fn rsa_parameters_equality() {
         &signature::RSA_PKCS1_2048_8192_SHA384,
         &signature::RSA_PKCS1_2048_8192_SHA512
     );
+}
+
+#[test]
+fn rsa_key_pair_clone() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_2048.p8");
+    const MESSAGE: &[u8] = b"hello, world";
+
+    let rng = rand::SystemRandom::new();
+    let key_pair = RsaKeyPair::from_pkcs8(PRIVATE_KEY).unwrap();
+    let cloned = key_pair.clone();
+    assert_eq!(key_pair.public_key().as_ref(), cloned.public_key().as_ref());
+    let public_key = cloned.public_key().as_ref().to_vec();
+
+    // The clone must remain usable after the original is dropped.
+    drop(key_pair);
+
+    let mut sig = vec![0; cloned.public_modulus_len()];
+    cloned
+        .sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut sig)
+        .unwrap();
+    UnparsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256, &public_key)
+        .verify(MESSAGE, &sig)
+        .unwrap();
 }
 
 #[test]

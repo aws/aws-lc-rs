@@ -3,8 +3,8 @@
 
 use aws_lc_rs::encoding::{AsDer, AsRawBytes};
 use aws_lc_rs::signature::{
-    KeyPair, ParsedPublicKey, PqdsaKeyPair, VerificationAlgorithm, ML_DSA_44, ML_DSA_44_SIGNING,
-    ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87, ML_DSA_87_SIGNING,
+    KeyPair, ParsedPublicKey, PqdsaKeyPair, UnparsedPublicKey, VerificationAlgorithm, ML_DSA_44,
+    ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87, ML_DSA_87_SIGNING,
 };
 use aws_lc_rs::{test, test_file};
 
@@ -95,6 +95,32 @@ macro_rules! mldsa_sigver_digest_test {
             Ok(())
         });
     };
+}
+
+#[test]
+fn mldsa_traits() {
+    test::compile_time_assert_send::<PqdsaKeyPair>();
+    test::compile_time_assert_sync::<PqdsaKeyPair>();
+    test::compile_time_assert_clone::<PqdsaKeyPair>();
+}
+
+#[test]
+fn mldsa_key_pair_clone() {
+    const MESSAGE: &[u8] = b"hello, world";
+
+    let key_pair = PqdsaKeyPair::generate(&ML_DSA_44_SIGNING).unwrap();
+    let cloned = key_pair.clone();
+    assert_eq!(key_pair.public_key().as_ref(), cloned.public_key().as_ref());
+    let public_key = cloned.public_key().as_ref().to_vec();
+
+    // The clone must remain usable after the original is dropped.
+    drop(key_pair);
+
+    let mut sig = vec![0; ML_DSA_44_SIGNING.signature_len()];
+    let sig_len = cloned.sign(MESSAGE, &mut sig).unwrap();
+    UnparsedPublicKey::new(&ML_DSA_44, &public_key)
+        .verify(MESSAGE, &sig[..sig_len])
+        .unwrap();
 }
 
 #[test]
