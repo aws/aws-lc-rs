@@ -115,6 +115,7 @@ pub(crate) fn parse_ed25519_public_key(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKE
 }
 
 /// An Ed25519 key pair, for signing.
+#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
     evp_pkey: LcPtr<EVP_PKEY>,

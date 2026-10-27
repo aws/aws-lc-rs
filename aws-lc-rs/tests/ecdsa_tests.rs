@@ -18,11 +18,31 @@ use aws_lc_rs::{digest, test, test_file};
 fn ecdsa_traits() {
     test::compile_time_assert_send::<EcdsaKeyPair>();
     test::compile_time_assert_sync::<EcdsaKeyPair>();
+    test::compile_time_assert_clone::<EcdsaKeyPair>();
     test::compile_time_assert_send::<Signature>();
     test::compile_time_assert_sync::<Signature>();
 
     test::compile_time_assert_eq::<EcdsaVerificationAlgorithm>();
     test::compile_time_assert_eq::<EcdsaSigningAlgorithm>();
+}
+
+#[test]
+fn ecdsa_key_pair_clone() {
+    const MESSAGE: &[u8] = b"hello, world";
+
+    let rng = SystemRandom::new();
+    let key_pair = EcdsaKeyPair::generate(&signature::ECDSA_P256_SHA256_ASN1_SIGNING).unwrap();
+    let cloned = key_pair.clone();
+    assert_eq!(key_pair.public_key().as_ref(), cloned.public_key().as_ref());
+    let public_key = cloned.public_key().as_ref().to_vec();
+
+    // The clone must remain usable after the original is dropped.
+    drop(key_pair);
+
+    let sig = cloned.sign(&rng, MESSAGE).unwrap();
+    UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_ASN1, &public_key)
+        .verify(MESSAGE, sig.as_ref())
+        .unwrap();
 }
 
 #[test]

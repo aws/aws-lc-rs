@@ -14,10 +14,29 @@ use aws_lc_rs::{error, test, test_file};
 fn test_ed25519_traits() {
     test::compile_time_assert_send::<Ed25519KeyPair>();
     test::compile_time_assert_sync::<Ed25519KeyPair>();
+    test::compile_time_assert_clone::<Ed25519KeyPair>();
 
     test::compile_time_assert_eq::<EdDSAParameters>();
     // `EdDSAParameters` carries no state, so all values are equal.
     assert_eq!(&ED25519, &ED25519);
+}
+
+#[test]
+fn test_ed25519_key_pair_clone() {
+    const MESSAGE: &[u8] = b"hello, world";
+
+    let key_pair = Ed25519KeyPair::generate().unwrap();
+    let cloned = key_pair.clone();
+    assert_eq!(key_pair.public_key().as_ref(), cloned.public_key().as_ref());
+    let public_key = cloned.public_key().as_ref().to_vec();
+
+    // The clone must remain usable after the original is dropped.
+    drop(key_pair);
+
+    let sig = cloned.sign(MESSAGE);
+    signature::UnparsedPublicKey::new(&ED25519, &public_key)
+        .verify(MESSAGE, sig.as_ref())
+        .unwrap();
 }
 
 /// Test vectors from `BoringSSL`.
