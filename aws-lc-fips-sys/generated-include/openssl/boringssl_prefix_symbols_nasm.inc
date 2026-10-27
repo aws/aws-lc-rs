@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_14_3
+%define BORINGSSL_PREFIX aws_lc_fips_0_14_4
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1081,6 +1081,8 @@
 %xdefine _ERR_save_state _ %+ BORINGSSL_PREFIX %+ _ERR_save_state
 %xdefine _ERR_set_error_data _ %+ BORINGSSL_PREFIX %+ _ERR_set_error_data
 %xdefine _ERR_set_mark _ %+ BORINGSSL_PREFIX %+ _ERR_set_mark
+%xdefine _ERR_suppress_errors_begin _ %+ BORINGSSL_PREFIX %+ _ERR_suppress_errors_begin
+%xdefine _ERR_suppress_errors_end _ %+ BORINGSSL_PREFIX %+ _ERR_suppress_errors_end
 %xdefine _EVP_AEAD_CTX_aead _ %+ BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_aead
 %xdefine _EVP_AEAD_CTX_cleanup _ %+ BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_cleanup
 %xdefine _EVP_AEAD_CTX_deserialize_state _ %+ BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_deserialize_state
@@ -5187,6 +5189,8 @@
 %xdefine ERR_save_state BORINGSSL_PREFIX %+ _ERR_save_state
 %xdefine ERR_set_error_data BORINGSSL_PREFIX %+ _ERR_set_error_data
 %xdefine ERR_set_mark BORINGSSL_PREFIX %+ _ERR_set_mark
+%xdefine ERR_suppress_errors_begin BORINGSSL_PREFIX %+ _ERR_suppress_errors_begin
+%xdefine ERR_suppress_errors_end BORINGSSL_PREFIX %+ _ERR_suppress_errors_end
 %xdefine EVP_AEAD_CTX_aead BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_aead
 %xdefine EVP_AEAD_CTX_cleanup BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_cleanup
 %xdefine EVP_AEAD_CTX_deserialize_state BORINGSSL_PREFIX %+ _EVP_AEAD_CTX_deserialize_state

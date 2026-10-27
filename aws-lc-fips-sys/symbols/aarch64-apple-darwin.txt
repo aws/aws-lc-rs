@@ -1149,6 +1149,8 @@ ERR_save_state
 ERR_SAVE_STATE_free
 ERR_set_error_data
 ERR_set_mark
+ERR_suppress_errors_begin
+ERR_suppress_errors_end
 EVP_add_cipher_alias
 EVP_add_digest
 EVP_aead_aes_128_cbc_sha1_tls
