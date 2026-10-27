@@ -8,7 +8,19 @@ use aws_lc_rs::{digest, test, test_file};
 /// Test vectors from `BoringSSL`, `Go`, and other sources.
 #[test]
 fn digest_misc() {
-    test::run(test_file!("data/digest_tests.txt"), |section, test_case| {
+    run_digest_misc_test(test_file!("data/digest_tests.txt"));
+}
+
+/// Keccak-256 cross-check vectors computed with an implementation unrelated to
+/// AWS-LC, including the well-known Ethereum constants.
+#[cfg(all(feature = "unstable", not(feature = "fips")))]
+#[test]
+fn digest_misc_keccak256() {
+    run_digest_misc_test(test_file!("data/keccak256_tests.txt"));
+}
+
+fn run_digest_misc_test(test_file: test::File) {
+    test::run(test_file, |section, test_case| {
         assert_eq!(section, "");
         let digest_alg = test_case.consume_digest_alg("Hash").unwrap();
         let input = test_case.consume_bytes("Input");
@@ -38,6 +50,10 @@ mod digest_shavs {
     enum TestType {
         Fips202,
         Fips180_4,
+        /// A known-answer test file that carries no `[L = ...]` section
+        /// header, as the AWS-LC Keccak-256 vector files do.
+        #[cfg(all(feature = "unstable", not(feature = "fips")))]
+        NoSection,
     }
 
     fn run_known_answer_test(
@@ -48,6 +64,8 @@ mod digest_shavs {
         let section_name = &match test_type {
             TestType::Fips180_4 => format!("L = {}", digest_alg.output_len),
             TestType::Fips202 => format!("L = {}", 8 * digest_alg.output_len),
+            #[cfg(all(feature = "unstable", not(feature = "fips")))]
+            TestType::NoSection => String::new(),
         };
         test::run(test_file, |section, test_case| {
             assert_eq!(section_name, section);
@@ -230,6 +248,35 @@ mod digest_shavs {
     shavs_tests!(SHA3_256, SHA3_256, TestType::Fips202);
     shavs_tests!(SHA3_384, SHA3_384, TestType::Fips202);
     shavs_tests!(SHA3_512, SHA3_512, TestType::Fips202);
+
+    /// Keccak-256 known-answer tests. These vectors come from AWS-LC rather
+    /// than from NIST, because NIST publishes none for Keccak-256: it is not a
+    /// FIPS 202 algorithm. They also ship no Monte Carlo file, so
+    /// `shavs_tests!` cannot be reused for them.
+    #[cfg(all(feature = "unstable", not(feature = "fips")))]
+    mod keccak256 {
+        use super::{run_known_answer_test, TestType};
+        use aws_lc_rs::test_file;
+        use aws_lc_rs::unstable::digest::KECCAK256;
+
+        #[test]
+        fn short_msg_known_answer_test() {
+            run_known_answer_test(
+                &KECCAK256,
+                test_file!("data/keccak256_short_msg.txt"),
+                TestType::NoSection,
+            );
+        }
+
+        #[test]
+        fn long_msg_known_answer_test() {
+            run_known_answer_test(
+                &KECCAK256,
+                test_file!("data/keccak256_long_msg.txt"),
+                TestType::NoSection,
+            );
+        }
+    }
 }
 
 /// Test some ways in which `Context::update` and/or `Context::finish`
@@ -393,6 +440,11 @@ fn test_fmt_algorithm() {
     assert_eq!("SHA384", &format!("{:?}", digest::SHA384));
     assert_eq!("SHA512", &format!("{:?}", digest::SHA512));
     assert_eq!("SHA512_256", &format!("{:?}", digest::SHA512_256));
+    #[cfg(all(feature = "unstable", not(feature = "fips")))]
+    assert_eq!(
+        "KECCAK256",
+        &format!("{:?}", aws_lc_rs::unstable::digest::KECCAK256)
+    );
 }
 
 #[test]
@@ -430,5 +482,15 @@ fn digest_test_fmt() {
         "SHA512_256:11f2c88c04f0a9c3d0970894ad2472505e\
          0bc6e8c7ec46b5211cd1fa3e253e62",
         &format!("{:?}", digest::digest(&digest::SHA512_256, b"hello, world"))
+    );
+
+    #[cfg(all(feature = "unstable", not(feature = "fips")))]
+    assert_eq!(
+        "KECCAK256:29bf7021020ea89dbd91ef52022b5a654b\
+         55ed418c9e7aba71ef3b43a51669f2",
+        &format!(
+            "{:?}",
+            digest::digest(&aws_lc_rs::unstable::digest::KECCAK256, b"hello, world")
+        )
     );
 }
