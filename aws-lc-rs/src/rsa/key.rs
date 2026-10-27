@@ -81,6 +81,7 @@ impl KeySize {
 }
 
 /// An RSA key pair, used for signing.
+#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct KeyPair {
     // https://github.com/aws/aws-lc/blob/ebaa07a207fee02bd68fe8d65f6b624afbf29394/include/openssl/evp.h#L295
