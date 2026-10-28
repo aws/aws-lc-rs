@@ -35,7 +35,7 @@ pub(crate) mod digest_ctx;
 // `pub(crate)` so `unstable::digest` and `test.rs` can reach Keccak-256; outside the
 // crate, only the items re-exported below are public.
 pub(crate) mod sha;
-#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
 use crate::aws_lc::EVP_keccak256;
 use crate::aws_lc::{
     EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha3_256,
@@ -48,7 +48,7 @@ use core::mem::MaybeUninit;
 use digest_ctx::DigestContext;
 // Keccak-256 is exposed through `crate::unstable::digest`, not from this module; this
 // re-export only lets the tests below name it like the stable algorithms.
-#[cfg(all(test, not(feature = "fips")))]
+#[cfg(all(test, not(feature = "fips"), feature = "unstable"))]
 pub(crate) use sha::KECCAK256;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA224, SHA224_OUTPUT_LEN, SHA256,
@@ -351,7 +351,7 @@ pub(crate) enum AlgorithmID {
     SHA3_256,
     SHA3_384,
     SHA3_512,
-    #[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+    #[cfg(all(not(feature = "fips"), feature = "unstable"))]
     KECCAK256,
 }
 
@@ -390,7 +390,7 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<'_, 
             AlgorithmID::SHA3_256 => EVP_sha3_256(),
             AlgorithmID::SHA3_384 => EVP_sha3_384(),
             AlgorithmID::SHA3_512 => EVP_sha3_512(),
-            #[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+            #[cfg(all(not(feature = "fips"), feature = "unstable"))]
             AlgorithmID::KECCAK256 => EVP_keccak256(),
         })
         .unwrap_or_else(|()| panic!("Digest algorithm not found: {algorithm_id:?}"))
@@ -476,7 +476,7 @@ mod tests {
         max_input_tests!(SHA512);
         max_input_tests!(SHA3_384);
         max_input_tests!(SHA3_512);
-        #[cfg(not(feature = "fips"))]
+        #[cfg(all(not(feature = "fips"), feature = "unstable"))]
         max_input_tests!(KECCAK256);
     }
 
@@ -490,7 +490,7 @@ mod tests {
             &digest::SHA512,
             &digest::SHA3_384,
             &digest::SHA3_512,
-            #[cfg(not(feature = "fips"))]
+            #[cfg(all(not(feature = "fips"), feature = "unstable"))]
             &digest::KECCAK256,
         ] {
             // Clone after updating context with message, then check if the final Digest is the same.

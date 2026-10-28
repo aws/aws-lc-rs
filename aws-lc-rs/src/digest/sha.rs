@@ -51,11 +51,11 @@ pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
 pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
 
 /// The length of a block for Keccak-256, in bytes.
-#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
 const KECCAK256_BLOCK_LEN: usize = SHA3_256_BLOCK_LEN;
 
 /// The length of the output of Keccak-256, in bytes.
-#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(not(feature = "fips"))))]
 pub const KECCAK256_OUTPUT_LEN: usize = 256 / 8;
 
@@ -224,7 +224,7 @@ pub const SHA3_512: Algorithm = Algorithm {
 // from `digest` (deprecated alias in `unstable::digest`), make `mod sha` private again,
 // drop the Keccak-256 `cfg`/`doc(cfg)` gates, and add a `digest/tests/fips.rs` case
 // asserting `NonApproved`.
-#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(not(feature = "fips"))))]
 #[allow(deprecated)]
 pub const KECCAK256: Algorithm = Algorithm {
@@ -295,7 +295,7 @@ fn sha3_512_digest(msg: &[u8], output: &mut [u8]) {
     output[0..SHA3_512_OUTPUT_LEN].copy_from_slice(digest.as_ref());
 }
 
-#[cfg(all(not(feature = "fips"), any(test, feature = "unstable")))]
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
 fn keccak256_digest(msg: &[u8], output: &mut [u8]) {
     let mut ctx = Context::new(&KECCAK256);
     ctx.update(msg);
