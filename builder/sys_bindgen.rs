@@ -83,7 +83,7 @@ const BLOCKED_FUNCTIONS: [&str; 9] = [
 
 // Includes implementation types behind the public aliases: bindgen can emit
 // dependencies of blocked items even when nothing uses them.
-const BLOCKED_TYPES: [&str; 20] = [
+const BLOCKED_TYPES: &[&str] = &[
     "FILE",
     "fpos_t",
     "tm",
@@ -94,6 +94,7 @@ const BLOCKED_TYPES: [&str; 20] = [
     "__va_list_tag",
     "__off_t",
     "__off64_t",
+    #[cfg(not(target_os = "freebsd"))]
     "__int64_t",
     "__darwin_off_t",
     "_IO_FILE",
