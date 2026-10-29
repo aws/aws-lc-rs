@@ -287,10 +287,8 @@ pub mod rsa;
 pub mod tls_prf;
 pub mod unstable;
 
+use core::ffi::CStr;
 pub(crate) use debug::derive_debug_via_id;
-// TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::CStr;
-use std::ffi::CStr;
 
 use crate::aws_lc::{
     BORINGSSL_self_test, CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode,
