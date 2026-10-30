@@ -524,6 +524,7 @@ jobs:
           - '--all-targets'
           - '--release'
           - '--no-default-features --features=fips'
+          - '--features bindgen'
         # exclude:
         #   - arch: 'riscv64'
         #     options: '--no-default-features --features=fips'
