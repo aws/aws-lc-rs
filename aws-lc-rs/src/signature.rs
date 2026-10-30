@@ -1118,9 +1118,27 @@ pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
 pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
 
+/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-512.
+/// # ⚠️ Warning
+/// The security strength of P-256 is less than the security strength of SHA-512 digests, so
+/// SHA-512 does not increase the security strength of the signature. FIPS 186-5 recommends
+/// matching them unless both parties agree to use a stronger hash function.
+/// This scheme should only be used for interoperability purposes.
+pub const ECDSA_P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm(&ECDSA_P256_SHA512_ASN1);
+
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub const ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_ASN1);
+
+/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-512.
+/// # ⚠️ Warning
+/// The security strength of P-384 is less than the security strength of SHA-512 digests, so
+/// SHA-512 does not increase the security strength of the signature. FIPS 186-5 recommends
+/// matching them unless both parties agree to use a stronger hash function.
+/// This scheme should only be used for interoperability purposes.
+pub const ECDSA_P384_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm(&ECDSA_P384_SHA512_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
 pub const ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
