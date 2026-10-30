@@ -83,7 +83,7 @@ const BLOCKED_FUNCTIONS: [&str; 9] = [
 
 // Includes implementation types behind the public aliases: bindgen can emit
 // dependencies of blocked items even when nothing uses them.
-const BLOCKED_TYPES: [&str; 20] = [
+const BLOCKED_TYPES: [&str; 22] = [
     "FILE",
     "fpos_t",
     "tm",
@@ -104,6 +104,9 @@ const BLOCKED_TYPES: [&str; 20] = [
     "__sFILE",
     "__sbuf",
     "__sFILEX",
+    // FreeBSD: __sFILE embeds __mbstate_t, whose fields name __int64_t and __intptr_t.
+    "__mbstate_t",
+    "__intptr_t",
 ];
 
 // printf formats expanded from the platform's PRIu64/PRIx64, which differ even
