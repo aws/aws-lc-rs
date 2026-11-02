@@ -81,33 +81,11 @@ const BLOCKED_FUNCTIONS: [&str; 9] = [
     "armv8_enable_dit",
 ];
 
-// Includes implementation types behind the public aliases: bindgen can emit
-// dependencies of blocked items even when nothing uses them.
-const BLOCKED_TYPES: [&str; 22] = [
-    "FILE",
-    "fpos_t",
-    "tm",
-    "va_list",
-    "__builtin_va_list",
-    "__gnuc_va_list",
-    "__darwin_va_list",
-    "__va_list_tag",
-    "__off_t",
-    "__off64_t",
-    "__int64_t",
-    "__darwin_off_t",
-    "_IO_FILE",
-    "_IO_marker",
-    "_IO_codecvt",
-    "_IO_wide_data",
-    "_IO_lock_t",
-    "__sFILE",
-    "__sbuf",
-    "__sFILEX",
-    // FreeBSD: __sFILE embeds __mbstate_t, whose fields name __int64_t and __intptr_t.
-    "__mbstate_t",
-    "__intptr_t",
-];
+// The public types in the blocked functions' signatures, which differ across
+// libcs. They are also made opaque: bindgen still traces blocklisted items,
+// including the blocked functions, and would otherwise emit each libc's FILE
+// and va_list internals, but it does not trace into opaque types.
+const BLOCKED_TYPES: [&str; 3] = ["FILE", "tm", "va_list"];
 
 // printf formats expanded from the platform's PRIu64/PRIx64, which differ even
 // among 64-bit targets ("%lu" on Linux, "%llu" on Darwin and Windows). BN_ULONG
@@ -131,7 +109,7 @@ fn configure_binding_scope(mut builder: bindgen::Builder, all_bindings: bool) ->
     }
     for tipe in BLOCKED_TYPES {
         emit_warning(format!("Blocked type: {tipe}").as_str());
-        builder = builder.blocklist_type(tipe);
+        builder = builder.blocklist_type(tipe).opaque_type(tipe);
     }
     for constant in BLOCKED_CONSTANTS {
         emit_warning(format!("Blocked constant: {constant}").as_str());
@@ -198,26 +176,9 @@ pub(crate) fn generate_bindings(
 mod tests {
     use super::*;
     use crate::strip_binding_link_prefixes;
+    use std::collections::BTreeSet;
 
-    const HEADER: &str = r"
-typedef __builtin_va_list va_list;
-typedef va_list __gnuc_va_list;
-typedef va_list __darwin_va_list;
-typedef long __off_t;
-typedef long __off64_t;
-typedef long long __int64_t;
-typedef __int64_t __darwin_off_t;
-struct _IO_FILE;
-typedef struct _IO_FILE FILE;
-struct _IO_marker;
-struct _IO_codecvt;
-struct _IO_wide_data;
-typedef void _IO_lock_t;
-struct __sFILE;
-struct __sbuf;
-struct __sFILEX;
-typedef long fpos_t;
-struct tm;
+    const OPENSSL_HEADER: &str = r"
 #define BN_DEC_FMT1 1
 #define BN_HEX_FMT1 2
 #define BN_HEX_FMT2 3
@@ -233,6 +194,86 @@ void PREFIX_armv8_enable_dit(void);
 void PREFIX_SHA256(void);
 ";
 
+    // Condensed from each libc's headers, keeping the typedef and field chains
+    // that the blocked functions reach through FILE, va_list, and struct tm.
+    const GLIBC: &str = r"
+typedef __builtin_va_list __gnuc_va_list;
+typedef __gnuc_va_list va_list;
+typedef long __off_t;
+typedef long __off64_t;
+struct _IO_marker;
+struct _IO_codecvt;
+struct _IO_wide_data;
+typedef void _IO_lock_t;
+struct _IO_FILE {
+  struct _IO_marker *_markers;
+  struct _IO_FILE *_chain;
+  __off_t _old_offset;
+  _IO_lock_t *_lock;
+  __off64_t _offset;
+  struct _IO_codecvt *_codecvt;
+  struct _IO_wide_data *_wide_data;
+};
+typedef struct _IO_FILE FILE;
+struct tm { int tm_sec; long tm_gmtoff; const char *tm_zone; };
+";
+    const DARWIN: &str = r"
+typedef __builtin_va_list __darwin_va_list;
+typedef __darwin_va_list va_list;
+typedef long long __int64_t;
+typedef __int64_t __darwin_off_t;
+typedef __darwin_off_t fpos_t;
+struct __sbuf { unsigned char *_base; int _size; };
+struct __sFILEX;
+typedef struct __sFILE {
+  struct __sbuf _bf;
+  fpos_t (*_seek)(void *, fpos_t, int);
+  struct __sFILEX *_extra;
+  fpos_t _offset;
+} FILE;
+struct tm { int tm_sec; long tm_gmtoff; char *tm_zone; };
+";
+    const FREEBSD: &str = r"
+typedef long long __int64_t;
+typedef __int64_t __intptr_t;
+typedef __int64_t __off_t;
+typedef __off_t fpos_t;
+typedef __builtin_va_list __va_list;
+typedef union {
+  char __mbstate8[128];
+  __int64_t _mbstateL;
+  __intptr_t _mbstateP;
+} __mbstate_t;
+struct __sbuf { unsigned char *_base; int _size; };
+struct __sFILEX;
+struct __sFILE {
+  struct __sbuf _bf;
+  fpos_t (*_seek)(void *, fpos_t, int);
+  struct __sFILEX *_extra;
+  __mbstate_t _mbstate;
+};
+typedef struct __sFILE FILE;
+struct tm { int tm_sec; long tm_gmtoff; const char *tm_zone; };
+";
+    const MSVC: &str = r"
+typedef char *va_list;
+typedef struct _iobuf { void *_Placeholder; } FILE;
+struct tm { int tm_sec; int tm_isdst; };
+";
+
+    // FreeBSD 14's stdio.h declares va_list as __va_list; 15.0 switched to
+    // __builtin_va_list.
+    const LIBC_HEADERS: [(&str, &[&str]); 5] = [
+        ("glibc", &[GLIBC]),
+        ("darwin", &[DARWIN]),
+        ("freebsd14", &[FREEBSD, "typedef __va_list va_list;\n"]),
+        (
+            "freebsd15",
+            &[FREEBSD, "typedef __builtin_va_list va_list;\n"],
+        ),
+        ("msvc", &[MSVC]),
+    ];
+
     const TARGETS: [&str; 5] = [
         "x86_64-unknown-linux-gnu",
         "aarch64-unknown-linux-gnu",
@@ -241,13 +282,23 @@ void PREFIX_SHA256(void);
         "i686-pc-windows-msvc",
     ];
 
-    fn generate_test_bindings(all_bindings: bool, target: &str, prefix: Option<&str>) -> String {
-        let header = HEADER.replace(
+    fn generate_test_bindings(
+        all_bindings: bool,
+        target: &str,
+        prefix: Option<&str>,
+        libc_header: &[&str],
+    ) -> String {
+        let header = OPENSSL_HEADER.replace(
             "PREFIX_",
             &prefix.map_or_else(String::new, |p| format!("{p}_")),
         );
         let mut builder = bindgen::Builder::default()
             .header_contents("test/openssl/mem.h", &header)
+            // bindgen passes every header after the first to clang via
+            // -include, so the libc types are declared ahead of mem.h, and, as
+            // with real system headers, they are reached only through the
+            // declarations that use them.
+            .header_contents("test/libc.h", &libc_header.concat())
             .clang_arg(format!("--target={target}"))
             .clang_arg("-nostdinc")
             .detect_include_paths(false)
@@ -262,90 +313,109 @@ void PREFIX_SHA256(void);
             .to_string()
     }
 
-    // Whole-identifier match on declarations only, so `FILE` does not match
-    // `_IO_FILE` and `tm` does not match a `*mut tm` parameter.
-    fn declares_item(bindings: &str, name: &str) -> bool {
-        const KEYWORDS: [&str; 5] = ["fn", "type", "struct", "const", "static mut"];
-        let is_ident_char = |c: char| c.is_ascii_alphanumeric() || c == '_';
-        !name.is_empty()
-            && bindings.match_indices(name).any(|(idx, _)| {
-                let before = bindings[..idx].trim_end();
-                let after = &bindings[idx + name.len()..];
-                !after.starts_with(is_ident_char)
-                    && KEYWORDS.iter().any(|kw| {
-                        before.ends_with(kw)
-                            && !before[..before.len() - kw.len()].ends_with(is_ident_char)
-                    })
-            })
+    // Names declared as `pub <kind> <name>` or `pub static mut <name>`,
+    // matched on whole identifier tokens so `FILE` is not `_IO_FILE` and a
+    // `*mut tm` parameter is not `tm`. Skips `pub const fn` helper methods.
+    fn declared_items(bindings: &str) -> BTreeSet<&str> {
+        let tokens: Vec<&str> = bindings
+            .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+            .filter(|token| !token.is_empty())
+            .collect();
+        let mut items = BTreeSet::new();
+        for (i, token) in tokens.iter().enumerate() {
+            if *token != "pub" {
+                continue;
+            }
+            match &tokens[i + 1..] {
+                ["static", "mut", name, ..]
+                | ["fn" | "type" | "struct" | "union" | "enum" | "const", name, ..]
+                    if *name != "fn" =>
+                {
+                    items.insert(*name);
+                }
+                _ => {}
+            }
+        }
+        items
     }
 
     #[test]
-    fn test_declares_item() {
-        let bindings = r#"pub type FILE = _IO_FILE; pub struct _IO_FILE { _unused: [u8; 0] }
+    fn test_declared_items() {
+        let bindings = r#"pub type FILE = _IO_FILE; pub struct _IO_FILE { pub _flags : c_int }
 # [link_name = "tm_alias"] pub fn CBS_parse_utc_time (time : * mut tm) ; pub const BN_DEC_FMT1 : u32 = 1 ;
-pub static mut OPENSSL_ia32cap_P: [u32; 4];
+pub static mut OPENSSL_ia32cap_P: [u32; 4]; pub union __mbstate_t { pub _mbstateL : i64 }
+impl < T > __BindgenUnionField < T > { pub const fn new () -> Self { } }
 "#;
-        for name in [
-            "FILE",
-            "_IO_FILE",
-            "CBS_parse_utc_time",
-            "BN_DEC_FMT1",
-            "OPENSSL_ia32cap_P",
-        ] {
-            assert!(declares_item(bindings, name), "{name}");
-        }
-        for name in ["tm", "IO_FILE", "BN_DEC_FMT", "SHA256", ""] {
-            assert!(!declares_item(bindings, name), "{name}");
-        }
+        assert_eq!(
+            declared_items(bindings),
+            BTreeSet::from([
+                "BN_DEC_FMT1",
+                "CBS_parse_utc_time",
+                "FILE",
+                "OPENSSL_ia32cap_P",
+                "_IO_FILE",
+                "__mbstate_t",
+            ])
+        );
     }
 
     #[test]
     fn test_universal_bindings_exclude_platform_specific_items() {
-        for prefix in [None, Some("aws_lc_0_45_0")] {
-            // Mirror generate_src_bindings: link-name decoration is the one
-            // remaining target-dependent output, and main.rs normalizes it.
-            let bindings: Vec<String> = TARGETS
-                .iter()
-                .map(|target| {
-                    strip_binding_link_prefixes(&generate_test_bindings(false, target, prefix))
-                })
-                .collect();
-            for (target, bindings) in TARGETS.iter().zip(&bindings) {
-                assert!(declares_item(bindings, "SHA256"), "{target}: {bindings}");
-                for name in BLOCKED_FUNCTIONS
+        for (libc, libc_header) in LIBC_HEADERS {
+            for prefix in [None, Some("aws_lc_0_45_0")] {
+                // Mirror generate_src_bindings: link-name decoration is the one
+                // remaining target-dependent output, and main.rs normalizes it.
+                let bindings: Vec<String> = TARGETS
                     .iter()
-                    .chain(&BLOCKED_TYPES)
-                    .chain(&BLOCKED_CONSTANTS)
-                {
-                    assert!(
-                        !declares_item(bindings, name),
-                        "{target}: unexpected {name}: {bindings}"
+                    .map(|target| {
+                        strip_binding_link_prefixes(&generate_test_bindings(
+                            false,
+                            target,
+                            prefix,
+                            libc_header,
+                        ))
+                    })
+                    .collect();
+                // An exact set, so a leaked libc type fails here whether or not
+                // anything names it.
+                for (target, bindings) in TARGETS.iter().zip(&bindings) {
+                    assert_eq!(
+                        declared_items(bindings),
+                        BTreeSet::from(["SHA256"]),
+                        "{libc} {target}: {bindings}"
                     );
                 }
-            }
-            // One universal_crypto.rs serves every target, so the output must
-            // not depend on the generation target.
-            for (target, other) in TARGETS.iter().zip(&bindings).skip(1) {
-                assert_eq!(other, &bindings[0], "{target} differs from {}", TARGETS[0]);
+                // One universal_crypto.rs serves every target, so the output
+                // must not depend on the generation target.
+                for (target, other) in TARGETS.iter().zip(&bindings).skip(1) {
+                    assert_eq!(
+                        other, &bindings[0],
+                        "{libc}: {target} differs from {}",
+                        TARGETS[0]
+                    );
+                }
             }
         }
     }
 
     #[test]
     fn test_all_bindings_retain_platform_specific_items() {
-        for target in TARGETS {
-            for prefix in [None, Some("aws_lc_0_45_0")] {
-                let bindings = generate_test_bindings(true, target, prefix);
-                assert!(declares_item(&bindings, "SHA256"), "{target}: {bindings}");
-                for name in BLOCKED_FUNCTIONS
-                    .iter()
-                    .chain(&BLOCKED_CONSTANTS)
-                    .chain(&["va_list", "FILE"])
-                {
-                    assert!(
-                        declares_item(&bindings, name),
-                        "{target}: missing {name}: {bindings}"
-                    );
+        for (libc, libc_header) in LIBC_HEADERS {
+            for target in TARGETS {
+                for prefix in [None, Some("aws_lc_0_45_0")] {
+                    let bindings = generate_test_bindings(true, target, prefix, libc_header);
+                    let declared = declared_items(&bindings);
+                    for name in BLOCKED_FUNCTIONS
+                        .iter()
+                        .chain(&BLOCKED_TYPES)
+                        .chain(&BLOCKED_CONSTANTS)
+                        .chain(&["SHA256"])
+                    {
+                        assert!(
+                            declared.contains(name),
+                            "{libc} {target}: missing {name}: {bindings}"
+                        );
+                    }
                 }
             }
         }
