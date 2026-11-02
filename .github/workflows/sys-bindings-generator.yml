@@ -16,16 +16,37 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
   DEBIAN_FRONTEND: noninteractive
+  # The output of this workflow is committed and published, so cross and its
+  # images are pinned. When bumping CROSS_REV, also update CROSS_IMAGES to the
+  # digests of the ghcr.io/cross-rs/<target>:main images built from it.
+  CROSS_REV: 5f05d13dc37c0db79f4448642c68e108b977a9e1
+  CROSS_IMAGES: |
+    {
+      "aarch64-linux-android": "ghcr.io/cross-rs/aarch64-linux-android@sha256:da10df1f3a352330338d9e066911467ed3ed77dfacac13331ed738cad3fda09d",
+      "aarch64-unknown-linux-gnu": "ghcr.io/cross-rs/aarch64-unknown-linux-gnu@sha256:79c12cadab2b768ad594e3925a196584a572abf79941502e32c97fed4d654773",
+      "aarch64-unknown-linux-musl": "ghcr.io/cross-rs/aarch64-unknown-linux-musl@sha256:8e73c3bcd1202bc35925774bf76c29685001c99bf7fdf01b23981c67d4cc4148",
+      "arm-unknown-linux-gnueabi": "ghcr.io/cross-rs/arm-unknown-linux-gnueabi@sha256:db4f38148235998c3e7bf88356ac0d24bd88327c379cdb9875def6718f62cc91",
+      "armv7-unknown-linux-gnueabihf": "ghcr.io/cross-rs/armv7-unknown-linux-gnueabihf@sha256:d0e0b64c36136853a53eef7db02cf3406cdb137bfea43b4036137a19f6bd0eb9",
+      "i686-unknown-linux-gnu": "ghcr.io/cross-rs/i686-unknown-linux-gnu@sha256:cd5416095a38025f36aa1b335a0e447442695bbf47591064f05168c242fb90cd",
+      "powerpc-unknown-linux-gnu": "ghcr.io/cross-rs/powerpc-unknown-linux-gnu@sha256:84bd0ecbfc229b6b7101ea6239823f36a5101b18a59b13f598736c72e8373c2b",
+      "powerpc64le-unknown-linux-gnu": "ghcr.io/cross-rs/powerpc64le-unknown-linux-gnu@sha256:8bad1f2468e6cd53e6fd0825096d14f36c054a6ed8f4a002583db65c438e6bd8",
+      "riscv64gc-unknown-linux-gnu": "ghcr.io/cross-rs/riscv64gc-unknown-linux-gnu@sha256:8b438aa2830b2009efad48b80acd15b32c50a3c33655c7203918e64ccf0c55fb",
+      "x86_64-unknown-linux-musl": "ghcr.io/cross-rs/x86_64-unknown-linux-musl@sha256:eab7cc0b74c748c99fd74d3eafb526a924bf795658cf3308727fd2a84df2379e"
+    }
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
+# Jobs that build or generate files run third-party code (cross and its images,
+# crates.io build scripts, toolchains), so they only get read access and hand
+# their output to a commit-* job as a patch. Only the commit-* jobs can push,
+# and each only accepts changes under the paths its stage owns.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  collect-symbols-and-commit:
+  collect-symbols:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,7 +57,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
@@ -57,9 +79,16 @@ jobs:
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-sys
-      - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from ${{ matrix.os }}"
-  collect-windows-symbols-and-commit:
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh "symbols-${{ matrix.os }}" aws-lc-sys/symbols
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: symbols-${{ matrix.os }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  collect-windows-symbols:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: windows-latest
     strategy:
@@ -74,7 +103,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --component rustfmt --no-self-update
@@ -93,10 +123,17 @@ jobs:
         shell: bash
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-sys -t  ${{ matrix.target }}
-      - name: Commit & Push changes
+      - name: Export changes
         shell: bash
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from  ${{ matrix.target }}"
-  collect-cross-symbols-and-commit:
+        run: ./scripts/ci/ci_export_generated_changes.sh "symbols-${{ matrix.target }}" aws-lc-sys/symbols
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: symbols-${{ matrix.target }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  collect-cross-symbols:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     strategy:
@@ -116,7 +153,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
@@ -125,26 +163,57 @@ jobs:
         with:
           go-version: '>=1.20'
       - name: Install cross
-        run: cargo install cross --locked --git https://github.com/cross-rs/cross
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev "${CROSS_REV}"
       - name: No-prefix build for ${{ matrix.target }}
         env:
           AWS_LC_SYS_NO_PREFIX: "1"
+          CROSS_BUILD_OPTS: --build-arg AWS_LC_CROSS_BASE_IMAGE=${{ fromJSON(env.CROSS_IMAGES)[matrix.target] }}
         run: |
           cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-sys -t ${{ matrix.target }}
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh "symbols-${{ matrix.target }}" aws-lc-sys/symbols
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: symbols-${{ matrix.target }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  commit-symbols:
+    needs: [ collect-symbols, collect-windows-symbols, collect-cross-symbols ]
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: symbols-*
+          path: ${{ runner.temp }}/generated-changes
+          merge-multiple: true
       - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols for ${{ matrix.target }}"
-  generate-headers-and-commit:
-    needs: [ collect-cross-symbols-and-commit, collect-symbols-and-commit, collect-windows-symbols-and-commit ]
+        id: commit
+        run: |
+          ./scripts/ci/ci_commit_generated_changes.sh "Collected symbols" "${RUNNER_TEMP}/generated-changes" aws-lc-sys/symbols
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+  generate-headers:
+    needs: commit-symbols
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-symbols.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchains
         run: |
           rustup toolchain install ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }} --profile minimal --component rustfmt --no-self-update
@@ -157,10 +226,38 @@ jobs:
         run: ./scripts/generate/_generate_prefix_headers.sh -c aws-lc-sys
       - name: Update sys-crate metadata
         run: ./scripts/ci/update_sys_crate_metadata.sh aws-lc-sys
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh headers aws-lc-sys/generated-include aws-lc-sys/Cargo.toml
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: headers
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  commit-headers:
+    needs: [ commit-symbols, generate-headers ]
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.commit-symbols.outputs.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: headers
+          path: ${{ runner.temp }}/generated-changes
       - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated headers"
-  generate-bindings-and-commit:
-    needs: generate-headers-and-commit
+        id: commit
+        run: |
+          ./scripts/ci/ci_commit_generated_changes.sh "Generated headers" "${RUNNER_TEMP}/generated-changes" aws-lc-sys/generated-include aws-lc-sys/Cargo.toml
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+  generate-bindings:
+    needs: commit-headers
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -171,7 +268,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-headers.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
@@ -184,10 +282,17 @@ jobs:
           AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
         run: |
           cargo test -p aws-lc-sys --features bindgen
-      - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
-  generate-windows-bindings-and-commit:
-    needs: generate-headers-and-commit
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh "bindings-${{ matrix.os }}" 'aws-lc-sys/src/*_crypto.rs'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bindings-${{ matrix.os }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  generate-windows-bindings:
+    needs: commit-headers
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: windows-latest
     strategy:
@@ -202,7 +307,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-headers.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --component rustfmt --no-self-update
@@ -217,11 +323,18 @@ jobs:
           AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
         run: |
           cargo ${{ (matrix.target == 'aarch64-pc-windows-msvc' && 'build') || 'test' }} -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
-      - name: Commit & Push changes
+      - name: Export changes
         shell: bash
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
-  generate-cross-bindings-and-commit:
-    needs: generate-headers-and-commit
+        run: ./scripts/ci/ci_export_generated_changes.sh "bindings-${{ matrix.target }}" 'aws-lc-sys/src/*_crypto.rs'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bindings-${{ matrix.target }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  generate-cross-bindings:
+    needs: commit-headers
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     strategy:
@@ -238,22 +351,31 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-headers.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
           rustup default stable
       - name: Install cross
-        run: cargo install cross --locked --git https://github.com/cross-rs/cross
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross --rev "${CROSS_REV}"
       - name: Generate bindings for ${{ matrix.target }}
         env:
           AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
+          CROSS_BUILD_OPTS: --build-arg AWS_LC_CROSS_BASE_IMAGE=${{ fromJSON(env.CROSS_IMAGES)[matrix.target] }}
         run: |
           cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
-      - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
-  generate-universal-bindings-and-commit:
-    needs: generate-headers-and-commit
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh "bindings-${{ matrix.target }}" 'aws-lc-sys/src/*_crypto.rs'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bindings-${{ matrix.target }}
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  generate-universal-bindings:
+    needs: commit-headers
     if: github.repository == 'aws/aws-lc-rs'
     # No OS matrix: the universal bindings are identical on every platform.
     runs-on: ubuntu-latest
@@ -261,7 +383,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-headers.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
@@ -271,19 +394,52 @@ jobs:
           AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
         run: |
           cargo test -p aws-lc-sys --no-default-features --features bindgen
-      - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated universal bindings"
-  collect-src-and-commit:
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh bindings-universal 'aws-lc-sys/src/*_crypto.rs'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bindings-universal
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  commit-bindings:
     needs:
-      - generate-bindings-and-commit
-      - generate-universal-bindings-and-commit
+      - commit-headers
+      - generate-bindings
+      - generate-windows-bindings
+      - generate-cross-bindings
+      - generate-universal-bindings
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.commit-headers.outputs.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: bindings-*
+          path: ${{ runner.temp }}/generated-changes
+          merge-multiple: true
+      - name: Commit & Push changes
+        id: commit
+        run: |
+          ./scripts/ci/ci_commit_generated_changes.sh "Generated bindings" "${RUNNER_TEMP}/generated-changes" 'aws-lc-sys/src/*_crypto.rs'
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+  collect-src:
+    needs: commit-bindings
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-bindings.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt --no-self-update
@@ -295,17 +451,25 @@ jobs:
           for script in aws-lc-sys/scripts/cc_builder/*; do
             $script;
           done
-      - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected source files"
-  collect-nasm-and-commit:
-    needs: generate-windows-bindings-and-commit
+      - name: Export changes
+        run: ./scripts/ci/ci_export_generated_changes.sh sources-cc builder/cc_builder/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sources-cc
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  collect-nasm:
+    needs: commit-bindings
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
-          ref: ${{ github.ref_name }}
+          ref: ${{ needs.commit-bindings.outputs.sha }}
+          persist-credentials: false
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal --target x86_64-pc-windows-msvc --target x86_64-pc-windows-gnu --component rustfmt --no-self-update
@@ -326,6 +490,30 @@ jobs:
       - name: Test aws-lc-sys for x86_64-pc-windows-gnu
         shell: bash
         run: AWS_LC_SYS_PREBUILT_NASM=1 cargo build -p aws-lc-sys --target x86_64-pc-windows-gnu
-      - name: Commit & Push changes
+      - name: Export changes
         shell: bash
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected NASM files"
+        run: ./scripts/ci/ci_export_generated_changes.sh sources-nasm builder/prebuilt-nasm/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sources-nasm
+          path: ${{ runner.temp }}/generated-changes/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+  commit-sources:
+    needs: [ commit-bindings, collect-src, collect-nasm ]
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.commit-bindings.outputs.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: sources-*
+          path: ${{ runner.temp }}/generated-changes
+          merge-multiple: true
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_commit_generated_changes.sh "Collected source files" "${RUNNER_TEMP}/generated-changes" builder/cc_builder/ builder/prebuilt-nasm/
