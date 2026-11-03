@@ -14,6 +14,7 @@ use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
 use std::{env, fmt};
 
@@ -392,7 +393,6 @@ fn prefix_string() -> String {
     )
 }
 
-#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn target_platform_prefix(name: &str) -> String {
     if is_all_bindings() {
         format!("{}_{}", effective_target().replace('-', "_"), name)
@@ -489,6 +489,31 @@ pub(crate) fn emit_rustc_cfg(cfg: &str) {
 
 fn emit_warning<T: AsRef<str>>(message: T) {
     println!("cargo:warning={}", message.as_ref());
+}
+
+/// Set once the crate is configured to compile `OUT_DIR/bindings.rs` instead of the bindings
+/// under `src/`.
+static USE_OUT_DIR_BINDINGS: AtomicBool = AtomicBool::new(false);
+
+/// Configures the crate to compile `OUT_DIR/bindings.rs`, which takes precedence over the
+/// bindings under `src/` (see `src/lib.rs`).
+pub(crate) fn use_out_dir_bindings() {
+    USE_OUT_DIR_BINDINGS.store(true, Ordering::Relaxed);
+    emit_rustc_cfg("use_bindgen_pregenerated");
+}
+
+/// Exports the path of the bindings file the crate compiles as `bindings`, so that dependents'
+/// build scripts can check which AWS-LC functions it declares. This mirrors the `cfg` selection
+/// in `src/lib.rs`.
+fn emit_bindings_metadata(manifest_dir: &Path) {
+    let bindings = if USE_OUT_DIR_BINDINGS.load(Ordering::Relaxed) {
+        out_dir().join("bindings.rs")
+    } else {
+        manifest_dir
+            .join("src")
+            .join(format!("{}.rs", target_platform_prefix("crypto")))
+    };
+    println!("cargo:bindings={}", bindings.display());
 }
 
 #[allow(dead_code)]
@@ -1271,7 +1296,7 @@ fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
         ));
         let gen_bindings_path = out_dir().join("bindings.rs");
         generate_bindings(manifest_dir, prefix, &gen_bindings_path);
-        emit_rustc_cfg("use_bindgen_pregenerated");
+        use_out_dir_bindings();
         true
     } else {
         false
@@ -1409,7 +1434,7 @@ fn main() {
             let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
             match result {
                 Ok(()) => {
-                    emit_rustc_cfg("use_bindgen_pregenerated");
+                    use_out_dir_bindings();
                     bindings_available = true;
                 }
                 Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),
@@ -1423,6 +1448,9 @@ fn main() {
         For more information, see the aws-lc-rs User Guide: https://aws.github.io/aws-lc-rs/index.html"
     );
     builder.build().unwrap();
+
+    // After `build()`: the system-library builder selects its bindings there.
+    emit_bindings_metadata(&manifest_dir);
 
     // Emitted unconditionally regardless of which builder ran: the OpenSSL
     // compatibility-conf macro list is a property of AWS-LC's API surface,
