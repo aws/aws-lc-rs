@@ -123,6 +123,12 @@ jobs:
         if: ${{ matrix.target[3] == '1' }}
         run: |
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
+      - name: Cross-compilation w/ internal bindgen (scoped bindings)
+        # The ssl step above generates all bindings. Without all-bindings, the
+        # scoped bindings that `aws-lc-rs --features bindgen` uses are generated
+        # instead, and they must compile against each target's libc headers.
+        if: ${{ matrix.target[3] == '1' }}
+        run: cross build -p aws-lc-sys --release --no-default-features --features bindgen --target ${{ matrix.target[0] }}
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name:  Cross-compilation w/ external bindgen (aws-lc-sys/ssl feature)
@@ -519,11 +525,12 @@ jobs:
       fail-fast: false
       matrix:
         arch: [  'x86_64' ] # , 'aarch64', 'riscv64' ]
-        release: [ '14.3', '15.0' ]
+        release: [ '14.5', '15.1' ]
         options:
           - '--all-targets'
           - '--release'
           - '--no-default-features --features=fips'
+          - '--features bindgen'
         # exclude:
         #   - arch: 'riscv64'
         #     options: '--no-default-features --features=fips'
@@ -559,6 +566,7 @@ jobs:
         options:
           - '--all-targets'
           - '--release'
+          - '--features bindgen'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -573,10 +581,12 @@ jobs:
           prepare: |
             export PATH="/usr/pkg/bin:/usr/pkg/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
             export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${{ matrix.arch }}/${{ matrix.release }}/All"
-            pkg_add -u curl cmake gmake perl mozilla-rootcerts
+            pkg_add -u curl cmake gmake perl mozilla-rootcerts${{ contains(matrix.options, 'bindgen') && ' clang' || '' }}
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
+            # clang-sys has no default libclang search path on NetBSD.
+            export LIBCLANG_PATH=/usr/pkg/lib
             cargo test -p aws-lc-rs ${{ matrix.options }}
   cross-x86_64-pc-windows-gnu:
     if: github.repository_owner == 'aws'
