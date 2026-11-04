@@ -11,12 +11,12 @@ use crate::signature::{
     EcdsaVerificationAlgorithm, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair,
     VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING,
     ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1,
-    ECDSA_P256_SHA512_ASN1, ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1,
-    ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING,
-    ECDSA_P384_SHA3_384_ASN1, ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED,
-    ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING,
-    ECDSA_P521_SHA3_512_FIXED, ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1,
-    ECDSA_P521_SHA512_ASN1_SIGNING, ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
+    ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING,
+    ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING, ECDSA_P384_SHA3_384_ASN1,
+    ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED, ECDSA_P384_SHA3_384_FIXED_SIGNING,
+    ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING, ECDSA_P521_SHA3_512_FIXED,
+    ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1, ECDSA_P521_SHA512_ASN1_SIGNING,
+    ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
     RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
     RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY, RSA_PKCS1_2048_8192_SHA256,
     RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512, RSA_PKCS1_SHA256, RSA_PKCS1_SHA384,
@@ -140,38 +140,36 @@ ecdsa_generate_sign_verify!(
     FipsServiceStatus::Approved
 );
 
-// (curve, digest) pairs with no predefined signing constant, built with the `const fn`
-// constructors. AWS-LC approves any approved digest with any NIST curve.
-macro_rules! ecdsa_constructed_asn1 {
-    ($($name:ident, $signing:ident, $verifying:ident = ($curve:ident, $digest:ident);)+) => {
+// (curve, digest) pairs with no predefined signing constant, selected at runtime.
+// AWS-LC approves any approved digest with any NIST curve.
+macro_rules! ecdsa_factory_asn1 {
+    ($($name:ident = ($curve:ident, $digest:ident);)+) => {
         $(
-            static $signing: EcdsaSigningAlgorithm = EcdsaSigningAlgorithm::new(
-                EcdsaCurve::$curve,
-                &digest::$digest,
-                EcdsaSignatureFormat::Asn1,
-            );
-            static $verifying: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm::new(
-                EcdsaCurve::$curve,
-                &digest::$digest,
-                EcdsaSignatureFormat::Asn1,
-            );
             ecdsa_generate_sign_verify!(
                 $name,
-                &$signing,
-                $verifying,
+                EcdsaSigningAlgorithm::get(
+                    EcdsaCurve::$curve,
+                    &digest::$digest,
+                    EcdsaSignatureFormat::Asn1,
+                ).unwrap(),
+                EcdsaVerificationAlgorithm::get(
+                    EcdsaCurve::$curve,
+                    &digest::$digest,
+                    EcdsaSignatureFormat::Asn1,
+                ).unwrap(),
                 FipsServiceStatus::Approved,
                 FipsServiceStatus::Approved
             );
         )+
     };
 }
-ecdsa_constructed_asn1! {
-    ecdsa_p256_sha224_asn1_constructed, P256_SHA224_ASN1_SIGNING, P256_SHA224_ASN1 = (P256, SHA224);
-    ecdsa_p256_sha384_asn1_constructed, P256_SHA384_ASN1_SIGNING, P256_SHA384_ASN1 = (P256, SHA384);
-    ecdsa_p256_sha512_asn1_constructed, P256_SHA512_ASN1_SIGNING, P256_SHA512_ASN1 = (P256, SHA512);
-    ecdsa_p384_sha224_asn1_constructed, P384_SHA224_ASN1_SIGNING, P384_SHA224_ASN1 = (P384, SHA224);
-    ecdsa_p384_sha256_asn1_constructed, P384_SHA256_ASN1_SIGNING, P384_SHA256_ASN1 = (P384, SHA256);
-    ecdsa_p384_sha512_asn1_constructed, P384_SHA512_ASN1_SIGNING, P384_SHA512_ASN1 = (P384, SHA512);
+ecdsa_factory_asn1! {
+    ecdsa_p256_sha224_asn1_constructed = (P256, SHA224);
+    ecdsa_p256_sha384_asn1_constructed = (P256, SHA384);
+    ecdsa_p256_sha512_asn1_constructed = (P256, SHA512);
+    ecdsa_p384_sha224_asn1_constructed = (P384, SHA224);
+    ecdsa_p384_sha256_asn1_constructed = (P384, SHA256);
+    ecdsa_p384_sha512_asn1_constructed = (P384, SHA512);
 }
 
 /// A key pair rebound with `with_algorithm` signs and verifies with the same approval status as
@@ -186,12 +184,16 @@ fn ecdsa_with_algorithm() {
     )
     .unwrap();
 
-    for (signing_alg, verification_alg) in [
-        (&P256_SHA224_ASN1_SIGNING, &P256_SHA224_ASN1),
-        (&P256_SHA512_ASN1_SIGNING, &ECDSA_P256_SHA512_ASN1),
-        (&ECDSA_P256_SHA256_FIXED_SIGNING, &ECDSA_P256_SHA256_FIXED),
+    for (digest_alg, format) in [
+        (&digest::SHA224, EcdsaSignatureFormat::Asn1),
+        (&digest::SHA512, EcdsaSignatureFormat::Asn1),
+        (&digest::SHA256, EcdsaSignatureFormat::Fixed),
     ] {
+        let signing_alg = EcdsaSigningAlgorithm::get(EcdsaCurve::P256, digest_alg, format).unwrap();
+        let verification_alg =
+            EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, digest_alg, format).unwrap();
         let rebound = key_pair.with_algorithm(signing_alg).unwrap();
+        assert_eq!(rebound.algorithm(), signing_alg);
 
         let signature = assert_fips_status_indicator!(
             rebound.sign(&rng, TEST_MESSAGE.as_bytes()),

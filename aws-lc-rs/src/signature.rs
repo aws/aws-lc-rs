@@ -17,13 +17,14 @@
 //! reduce the risks of algorithm agility and to provide consistency with ECDSA
 //! and `EdDSA`.
 //!
-//! The predefined ECDSA constants pair each curve with a digest of matching
-//! security strength. For a (curve, digest, encoding) combination without a
-//! constant, construct one with [`EcdsaSigningAlgorithm::new`] or
-//! [`EcdsaVerificationAlgorithm::new`]. Both are `const fn`, so the result can
-//! be bound to a `static` and used anywhere a predefined constant is accepted.
-//! An [`EcdsaKeyPair`] is bound to one algorithm; to sign with the same key
-//! under another algorithm for its curve, use [`EcdsaKeyPair::with_algorithm`].
+//! Prefer the recommended ECDSA constants, which pair curves with digests of
+//! matching security strength; other constants are retained for interoperability.
+//! For a (curve, digest, encoding) combination without a constant, use
+//! [`EcdsaSigningAlgorithm::get`] or [`EcdsaVerificationAlgorithm::get`].
+//! These lookups accept runtime parameters and return library-owned static
+//! references without allocating. An [`EcdsaKeyPair`] is bound to one algorithm;
+//! to sign with the same key under another algorithm for its curve, use
+//! [`EcdsaKeyPair::with_algorithm`].
 //!
 //! For most use cases, prefer passing the full message to the signing and
 //! verification APIs, which hash it as part of the operation. Signing and
@@ -145,6 +146,39 @@
 //!
 //!
 //! # Examples
+//!
+//! ## Selecting ECDSA parameters at runtime
+//!
+//! ```
+//! use aws_lc_rs::{
+//!     digest,
+//!     error::Unspecified,
+//!     rand::SystemRandom,
+//!     signature::{
+//!         EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+//!         EcdsaVerificationAlgorithm, KeyPair, UnparsedPublicKey,
+//!     },
+//! };
+//!
+//! fn sign_and_verify(
+//!     curve: EcdsaCurve,
+//!     digest: &'static digest::Algorithm,
+//!     format: EcdsaSignatureFormat,
+//! ) -> Result<(), Unspecified> {
+//!     let signing = EcdsaSigningAlgorithm::get(curve, digest, format)?;
+//!     let key_pair = EcdsaKeyPair::generate(signing)?;
+//!     let signature = key_pair.sign(&SystemRandom::new(), b"message")?;
+//!     let verifying = EcdsaVerificationAlgorithm::get(curve, digest, format)?;
+//!     let public_key = UnparsedPublicKey::new(verifying, key_pair.public_key().as_ref());
+//!     public_key.verify(b"message", signature.as_ref())?;
+//!     let parsed = public_key.parse()?;
+//!     parsed.verify_sig(b"message", signature.as_ref())
+//! }
+//!
+//! // Use a protocol-required combination that has no predefined signing constant.
+//! sign_and_verify(EcdsaCurve::P384, &digest::SHA224, EcdsaSignatureFormat::Asn1)?;
+//! # Ok::<(), Unspecified>(())
+//! ```
 //!
 //! ## Signing and verifying with Ed25519
 //!

@@ -215,23 +215,26 @@ impl EcdsaKeyPair {
     /// Returns a key pair sharing this key pair's key material, bound to `alg`.
     ///
     /// The key material is reference counted, so this does not re-parse or re-validate the key.
-    /// Signing with one key under several digests is discouraged (see
-    /// [`EcdsaSigningAlgorithm::new`]); this exists for interoperating with peers that require it.
+    /// Use a predefined constant or [`EcdsaSigningAlgorithm::get`] to select `alg`.
+    ///
+    /// Prefer using each key with a single algorithm. Where the signature algorithm is identified
+    /// alongside the signature (as in X.509, PKCS#10, or CMS), verifiers honor whichever digest
+    /// the signer used, so a key used with several digests is only as strong as the weakest of
+    /// them. This exists for interoperating with peers that require it.
     ///
     /// ```
     /// use aws_lc_rs::digest::SHA512;
     /// use aws_lc_rs::rand::SystemRandom;
     /// use aws_lc_rs::signature::{
-    ///     EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    ///     EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
     ///     ECDSA_P256_SHA256_ASN1_SIGNING,
     /// };
     ///
-    /// static ECDSA_P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    ///     EcdsaSigningAlgorithm::new(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
-    ///
-    /// # let pkcs8 = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &SystemRandom::new())?;
-    /// let key_pair = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, pkcs8.as_ref())?;
-    /// let sha512_key_pair = key_pair.with_algorithm(&ECDSA_P256_SHA512_ASN1_SIGNING)?;
+    /// let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING)?;
+    /// let algorithm = EcdsaSigningAlgorithm::get(
+    ///     key_pair.algorithm().curve(), &SHA512, EcdsaSignatureFormat::Asn1,
+    /// )?;
+    /// let sha512_key_pair = key_pair.with_algorithm(algorithm)?;
     ///
     /// let rng = SystemRandom::new();
     /// let sha256_signature = key_pair.sign(&rng, b"message")?;
@@ -264,7 +267,8 @@ impl EcdsaKeyPair {
     // # FIPS
     // The following conditions must be met:
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
         let out_sig = self.evp_pkey.sign(
