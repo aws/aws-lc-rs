@@ -28,9 +28,8 @@ use untrusted::Input;
 
 /// An ECDSA verification algorithm.
 ///
-/// The predefined constants in [`crate::signature`] (e.g. `ECDSA_P256_SHA256_ASN1`) cover the
-/// recommended combinations. Use [`EcdsaVerificationAlgorithm::new`] for a combination that has
-/// no constant.
+/// Prefer the recommended constants in [`crate::signature`] (e.g. `ECDSA_P256_SHA256_ASN1`).
+/// Use [`EcdsaVerificationAlgorithm::get`] for a combination that has no constant.
 #[derive(Debug, Eq, PartialEq)]
 pub struct EcdsaVerificationAlgorithm {
     pub(crate) id: &'static AlgorithmID,
@@ -39,49 +38,40 @@ pub struct EcdsaVerificationAlgorithm {
 }
 
 impl EcdsaVerificationAlgorithm {
-    /// Constructs a verification algorithm from a curve, digest, and signature format.
+    /// Returns a verification algorithm for the given curve, digest, and signature format.
     ///
-    /// Prefer the predefined constants in [`crate::signature`], which pair each curve with a
-    /// digest of matching security strength. This constructor exists for interoperating with
-    /// peers or formats that require a combination without a constant. See
-    /// [`EcdsaSigningAlgorithm::new`] for the security considerations of pairing a curve with a
-    /// digest of a different strength.
+    /// Prefer the recommended constants in [`crate::signature`], which pair curves with digests
+    /// of matching security strength. This lookup supports interoperability with peers or
+    /// formats that require other combinations. See [`EcdsaSigningAlgorithm::get`] for the
+    /// security considerations of pairing a curve with a digest of a different strength.
     ///
-    /// This is a `const fn`, so the result can be bound to a `const` or `static` and used wherever
-    /// a `&'static` algorithm is expected:
+    /// Returns `None` for unsupported digests, including SHA-1. To verify a legacy SHA-1
+    /// signature, explicitly select one of the predefined SHA-1 verification constants.
     ///
     /// ```
-    /// use aws_lc_rs::digest::SHA224;
+    /// use aws_lc_rs::digest::SHA512;
+    /// use aws_lc_rs::error::Unspecified;
     /// use aws_lc_rs::signature::{
     ///     EcdsaCurve, EcdsaSignatureFormat, EcdsaVerificationAlgorithm, UnparsedPublicKey,
     /// };
     ///
-    /// static ECDSA_P384_SHA224_ASN1: EcdsaVerificationAlgorithm =
-    ///     EcdsaVerificationAlgorithm::new(EcdsaCurve::P384, &SHA224, EcdsaSignatureFormat::Asn1);
-    ///
+    /// let algorithm =
+    ///     EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1)
+    ///         .ok_or(Unspecified)?;
     /// # let public_key: &[u8] = &[];
-    /// let public_key = UnparsedPublicKey::new(&ECDSA_P384_SHA224_ASN1, public_key);
+    /// let public_key = UnparsedPublicKey::new(algorithm, public_key);
+    /// # Ok::<(), aws_lc_rs::error::Unspecified>(())
     /// ```
-    ///
-    /// SHA-1 is accepted for verification of legacy signatures only.
-    ///
-    /// # Panics
-    /// Panics if `digest` cannot be used with ECDSA (e.g. Keccak-256). In a `const` context this
-    /// is a compile-time error.
     #[must_use]
-    pub const fn new(
+    #[inline]
+    pub const fn get(
         curve: EcdsaCurve,
         digest: &'static digest::Algorithm,
         sig_format: EcdsaSignatureFormat,
-    ) -> Self {
-        assert!(
-            ecdsa_digest_supported(digest, true),
-            "digest algorithm is not supported for ECDSA"
-        );
-        Self {
-            id: curve.id(),
-            digest,
-            sig_format,
+    ) -> Option<&'static Self> {
+        match EcdsaSigningAlgorithm::get(curve, digest, sig_format) {
+            Some(algorithm) => Some(algorithm.verification_algorithm()),
+            None => None,
         }
     }
 
@@ -109,22 +99,22 @@ impl EcdsaVerificationAlgorithm {
 
 /// An ECDSA signing algorithm.
 ///
-/// The predefined constants in [`crate::signature`] (e.g. `ECDSA_P256_SHA256_ASN1_SIGNING`)
-/// cover the recommended combinations. Use [`EcdsaSigningAlgorithm::new`] for a combination that
-/// has no constant.
+/// Prefer the recommended constants in [`crate::signature`]
+/// (e.g. `ECDSA_P256_SHA256_ASN1_SIGNING`). Use [`EcdsaSigningAlgorithm::get`] for a combination
+/// that has no constant.
 #[derive(Debug, Eq, PartialEq)]
 pub struct EcdsaSigningAlgorithm(pub(crate) EcdsaVerificationAlgorithm);
 
 impl EcdsaSigningAlgorithm {
-    /// Constructs a signing algorithm from a curve, digest, and signature format.
+    /// Returns a signing algorithm for the given curve, digest, and signature format.
     ///
-    /// Prefer the predefined constants in [`crate::signature`], which pair each curve with a
-    /// digest of matching security strength. This constructor exists for interoperating with
-    /// peers or formats that require a combination without a constant, such as a PKCS#10 request
-    /// whose signature algorithm is chosen by a third party.
+    /// Prefer the recommended constants in [`crate::signature`], which pair curves with digests
+    /// of matching security strength. This lookup supports interoperability with peers or
+    /// formats that require other combinations, such as a PKCS#10 request whose signature
+    /// algorithm is chosen by a third party.
     ///
-    /// This is a `const fn`, so the result can be bound to a `const` or `static` and used with
-    /// [`crate::signature::EcdsaKeyPair`]:
+    /// The lookup can be used in a `const` or at runtime without allocating. It returns `None`
+    /// for unsupported digests, including SHA-1. Compare algorithms with `==`, not by address.
     ///
     /// ```
     /// use aws_lc_rs::digest::SHA512;
@@ -134,14 +124,17 @@ impl EcdsaSigningAlgorithm {
     ///     UnparsedPublicKey,
     /// };
     ///
-    /// static ECDSA_P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    ///     EcdsaSigningAlgorithm::new(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
-    ///
-    /// let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA512_ASN1_SIGNING)?;
+    /// const ALGORITHM: &EcdsaSigningAlgorithm = match EcdsaSigningAlgorithm::get(
+    ///     EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1,
+    /// ) {
+    ///     Some(algorithm) => algorithm,
+    ///     None => panic!("unsupported ECDSA parameters"),
+    /// };
+    /// let key_pair = EcdsaKeyPair::generate(ALGORITHM)?;
     /// let signature = key_pair.sign(&SystemRandom::new(), b"message")?;
     ///
     /// let public_key = UnparsedPublicKey::new(
-    ///     ECDSA_P256_SHA512_ASN1_SIGNING.verification_algorithm(),
+    ///     ALGORITHM.verification_algorithm(),
     ///     key_pair.public_key().as_ref(),
     /// );
     /// public_key.verify(b"message", signature.as_ref())?;
@@ -150,29 +143,48 @@ impl EcdsaSigningAlgorithm {
     ///
     /// # Security strength
     /// The strength of an ECDSA signature is bounded by the weaker of the curve and the digest.
-    /// A digest weaker than the curve (e.g. P-384 with SHA-256) reduces the signature's strength
-    /// to that of the digest. A digest stronger than the curve (e.g. P-256 with SHA-512) does not
-    /// reduce the strength, but does not increase it either. FIPS 186-5 recommends matching
-    /// strengths unless the participating entities agree otherwise.
-    ///
-    /// # Panics
-    /// Panics if `digest` cannot be used for ECDSA signing. SHA-1 is rejected for signing even
-    /// though it is accepted for verification. In a `const` context this is a compile-time error.
+    /// `Some` means the library supports the combination. This lookup does not compare the
+    /// security strengths of the curve and digest.
     #[must_use]
-    pub const fn new(
+    #[inline]
+    pub const fn get(
         curve: EcdsaCurve,
         digest: &'static digest::Algorithm,
         sig_format: EcdsaSignatureFormat,
-    ) -> Self {
-        assert!(
-            ecdsa_digest_supported(digest, false),
-            "digest algorithm is not supported for ECDSA signing"
-        );
-        Self(EcdsaVerificationAlgorithm {
-            id: curve.id(),
-            digest,
-            sig_format,
-        })
+    ) -> Option<&'static Self> {
+        use EcdsaSignatureFormat::{Asn1, Fixed};
+
+        // Each match arm borrows a constant expression, so even runtime choices yield a
+        // 'static reference without allocating or reading a static in a const fn on Rust 1.71.
+        macro_rules! by_digest {
+            ($id:ident, $format:ident; $($hash:ident),+) => {
+                match digest.id {
+                    $(digest::AlgorithmID::$hash => Some(&Self(EcdsaVerificationAlgorithm {
+                        id: &AlgorithmID::$id,
+                        digest: &digest::$hash,
+                        sig_format: $format,
+                    })),)+
+                    digest::AlgorithmID::SHA1 => None,
+                    #[cfg(all(not(feature = "fips"), feature = "unstable"))]
+                    digest::AlgorithmID::KECCAK256 => None,
+                }
+            };
+            ($id:ident, $format:ident) => {
+                by_digest!($id, $format; SHA224, SHA256, SHA384, SHA512, SHA512_256,
+                    SHA3_256, SHA3_384, SHA3_512)
+            };
+        }
+
+        match (curve, sig_format) {
+            (EcdsaCurve::P256, Asn1) => by_digest!(ECDSA_P256, Asn1),
+            (EcdsaCurve::P256, Fixed) => by_digest!(ECDSA_P256, Fixed),
+            (EcdsaCurve::P384, Asn1) => by_digest!(ECDSA_P384, Asn1),
+            (EcdsaCurve::P384, Fixed) => by_digest!(ECDSA_P384, Fixed),
+            (EcdsaCurve::P521, Asn1) => by_digest!(ECDSA_P521, Asn1),
+            (EcdsaCurve::P521, Fixed) => by_digest!(ECDSA_P521, Fixed),
+            (EcdsaCurve::P256K1, Asn1) => by_digest!(ECDSA_P256K1, Asn1),
+            (EcdsaCurve::P256K1, Fixed) => by_digest!(ECDSA_P256K1, Fixed),
+        }
     }
 
     // Deref is not const on Rust 1.71, so expose these accessors directly as well.
@@ -214,29 +226,11 @@ impl Deref for EcdsaSigningAlgorithm {
     }
 }
 
-/// Whether `digest` may be used with ECDSA. This mirrors the digests accepted by AWS-LC's EC
-/// `EVP_PKEY` method; SHA-1 is additionally excluded for signing.
-const fn ecdsa_digest_supported(digest: &digest::Algorithm, allow_sha1: bool) -> bool {
-    match digest.id {
-        digest::AlgorithmID::SHA1 => allow_sha1,
-        digest::AlgorithmID::SHA224
-        | digest::AlgorithmID::SHA256
-        | digest::AlgorithmID::SHA384
-        | digest::AlgorithmID::SHA512
-        | digest::AlgorithmID::SHA512_256
-        | digest::AlgorithmID::SHA3_256
-        | digest::AlgorithmID::SHA3_384
-        | digest::AlgorithmID::SHA3_512 => true,
-        #[cfg(all(not(feature = "fips"), feature = "unstable"))]
-        digest::AlgorithmID::KECCAK256 => false,
-    }
-}
-
 impl sealed::Sealed for EcdsaVerificationAlgorithm {}
 impl sealed::Sealed for EcdsaSigningAlgorithm {}
 
 /// The encoding of an ECDSA signature.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[non_exhaustive]
 pub enum EcdsaSignatureFormat {
     /// ASN.1 DER-encoded `ECDSA-Sig-Value` (RFC 3279), as used in X.509 and PKCS#10.
@@ -247,7 +241,7 @@ pub enum EcdsaSignatureFormat {
 }
 
 /// An elliptic curve usable with ECDSA.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[non_exhaustive]
 pub enum EcdsaCurve {
     /// NIST P-256, also known as secp256r1 or prime256v1.
@@ -262,16 +256,6 @@ pub enum EcdsaCurve {
 
 impl EcdsaCurve {
     #[inline]
-    pub(crate) const fn id(self) -> &'static AlgorithmID {
-        match self {
-            EcdsaCurve::P256 => &AlgorithmID::ECDSA_P256,
-            EcdsaCurve::P384 => &AlgorithmID::ECDSA_P384,
-            EcdsaCurve::P521 => &AlgorithmID::ECDSA_P521,
-            EcdsaCurve::P256K1 => &AlgorithmID::ECDSA_P256K1,
-        }
-    }
-
-    #[inline]
     pub(crate) const fn from_id(id: &AlgorithmID) -> Self {
         match id {
             AlgorithmID::ECDSA_P256 => EcdsaCurve::P256,
@@ -282,10 +266,9 @@ impl EcdsaCurve {
     }
 }
 
-impl sealed::Sealed for EcdsaCurve {}
-
-// Adding a curve requires a new variant here, matching arms in the `AlgorithmID` methods below
-// and in `EcdsaCurve::{id, from_id}`, and a public `EcdsaCurve` variant.
+// Adding a curve requires a new variant here, matching arms in the `AlgorithmID` methods below,
+// in `EcdsaCurve::from_id`, and in `EcdsaSigningAlgorithm::get`, and a public `EcdsaCurve`
+// variant.
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 pub(crate) enum AlgorithmID {

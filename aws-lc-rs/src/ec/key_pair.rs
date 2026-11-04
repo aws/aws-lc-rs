@@ -214,24 +214,30 @@ impl EcdsaKeyPair {
 
     /// Returns a key pair sharing this key pair's key material, bound to `alg`.
     ///
-    /// The key material is reference counted, so this does not re-parse or re-validate the key.
-    /// Signing with one key under several digests is discouraged (see
-    /// [`EcdsaSigningAlgorithm::new`]); this exists for interoperating with peers that require it.
+    /// The private key is reference counted; only the cached public key encoding is copied.
+    /// This does not re-parse or re-validate the key. Use a predefined constant or
+    /// [`EcdsaSigningAlgorithm::get`] to select `alg`.
+    ///
+    /// Prefer using each key with a single algorithm. Rebind it only when the protocol
+    /// requires another digest or signature format for the same curve.
     ///
     /// ```
     /// use aws_lc_rs::digest::SHA512;
+    /// use aws_lc_rs::error::Unspecified;
     /// use aws_lc_rs::rand::SystemRandom;
     /// use aws_lc_rs::signature::{
-    ///     EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    ///     EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
     ///     ECDSA_P256_SHA256_ASN1_SIGNING,
     /// };
     ///
-    /// static ECDSA_P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    ///     EcdsaSigningAlgorithm::new(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
-    ///
-    /// # let pkcs8 = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &SystemRandom::new())?;
-    /// let key_pair = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, pkcs8.as_ref())?;
-    /// let sha512_key_pair = key_pair.with_algorithm(&ECDSA_P256_SHA512_ASN1_SIGNING)?;
+    /// let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING)?;
+    /// let algorithm = EcdsaSigningAlgorithm::get(
+    ///     key_pair.algorithm().curve(),
+    ///     &SHA512,
+    ///     EcdsaSignatureFormat::Asn1,
+    /// )
+    /// .ok_or(Unspecified)?;
+    /// let sha512_key_pair = key_pair.with_algorithm(algorithm)?;
     ///
     /// let rng = SystemRandom::new();
     /// let sha256_signature = key_pair.sign(&rng, b"message")?;
