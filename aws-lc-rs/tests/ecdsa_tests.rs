@@ -5,14 +5,58 @@
 
 use aws_lc_rs::digest::{
     Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512, SHA512,
+    SHA512_256,
 };
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{
-    self, EcdsaKeyPair, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, KeyPair,
-    ParsedPublicKey, Signature, UnparsedPublicKey, VerificationAlgorithm,
+    self, EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    EcdsaVerificationAlgorithm, KeyPair, ParsedPublicKey, Signature, UnparsedPublicKey,
+    VerificationAlgorithm,
 };
 use aws_lc_rs::{digest, test, test_file};
+
+const ECDSA_CURVES: [EcdsaCurve; 4] = [
+    EcdsaCurve::P256,
+    EcdsaCurve::P384,
+    EcdsaCurve::P521,
+    EcdsaCurve::P256K1,
+];
+const ECDSA_SIGNATURE_FORMATS: [EcdsaSignatureFormat; 2] =
+    [EcdsaSignatureFormat::Asn1, EcdsaSignatureFormat::Fixed];
+const ECDSA_SIGNING_DIGESTS: [&digest::Algorithm; 8] = [
+    &SHA224,
+    &SHA256,
+    &SHA384,
+    &SHA512,
+    &SHA512_256,
+    &SHA3_256,
+    &SHA3_384,
+    &SHA3_512,
+];
+
+// (curve, digest) pairs that have NIST CAVP vectors but no predefined signing constant.
+macro_rules! ecdsa_asn1_algorithms {
+    ($($signing:ident, $verifying:ident = ($curve:ident, $digest:ident);)+) => {
+        $(
+            static $signing: EcdsaSigningAlgorithm =
+                EcdsaSigningAlgorithm::new(EcdsaCurve::$curve, &$digest, EcdsaSignatureFormat::Asn1);
+            static $verifying: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm::new(
+                EcdsaCurve::$curve,
+                &$digest,
+                EcdsaSignatureFormat::Asn1,
+            );
+        )+
+    };
+}
+ecdsa_asn1_algorithms! {
+    ECDSA_P256_SHA224_ASN1_SIGNING, ECDSA_P256_SHA224_ASN1 = (P256, SHA224);
+    ECDSA_P256_SHA384_ASN1_SIGNING, ECDSA_P256_SHA384_ASN1 = (P256, SHA384);
+    ECDSA_P256_SHA512_ASN1_SIGNING, ECDSA_P256_SHA512_ASN1 = (P256, SHA512);
+    ECDSA_P384_SHA224_ASN1_SIGNING, ECDSA_P384_SHA224_ASN1 = (P384, SHA224);
+    ECDSA_P384_SHA256_ASN1_SIGNING, ECDSA_P384_SHA256_ASN1 = (P384, SHA256);
+    ECDSA_P384_SHA512_ASN1_SIGNING, ECDSA_P384_SHA512_ASN1 = (P384, SHA512);
+}
 
 #[test]
 fn ecdsa_traits() {
@@ -23,7 +67,219 @@ fn ecdsa_traits() {
     test::compile_time_assert_sync::<Signature>();
 
     test::compile_time_assert_eq::<EcdsaVerificationAlgorithm>();
+    test::compile_time_assert_copy::<EcdsaVerificationAlgorithm>();
     test::compile_time_assert_eq::<EcdsaSigningAlgorithm>();
+    test::compile_time_assert_copy::<EcdsaSigningAlgorithm>();
+    test::compile_time_assert_eq::<EcdsaCurve>();
+    test::compile_time_assert_copy::<EcdsaCurve>();
+    test::compile_time_assert_eq::<EcdsaSignatureFormat>();
+    test::compile_time_assert_copy::<EcdsaSignatureFormat>();
+}
+
+/// The `const fn` constructors reproduce every predefined ECDSA constant, so a constructed
+/// algorithm is interchangeable with the constant for the same (curve, digest, format).
+#[test]
+fn ecdsa_algorithm_constructors_match_constants() {
+    macro_rules! assert_constructs {
+        ($ty:ident: $($constant:ident = ($curve:ident, $digest:ident, $format:ident);)+) => {
+            $(
+                assert_eq!(
+                    $ty::new(EcdsaCurve::$curve, &$digest, EcdsaSignatureFormat::$format),
+                    signature::$constant,
+                    stringify!($constant)
+                );
+            )+
+        };
+    }
+
+    assert_constructs! { EcdsaVerificationAlgorithm:
+        ECDSA_P256_SHA256_FIXED = (P256, SHA256, Fixed);
+        ECDSA_P384_SHA384_FIXED = (P384, SHA384, Fixed);
+        ECDSA_P384_SHA3_384_FIXED = (P384, SHA3_384, Fixed);
+        ECDSA_P521_SHA1_FIXED = (P521, SHA1_FOR_LEGACY_USE_ONLY, Fixed);
+        ECDSA_P521_SHA224_FIXED = (P521, SHA224, Fixed);
+        ECDSA_P521_SHA256_FIXED = (P521, SHA256, Fixed);
+        ECDSA_P521_SHA384_FIXED = (P521, SHA384, Fixed);
+        ECDSA_P521_SHA512_FIXED = (P521, SHA512, Fixed);
+        ECDSA_P521_SHA3_512_FIXED = (P521, SHA3_512, Fixed);
+        ECDSA_P256K1_SHA256_FIXED = (P256K1, SHA256, Fixed);
+        ECDSA_P256K1_SHA3_256_FIXED = (P256K1, SHA3_256, Fixed);
+        ECDSA_P256_SHA1_ASN1 = (P256, SHA1_FOR_LEGACY_USE_ONLY, Asn1);
+        ECDSA_P256_SHA256_ASN1 = (P256, SHA256, Asn1);
+        ECDSA_P256_SHA384_ASN1 = (P256, SHA384, Asn1);
+        ECDSA_P256_SHA512_ASN1 = (P256, SHA512, Asn1);
+        ECDSA_P384_SHA256_ASN1 = (P384, SHA256, Asn1);
+        ECDSA_P384_SHA384_ASN1 = (P384, SHA384, Asn1);
+        ECDSA_P384_SHA512_ASN1 = (P384, SHA512, Asn1);
+        ECDSA_P384_SHA3_384_ASN1 = (P384, SHA3_384, Asn1);
+        ECDSA_P521_SHA1_ASN1 = (P521, SHA1_FOR_LEGACY_USE_ONLY, Asn1);
+        ECDSA_P521_SHA224_ASN1 = (P521, SHA224, Asn1);
+        ECDSA_P521_SHA256_ASN1 = (P521, SHA256, Asn1);
+        ECDSA_P521_SHA384_ASN1 = (P521, SHA384, Asn1);
+        ECDSA_P521_SHA512_ASN1 = (P521, SHA512, Asn1);
+        ECDSA_P521_SHA3_512_ASN1 = (P521, SHA3_512, Asn1);
+        ECDSA_P256K1_SHA256_ASN1 = (P256K1, SHA256, Asn1);
+        ECDSA_P256K1_SHA3_256_ASN1 = (P256K1, SHA3_256, Asn1);
+    }
+
+    assert_constructs! { EcdsaSigningAlgorithm:
+        ECDSA_P256_SHA256_FIXED_SIGNING = (P256, SHA256, Fixed);
+        ECDSA_P384_SHA384_FIXED_SIGNING = (P384, SHA384, Fixed);
+        ECDSA_P384_SHA3_384_FIXED_SIGNING = (P384, SHA3_384, Fixed);
+        ECDSA_P521_SHA224_FIXED_SIGNING = (P521, SHA224, Fixed);
+        ECDSA_P521_SHA256_FIXED_SIGNING = (P521, SHA256, Fixed);
+        ECDSA_P521_SHA384_FIXED_SIGNING = (P521, SHA384, Fixed);
+        ECDSA_P521_SHA512_FIXED_SIGNING = (P521, SHA512, Fixed);
+        ECDSA_P521_SHA3_512_FIXED_SIGNING = (P521, SHA3_512, Fixed);
+        ECDSA_P256K1_SHA256_FIXED_SIGNING = (P256K1, SHA256, Fixed);
+        ECDSA_P256K1_SHA3_256_FIXED_SIGNING = (P256K1, SHA3_256, Fixed);
+        ECDSA_P256_SHA256_ASN1_SIGNING = (P256, SHA256, Asn1);
+        ECDSA_P384_SHA384_ASN1_SIGNING = (P384, SHA384, Asn1);
+        ECDSA_P384_SHA3_384_ASN1_SIGNING = (P384, SHA3_384, Asn1);
+        ECDSA_P521_SHA224_ASN1_SIGNING = (P521, SHA224, Asn1);
+        ECDSA_P521_SHA256_ASN1_SIGNING = (P521, SHA256, Asn1);
+        ECDSA_P521_SHA384_ASN1_SIGNING = (P521, SHA384, Asn1);
+        ECDSA_P521_SHA512_ASN1_SIGNING = (P521, SHA512, Asn1);
+        ECDSA_P521_SHA3_512_ASN1_SIGNING = (P521, SHA3_512, Asn1);
+        ECDSA_P256K1_SHA256_ASN1_SIGNING = (P256K1, SHA256, Asn1);
+        ECDSA_P256K1_SHA3_256_ASN1_SIGNING = (P256K1, SHA3_256, Asn1);
+    }
+}
+
+/// The constructors and accessors are usable in `const` contexts.
+#[test]
+fn ecdsa_algorithm_const_accessors() {
+    const SIGNING: EcdsaSigningAlgorithm =
+        EcdsaSigningAlgorithm::new(EcdsaCurve::P384, &SHA256, EcdsaSignatureFormat::Fixed);
+    const VERIFYING: &EcdsaVerificationAlgorithm = SIGNING.verification_algorithm();
+    const CURVE: EcdsaCurve = VERIFYING.curve();
+    const DIGEST: &digest::Algorithm = VERIFYING.digest_algorithm();
+    const FORMAT: EcdsaSignatureFormat = VERIFYING.signature_format();
+    const SCALAR_LEN: usize = CURVE.private_key_size();
+
+    assert_eq!(CURVE, EcdsaCurve::P384);
+    assert_eq!(DIGEST, &SHA256);
+    assert_eq!(FORMAT, EcdsaSignatureFormat::Fixed);
+    assert_eq!(SCALAR_LEN, 48);
+    assert_eq!(
+        *VERIFYING,
+        EcdsaVerificationAlgorithm::new(EcdsaCurve::P384, &SHA256, EcdsaSignatureFormat::Fixed)
+    );
+    // Accessors are also reachable on the signing algorithm through `Deref`.
+    assert_eq!(SIGNING.curve(), CURVE);
+    assert_eq!(SIGNING.digest_algorithm(), DIGEST);
+    assert_eq!(SIGNING.signature_format(), FORMAT);
+
+    for curve in ECDSA_CURVES {
+        let expected = match curve {
+            EcdsaCurve::P256 | EcdsaCurve::P256K1 => 32,
+            EcdsaCurve::P384 => 48,
+            EcdsaCurve::P521 => 66,
+            _ => unreachable!(),
+        };
+        assert_eq!(curve.private_key_size(), expected, "{curve:?}");
+    }
+}
+
+/// Every (curve, digest, format) combination accepted by the constructors can generate a key,
+/// sign, and verify, including the combinations that have no predefined constant.
+#[test]
+fn ecdsa_constructed_algorithm_matrix() {
+    const MESSAGE: &[u8] = b"constructed ECDSA algorithm";
+    let rng = SystemRandom::new();
+
+    for curve in ECDSA_CURVES {
+        for digest_alg in ECDSA_SIGNING_DIGESTS {
+            let message_digest = digest::digest(digest_alg, MESSAGE);
+            for format in ECDSA_SIGNATURE_FORMATS {
+                // `EcdsaKeyPair` requires `&'static` algorithms; leak the constructed ones
+                // so this test can iterate over the matrix at runtime.
+                let signing: &'static EcdsaSigningAlgorithm = Box::leak(Box::new(
+                    EcdsaSigningAlgorithm::new(curve, digest_alg, format),
+                ));
+                let verifying: &'static EcdsaVerificationAlgorithm = Box::leak(Box::new(
+                    EcdsaVerificationAlgorithm::new(curve, digest_alg, format),
+                ));
+                assert_eq!(signing.verification_algorithm(), verifying);
+                assert_eq!(signing.curve(), curve);
+                assert_eq!(signing.digest_algorithm(), digest_alg);
+                assert_eq!(signing.signature_format(), format);
+
+                let key_pair = EcdsaKeyPair::generate(signing).unwrap();
+                assert_eq!(key_pair.algorithm(), signing);
+                let public_key = key_pair.public_key().as_ref();
+                for signature in [
+                    key_pair.sign(&rng, MESSAGE),
+                    key_pair.sign_digest(&message_digest),
+                ] {
+                    let signature = signature.unwrap_or_else(|err| panic!("{signing:?}: {err:?}"));
+                    if format == EcdsaSignatureFormat::Fixed {
+                        assert_eq!(signature.as_ref().len(), 2 * curve.private_key_size());
+                    }
+                    UnparsedPublicKey::new(verifying, public_key)
+                        .verify(MESSAGE, signature.as_ref())
+                        .unwrap_or_else(|err| panic!("{verifying:?}: {err:?}"));
+                    verifying
+                        .verify_digest_sig(public_key, &message_digest, signature.as_ref())
+                        .unwrap_or_else(|err| panic!("{verifying:?}: {err:?}"));
+                }
+
+                // A same-length digest from a different algorithm must not be accepted.
+                let other_digest = match digest_alg.output_len {
+                    32 if digest_alg == &SHA256 => Some(&SHA3_256),
+                    32 if digest_alg == &SHA3_256 => Some(&SHA256),
+                    48 if digest_alg == &SHA384 => Some(&SHA3_384),
+                    48 if digest_alg == &SHA3_384 => Some(&SHA384),
+                    64 if digest_alg == &SHA512 => Some(&SHA3_512),
+                    64 if digest_alg == &SHA3_512 => Some(&SHA512),
+                    _ => None,
+                };
+                if let Some(other_digest) = other_digest {
+                    let wrong_digest = digest::digest(other_digest, MESSAGE);
+                    assert!(key_pair.sign_digest(&wrong_digest).is_err());
+                    let signature = key_pair.sign_digest(&message_digest).unwrap();
+                    assert!(verifying
+                        .verify_digest_sig(public_key, &wrong_digest, signature.as_ref())
+                        .is_err());
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn ecdsa_sha1_verification_only() {
+    for curve in ECDSA_CURVES {
+        for format in ECDSA_SIGNATURE_FORMATS {
+            let verifying =
+                EcdsaVerificationAlgorithm::new(curve, &SHA1_FOR_LEGACY_USE_ONLY, format);
+            assert_eq!(verifying.curve(), curve);
+            assert_eq!(verifying.digest_algorithm(), &SHA1_FOR_LEGACY_USE_ONLY);
+            assert!(std::panic::catch_unwind(|| {
+                EcdsaSigningAlgorithm::new(curve, &SHA1_FOR_LEGACY_USE_ONLY, format)
+            })
+            .is_err());
+        }
+    }
+}
+
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
+#[test]
+fn ecdsa_keccak_rejected() {
+    use aws_lc_rs::unstable::digest::KECCAK256;
+
+    for curve in ECDSA_CURVES {
+        for format in ECDSA_SIGNATURE_FORMATS {
+            assert!(std::panic::catch_unwind(|| {
+                EcdsaSigningAlgorithm::new(curve, &KECCAK256, format)
+            })
+            .is_err());
+            assert!(std::panic::catch_unwind(|| {
+                EcdsaVerificationAlgorithm::new(curve, &KECCAK256, format)
+            })
+            .is_err());
+        }
+    }
 }
 
 #[test]
@@ -450,6 +706,7 @@ fn signature_ecdsa_sign_asn1_sha3_test() {
 // test vectors. Because the nonce is randomized, the signature will be
 // different each time. Because of that, here we simply verify that the
 // signature verifies correctly.
+#[allow(clippy::too_many_lines)]
 fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
     let rng = SystemRandom::new();
 
@@ -469,15 +726,45 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
 
         let (signing_alg, verification_alg, digest_alg) =
             match (curve_name.as_str(), digest_name.as_str()) {
+                ("P-256", "SHA224") => (
+                    &ECDSA_P256_SHA224_ASN1_SIGNING,
+                    &ECDSA_P256_SHA224_ASN1,
+                    &SHA224,
+                ),
                 ("P-256", "SHA256") => (
                     &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
                     &signature::ECDSA_P256_SHA256_ASN1,
+                    &SHA256,
+                ),
+                ("P-256", "SHA384") => (
+                    &ECDSA_P256_SHA384_ASN1_SIGNING,
+                    &ECDSA_P256_SHA384_ASN1,
+                    &SHA384,
+                ),
+                ("P-256", "SHA512") => (
+                    &ECDSA_P256_SHA512_ASN1_SIGNING,
+                    &ECDSA_P256_SHA512_ASN1,
+                    &SHA512,
+                ),
+                ("P-384", "SHA224") => (
+                    &ECDSA_P384_SHA224_ASN1_SIGNING,
+                    &ECDSA_P384_SHA224_ASN1,
+                    &SHA224,
+                ),
+                ("P-384", "SHA256") => (
+                    &ECDSA_P384_SHA256_ASN1_SIGNING,
+                    &ECDSA_P384_SHA256_ASN1,
                     &SHA256,
                 ),
                 ("P-384", "SHA384") => (
                     &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
                     &signature::ECDSA_P384_SHA384_ASN1,
                     &SHA384,
+                ),
+                ("P-384", "SHA512") => (
+                    &ECDSA_P384_SHA512_ASN1_SIGNING,
+                    &ECDSA_P384_SHA512_ASN1,
+                    &SHA512,
                 ),
                 ("P-384", "SHA3-384") => (
                     &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,

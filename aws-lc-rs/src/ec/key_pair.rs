@@ -77,7 +77,7 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
-        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -229,7 +229,7 @@ impl EcdsaKeyPair {
         )?;
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),
@@ -254,7 +254,7 @@ impl EcdsaKeyPair {
         }
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),
