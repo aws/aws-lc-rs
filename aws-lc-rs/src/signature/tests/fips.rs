@@ -11,12 +11,12 @@ use crate::signature::{
     EcdsaVerificationAlgorithm, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair,
     VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING,
     ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1,
-    ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING,
-    ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING, ECDSA_P384_SHA3_384_ASN1,
-    ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED, ECDSA_P384_SHA3_384_FIXED_SIGNING,
-    ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING, ECDSA_P521_SHA3_512_FIXED,
-    ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1, ECDSA_P521_SHA512_ASN1_SIGNING,
-    ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
+    ECDSA_P256_SHA512_ASN1, ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1,
+    ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING,
+    ECDSA_P384_SHA3_384_ASN1, ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED,
+    ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING,
+    ECDSA_P521_SHA3_512_FIXED, ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1,
+    ECDSA_P521_SHA512_ASN1_SIGNING, ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
     RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
     RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY, RSA_PKCS1_2048_8192_SHA256,
     RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512, RSA_PKCS1_SHA256, RSA_PKCS1_SHA384,
@@ -172,6 +172,43 @@ ecdsa_constructed_asn1! {
     ecdsa_p384_sha224_asn1_constructed, P384_SHA224_ASN1_SIGNING, P384_SHA224_ASN1 = (P384, SHA224);
     ecdsa_p384_sha256_asn1_constructed, P384_SHA256_ASN1_SIGNING, P384_SHA256_ASN1 = (P384, SHA256);
     ecdsa_p384_sha512_asn1_constructed, P384_SHA512_ASN1_SIGNING, P384_SHA512_ASN1 = (P384, SHA512);
+}
+
+/// A key pair rebound with `with_algorithm` signs and verifies with the same approval status as
+/// one constructed directly for the target algorithm.
+#[test]
+fn ecdsa_with_algorithm() {
+    let rng = SystemRandom::new();
+
+    let key_pair = assert_fips_status_indicator!(
+        EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING),
+        FipsServiceStatus::Approved
+    )
+    .unwrap();
+
+    for (signing_alg, verification_alg) in [
+        (&P256_SHA224_ASN1_SIGNING, &P256_SHA224_ASN1),
+        (&P256_SHA512_ASN1_SIGNING, &ECDSA_P256_SHA512_ASN1),
+        (&ECDSA_P256_SHA256_FIXED_SIGNING, &ECDSA_P256_SHA256_FIXED),
+    ] {
+        let rebound = key_pair.with_algorithm(signing_alg).unwrap();
+
+        let signature = assert_fips_status_indicator!(
+            rebound.sign(&rng, TEST_MESSAGE.as_bytes()),
+            FipsServiceStatus::Approved
+        )
+        .unwrap();
+
+        assert_fips_status_indicator!(
+            verification_alg.verify_sig(
+                rebound.public_key().as_ref(),
+                TEST_MESSAGE.as_bytes(),
+                signature.as_ref()
+            ),
+            FipsServiceStatus::Approved
+        )
+        .unwrap();
+    }
 }
 
 #[test]

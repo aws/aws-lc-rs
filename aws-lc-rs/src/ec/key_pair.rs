@@ -28,6 +28,10 @@ use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 
 /// An ECDSA key pair, used for signing.
+///
+/// A key pair is bound to one [`EcdsaSigningAlgorithm`] (curve, digest, and signature encoding).
+/// To sign with the same key under a different algorithm for its curve, use
+/// [`EcdsaKeyPair::with_algorithm`].
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
@@ -62,7 +66,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
+        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey)?;
 
         Ok(Self {
             algorithm,
@@ -202,10 +206,51 @@ impl EcdsaKeyPair {
         PrivateKey(self)
     }
 
-    /// [`EcdsaSigningAlgorithm`] which was used to create this [`EcdsaKeyPair`]
+    /// The [`EcdsaSigningAlgorithm`] this key pair is bound to.
     #[must_use]
     pub fn algorithm(&self) -> &'static EcdsaSigningAlgorithm {
         self.algorithm
+    }
+
+    /// Returns a key pair sharing this key pair's key material, bound to `alg`.
+    ///
+    /// The key material is reference counted, so this does not re-parse or re-validate the key.
+    /// Signing with one key under several digests is discouraged (see
+    /// [`EcdsaSigningAlgorithm::new`]); this exists for interoperating with peers that require it.
+    ///
+    /// ```
+    /// use aws_lc_rs::digest::SHA512;
+    /// use aws_lc_rs::rand::SystemRandom;
+    /// use aws_lc_rs::signature::{
+    ///     EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    ///     ECDSA_P256_SHA256_ASN1_SIGNING,
+    /// };
+    ///
+    /// static ECDSA_P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+    ///     EcdsaSigningAlgorithm::new(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
+    ///
+    /// # let pkcs8 = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &SystemRandom::new())?;
+    /// let key_pair = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, pkcs8.as_ref())?;
+    /// let sha512_key_pair = key_pair.with_algorithm(&ECDSA_P256_SHA512_ASN1_SIGNING)?;
+    ///
+    /// let rng = SystemRandom::new();
+    /// let sha256_signature = key_pair.sign(&rng, b"message")?;
+    /// let sha512_signature = sha512_key_pair.sign(&rng, b"message")?;
+    /// # Ok::<(), aws_lc_rs::error::Unspecified>(())
+    /// ```
+    ///
+    /// # Errors
+    /// `error::KeyRejected::wrong_algorithm()` if `alg` is for a different curve than this key
+    /// pair.
+    pub fn with_algorithm(&self, alg: &'static EcdsaSigningAlgorithm) -> Result<Self, KeyRejected> {
+        if alg.curve() != self.algorithm.curve() {
+            return Err(KeyRejected::wrong_algorithm());
+        }
+        Ok(Self {
+            algorithm: alg,
+            evp_pkey: self.evp_pkey.clone(),
+            pubkey: self.pubkey.clone(),
+        })
     }
 
     /// Returns a signature for the message.

@@ -22,6 +22,8 @@
 //! constant, construct one with [`EcdsaSigningAlgorithm::new`] or
 //! [`EcdsaVerificationAlgorithm::new`]. Both are `const fn`, so the result can
 //! be bound to a `static` and used anywhere a predefined constant is accepted.
+//! An [`EcdsaKeyPair`] is bound to one algorithm; to sign with the same key
+//! under another algorithm for its curve, use [`EcdsaKeyPair::with_algorithm`].
 //!
 //! For most use cases, prefer passing the full message to the signing and
 //! verification APIs, which hash it as part of the operation. Signing and

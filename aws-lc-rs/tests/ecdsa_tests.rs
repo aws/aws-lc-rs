@@ -282,6 +282,112 @@ fn ecdsa_keccak_rejected() {
     }
 }
 
+/// The predefined ASN.1 signing algorithm for a curve, used as the algorithm a key pair is
+/// initially bound to before `with_algorithm` rebinds it.
+fn default_asn1_signing_algorithm(curve: EcdsaCurve) -> &'static EcdsaSigningAlgorithm {
+    match curve {
+        EcdsaCurve::P256 => &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
+        EcdsaCurve::P384 => &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+        EcdsaCurve::P521 => &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+        EcdsaCurve::P256K1 => &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
+        _ => unreachable!(),
+    }
+}
+
+/// `with_algorithm` rebinds a key pair to any algorithm for its curve without changing the key
+/// material, and both handles remain independently usable.
+#[test]
+fn ecdsa_key_pair_with_algorithm() {
+    const MESSAGE: &[u8] = b"EcdsaKeyPair::with_algorithm";
+    let rng = SystemRandom::new();
+
+    for curve in ECDSA_CURVES {
+        let original_alg = default_asn1_signing_algorithm(curve);
+        let original = EcdsaKeyPair::generate(original_alg).unwrap();
+        let public_key = original.public_key().as_ref().to_vec();
+        let pkcs8 = original.to_pkcs8v1().unwrap();
+
+        for digest_alg in ECDSA_SIGNING_DIGESTS {
+            let message_digest = digest::digest(digest_alg, MESSAGE);
+            for format in ECDSA_SIGNATURE_FORMATS {
+                let alg: &'static EcdsaSigningAlgorithm = Box::leak(Box::new(
+                    EcdsaSigningAlgorithm::new(curve, digest_alg, format),
+                ));
+                let rebound = original.with_algorithm(alg).unwrap();
+                assert_eq!(rebound.algorithm(), alg);
+                assert_eq!(rebound.public_key().as_ref(), public_key.as_slice());
+                assert_eq!(rebound.to_pkcs8v1().unwrap().as_ref(), pkcs8.as_ref());
+                assert_eq!(format!("{rebound:?}"), format!("{original:?}"));
+
+                for signature in [
+                    rebound.sign(&rng, MESSAGE),
+                    rebound.sign_digest(&message_digest),
+                ] {
+                    let signature = signature.unwrap_or_else(|err| panic!("{alg:?}: {err:?}"));
+                    let verifying = alg.verification_algorithm();
+                    verifying
+                        .verify_sig(&public_key, MESSAGE, signature.as_ref())
+                        .unwrap_or_else(|err| panic!("{verifying:?}: {err:?}"));
+                    verifying
+                        .verify_digest_sig(&public_key, &message_digest, signature.as_ref())
+                        .unwrap_or_else(|err| panic!("{verifying:?}: {err:?}"));
+                    // The signature is specific to the rebound algorithm.
+                    if alg != original_alg {
+                        assert!(original_alg
+                            .verification_algorithm()
+                            .verify_sig(&public_key, MESSAGE, signature.as_ref())
+                            .is_err());
+                    }
+                }
+
+                // The original handle is unaffected.
+                assert_eq!(original.algorithm(), original_alg);
+                let signature = original.sign(&rng, MESSAGE).unwrap();
+                original_alg
+                    .verification_algorithm()
+                    .verify_sig(&public_key, MESSAGE, signature.as_ref())
+                    .unwrap();
+            }
+        }
+
+        // A rebound handle outlives the handle it was created from.
+        let fixed_alg: &'static EcdsaSigningAlgorithm = Box::leak(Box::new(
+            EcdsaSigningAlgorithm::new(curve, &SHA512_256, EcdsaSignatureFormat::Fixed),
+        ));
+        let rebound = {
+            let temporary = EcdsaKeyPair::from_pkcs8(original_alg, pkcs8.as_ref()).unwrap();
+            temporary.with_algorithm(fixed_alg).unwrap()
+        };
+        let signature = rebound.sign(&rng, MESSAGE).unwrap();
+        assert_eq!(signature.as_ref().len(), 2 * curve.private_key_size());
+        fixed_alg
+            .verification_algorithm()
+            .verify_sig(&public_key, MESSAGE, signature.as_ref())
+            .unwrap();
+    }
+}
+
+#[test]
+fn ecdsa_key_pair_with_algorithm_rejects_curve_mismatch() {
+    for curve in ECDSA_CURVES {
+        let key_pair = EcdsaKeyPair::generate(default_asn1_signing_algorithm(curve)).unwrap();
+        // Includes the same-width P-256 / secp256k1 pair.
+        for wrong_curve in ECDSA_CURVES.into_iter().filter(|other| *other != curve) {
+            for format in ECDSA_SIGNATURE_FORMATS {
+                let alg: &'static EcdsaSigningAlgorithm = Box::leak(Box::new(
+                    EcdsaSigningAlgorithm::new(wrong_curve, &SHA256, format),
+                ));
+                let err = key_pair.with_algorithm(alg).unwrap_err();
+                assert_eq!(
+                    err.description_(),
+                    "WrongAlgorithm",
+                    "{curve:?}/{wrong_curve:?}"
+                );
+            }
+        }
+    }
+}
+
 #[test]
 fn ecdsa_key_pair_clone() {
     const MESSAGE: &[u8] = b"hello, world";
@@ -819,12 +925,29 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
         let digest = digest::digest(digest_alg, &msg);
         let digest_signature = private_key.sign_digest(&digest).unwrap();
 
-        let public_key = UnparsedPublicKey::new(verification_alg, q);
+        let public_key = UnparsedPublicKey::new(verification_alg, q.as_slice());
         let vfy_result = public_key.verify(&msg, signature.as_ref());
         assert!(vfy_result.is_ok());
 
         let vfy_digest_result = public_key.verify_digest(&digest, digest_signature.as_ref());
         assert!(vfy_digest_result.is_ok());
+
+        // The same key parsed under the curve's default algorithm and rebound.
+        let rebound = EcdsaKeyPair::from_private_key_and_public_key(
+            default_asn1_signing_algorithm(signing_alg.curve()),
+            &d,
+            &q,
+        )
+        .unwrap()
+        .with_algorithm(signing_alg)
+        .unwrap();
+        assert_eq!(rebound.public_key().as_ref(), q.as_slice());
+        let signature = rebound.sign(&rng, &msg).unwrap();
+        public_key.verify(&msg, signature.as_ref()).unwrap();
+        let digest_signature = rebound.sign_digest(&digest).unwrap();
+        public_key
+            .verify_digest(&digest, digest_signature.as_ref())
+            .unwrap();
 
         Ok(())
     });
