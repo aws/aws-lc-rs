@@ -3,23 +3,25 @@
 
 #![cfg(debug_assertions)]
 
+use crate::digest;
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 use crate::rand::SystemRandom;
 use crate::signature::{
-    EcdsaKeyPair, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair, VerificationAlgorithm,
-    ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED,
-    ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1, ECDSA_P384_SHA256_ASN1,
-    ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED,
-    ECDSA_P384_SHA384_FIXED_SIGNING, ECDSA_P384_SHA3_384_ASN1, ECDSA_P384_SHA3_384_ASN1_SIGNING,
-    ECDSA_P384_SHA3_384_FIXED, ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA3_512_ASN1,
-    ECDSA_P521_SHA3_512_ASN1_SIGNING, ECDSA_P521_SHA3_512_FIXED, ECDSA_P521_SHA3_512_FIXED_SIGNING,
-    ECDSA_P521_SHA512_ASN1, ECDSA_P521_SHA512_ASN1_SIGNING, ECDSA_P521_SHA512_FIXED,
-    ECDSA_P521_SHA512_FIXED_SIGNING, RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_2048_8192_SHA256, RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512,
-    RSA_PKCS1_SHA256, RSA_PKCS1_SHA384, RSA_PKCS1_SHA512, RSA_PSS_2048_8192_SHA256,
-    RSA_PSS_2048_8192_SHA384, RSA_PSS_2048_8192_SHA512, RSA_PSS_SHA256, RSA_PSS_SHA384,
-    RSA_PSS_SHA512,
+    EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    EcdsaVerificationAlgorithm, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair,
+    VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING,
+    ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1,
+    ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING,
+    ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING, ECDSA_P384_SHA3_384_ASN1,
+    ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED, ECDSA_P384_SHA3_384_FIXED_SIGNING,
+    ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING, ECDSA_P521_SHA3_512_FIXED,
+    ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1, ECDSA_P521_SHA512_ASN1_SIGNING,
+    ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
+    RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY, RSA_PKCS1_2048_8192_SHA256,
+    RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512, RSA_PKCS1_SHA256, RSA_PKCS1_SHA384,
+    RSA_PKCS1_SHA512, RSA_PSS_2048_8192_SHA256, RSA_PSS_2048_8192_SHA384, RSA_PSS_2048_8192_SHA512,
+    RSA_PSS_SHA256, RSA_PSS_SHA384, RSA_PSS_SHA512,
 };
 
 mod keys;
@@ -137,6 +139,40 @@ ecdsa_generate_sign_verify!(
     FipsServiceStatus::Approved,
     FipsServiceStatus::Approved
 );
+
+// (curve, digest) pairs with no predefined signing constant, built with the `const fn`
+// constructors. AWS-LC approves any approved digest with any NIST curve.
+macro_rules! ecdsa_constructed_asn1 {
+    ($($name:ident, $signing:ident, $verifying:ident = ($curve:ident, $digest:ident);)+) => {
+        $(
+            static $signing: EcdsaSigningAlgorithm = EcdsaSigningAlgorithm::new(
+                EcdsaCurve::$curve,
+                &digest::$digest,
+                EcdsaSignatureFormat::Asn1,
+            );
+            static $verifying: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm::new(
+                EcdsaCurve::$curve,
+                &digest::$digest,
+                EcdsaSignatureFormat::Asn1,
+            );
+            ecdsa_generate_sign_verify!(
+                $name,
+                &$signing,
+                $verifying,
+                FipsServiceStatus::Approved,
+                FipsServiceStatus::Approved
+            );
+        )+
+    };
+}
+ecdsa_constructed_asn1! {
+    ecdsa_p256_sha224_asn1_constructed, P256_SHA224_ASN1_SIGNING, P256_SHA224_ASN1 = (P256, SHA224);
+    ecdsa_p256_sha384_asn1_constructed, P256_SHA384_ASN1_SIGNING, P256_SHA384_ASN1 = (P256, SHA384);
+    ecdsa_p256_sha512_asn1_constructed, P256_SHA512_ASN1_SIGNING, P256_SHA512_ASN1 = (P256, SHA512);
+    ecdsa_p384_sha224_asn1_constructed, P384_SHA224_ASN1_SIGNING, P384_SHA224_ASN1 = (P384, SHA224);
+    ecdsa_p384_sha256_asn1_constructed, P384_SHA256_ASN1_SIGNING, P384_SHA256_ASN1 = (P384, SHA256);
+    ecdsa_p384_sha512_asn1_constructed, P384_SHA512_ASN1_SIGNING, P384_SHA512_ASN1 = (P384, SHA512);
+}
 
 #[test]
 fn ed25519() {
