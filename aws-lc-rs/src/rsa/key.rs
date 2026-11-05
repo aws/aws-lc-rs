@@ -24,9 +24,7 @@ use aws_lc::RSA_check_fips;
 use core::fmt::{self, Debug, Formatter};
 use core::ptr::null_mut;
 
-// TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::c_int;
-use std::os::raw::c_int;
+use core::ffi::c_int;
 
 use crate::digest::{match_digest_type, Digest};
 use crate::pkcs8::Version;

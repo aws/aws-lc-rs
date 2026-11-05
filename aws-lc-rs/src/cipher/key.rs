@@ -12,11 +12,9 @@ use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
 #[cfg(feature = "legacy-des")]
 use crate::constant_time;
 use crate::error::{KeyRejected, Unspecified};
+use core::ffi::c_uint;
 use core::mem::{size_of, MaybeUninit};
 use core::ptr::copy_nonoverlapping;
-// TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::c_uint;
-use std::os::raw::c_uint;
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
