@@ -219,22 +219,23 @@ fn ecdsa_algorithm_lookup_matrix() {
                         .unwrap_or_else(|err| panic!("{verifying:?}: {err:?}"));
                 }
 
-                // A same-length digest from a different algorithm must not be accepted.
-                let other_digest = match digest_alg.output_len {
-                    32 if digest_alg == &SHA256 => Some(&SHA3_256),
-                    32 if digest_alg == &SHA3_256 => Some(&SHA256),
-                    48 if digest_alg == &SHA384 => Some(&SHA3_384),
-                    48 if digest_alg == &SHA3_384 => Some(&SHA384),
-                    64 if digest_alg == &SHA512 => Some(&SHA3_512),
-                    64 if digest_alg == &SHA3_512 => Some(&SHA512),
-                    _ => None,
-                };
-                if let Some(other_digest) = other_digest {
-                    let wrong_digest = digest::digest(other_digest, MESSAGE);
+                // Keep the bytes unchanged so rejection depends on algorithm identity, not
+                // a different hash value. Include every other digest of the same length.
+                for other_digest in ECDSA_SIGNING_DIGESTS.into_iter().filter(|other| {
+                    *other != digest_alg && other.output_len() == digest_alg.output_len()
+                }) {
+                    let wrong_digest =
+                        Digest::import_less_safe(message_digest.as_ref(), other_digest).unwrap();
                     assert!(key_pair.sign_digest(&wrong_digest).is_err());
                     let signature = key_pair.sign_digest(&message_digest).unwrap();
                     assert!(verifying
                         .verify_digest_sig(public_key, &wrong_digest, signature.as_ref())
+                        .is_err());
+                    assert!(UnparsedPublicKey::new(verifying, public_key)
+                        .verify_digest(&wrong_digest, signature.as_ref())
+                        .is_err());
+                    assert!(parsed_public_key
+                        .verify_digest_sig(&wrong_digest, signature.as_ref())
                         .is_err());
                 }
             }
@@ -258,6 +259,65 @@ fn ecdsa_lookups_reject_sha1() {
     };
 
     assert_ecdsa_lookups_reject(&SHA1_FOR_LEGACY_USE_ONLY);
+}
+
+#[test]
+fn ecdsa_named_legacy_sha1_verification() {
+    let mut fixture_curves = Vec::new();
+    test::run(
+        test_file!("data/ecdsa_verify_sha1_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+            let curve_name = test_case.consume_string("Curve");
+            let curve = match curve_name.as_str() {
+                "P-256" => EcdsaCurve::P256,
+                "P-384" => EcdsaCurve::P384,
+                "P-521" => EcdsaCurve::P521,
+                "secp256k1" => EcdsaCurve::P256K1,
+                _ => panic!("Unsupported curve: {curve_name}"),
+            };
+            fixture_curves.push(curve);
+            let msg = test_case.consume_bytes("Msg");
+            let public_key = test_case.consume_bytes("Q");
+            let asn1_signature = test_case.consume_bytes("SigASN1");
+            let fixed_signature = test_case.consume_bytes("SigFixed");
+            assert_eq!(fixed_signature.len(), fixed_signature_len(curve));
+            let mut changed_msg = msg.clone();
+            changed_msg.push(0);
+
+            for (verifying, signature) in [
+                (&signature::ECDSA_P256_SHA1_ASN1, asn1_signature.as_slice()),
+                (&signature::ECDSA_P521_SHA1_ASN1, asn1_signature.as_slice()),
+                (
+                    &signature::ECDSA_P521_SHA1_FIXED,
+                    fixed_signature.as_slice(),
+                ),
+            ] {
+                let unparsed = UnparsedPublicKey::new(verifying, &public_key);
+                if verifying.curve() != curve {
+                    assert!(unparsed.verify(&msg, signature).is_err());
+                    continue;
+                }
+                let format = verifying.signature_format();
+                assert_eq!(verifying.digest_algorithm(), &SHA1_FOR_LEGACY_USE_ONLY);
+                let parsed = unparsed.parse().unwrap();
+                for (message, is_valid) in [(msg.as_slice(), true), (changed_msg.as_slice(), false)]
+                {
+                    let digest = digest::digest(&SHA1_FOR_LEGACY_USE_ONLY, message);
+                    for result in [
+                        unparsed.verify(message, signature),
+                        unparsed.verify_digest(&digest, signature),
+                        parsed.verify_sig(message, signature),
+                        parsed.verify_digest_sig(&digest, signature),
+                    ] {
+                        assert_eq!(result.is_ok(), is_valid, "{curve:?}/{format:?}");
+                    }
+                }
+            }
+            Ok(())
+        },
+    );
+    assert_eq!(fixture_curves, ECDSA_CURVES);
 }
 
 #[cfg(all(not(feature = "fips"), feature = "unstable"))]
@@ -832,10 +892,8 @@ fn signature_ecdsa_sign_asn1_sha3_test() {
     test_signature_ecdsa_sign_asn1(test_file!("data/ecdsa_sign_asn1_sha3_tests.txt"));
 }
 
-// This test is not a known-answer test, though it re-uses the known-answer
-// test vectors. Because the nonce is randomized, the signature will be
-// different each time. Because of that, here we simply verify that the
-// signature verifies correctly.
+// Signing uses a randomized nonce, so its output cannot be compared with the reference
+// signature. Verify both independently supplied reference signatures and generated signatures.
 #[allow(clippy::too_many_lines)]
 fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
     let rng = SystemRandom::new();
@@ -852,7 +910,7 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
 
         // Ignored since the actual signature will use a randomized nonce.
         let _k = test_case.consume_optional_bytes("k");
-        let _expected_result = test_case.consume_bytes("Sig");
+        let known_signature = test_case.consume_bytes("Sig");
 
         let (curve, digest_alg) = match (curve_name.as_str(), digest_name.as_str()) {
             ("P-256", "SHA224") => (EcdsaCurve::P256, &SHA224),
@@ -887,11 +945,19 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
         let digest_signature = private_key.sign_digest(&digest).unwrap();
 
         let public_key = UnparsedPublicKey::new(verification_alg, q.as_slice());
-        let vfy_result = public_key.verify(&msg, signature.as_ref());
-        assert!(vfy_result.is_ok());
-
-        let vfy_digest_result = public_key.verify_digest(&digest, digest_signature.as_ref());
-        assert!(vfy_digest_result.is_ok());
+        let parsed_public_key = public_key.parse().unwrap();
+        for signature in [
+            known_signature.as_slice(),
+            signature.as_ref(),
+            digest_signature.as_ref(),
+        ] {
+            public_key.verify(&msg, signature).unwrap();
+            public_key.verify_digest(&digest, signature).unwrap();
+            parsed_public_key.verify_sig(&msg, signature).unwrap();
+            parsed_public_key
+                .verify_digest_sig(&digest, signature)
+                .unwrap();
+        }
 
         // The same key parsed under the curve's default algorithm and rebound.
         let rebound = EcdsaKeyPair::from_private_key_and_public_key(
