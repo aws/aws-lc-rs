@@ -398,10 +398,11 @@ fn cfb1_cipher_in_chunks(
     let mut num: i32 = 0;
     indicator_check!({
         for chunk in in_out.chunks_mut(chunk_len) {
+            let in_out_ptr = chunk.as_mut_ptr();
             unsafe {
                 AES_cfb1_encrypt(
-                    chunk.as_ptr(),
-                    chunk.as_mut_ptr(),
+                    in_out_ptr.cast_const(),
+                    in_out_ptr,
                     chunk.len() * 8,
                     key,
                     iv.as_mut_ptr(),
