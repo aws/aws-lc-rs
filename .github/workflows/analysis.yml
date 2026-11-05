@@ -362,6 +362,38 @@ jobs:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
             cargo test --release -p aws-lc-rs --features fips --all-targets -- --test-threads=1
 
+  borrow-sanitizer:
+    if: github.repository_owner == 'aws'
+    name: BorrowSanitizer (bounded, non-FIPS)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    container:
+      # bsan 9537ca3 (2026-11-02), including its matching Rust/Clang/LLVM toolchain.
+      # Revalidate native instrumentation and test budgets before updating this pin.
+      image: ghcr.io/borrowsanitizer/bsan@sha256:80691864268b0bbc3e617ae3ddc6a49925d588cb5f6e48eef8e4afa026e9125a
+      # The pilot peaked near 5 GiB RSS; allow headroom for runner variation.
+      options: --init --cpus=4 --memory=8g --memory-swap=8g
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+          persist-credentials: false
+      - name: Run bounded BorrowSanitizer tests
+        # Leave time for log upload if the test step exceeds its overall budget.
+        timeout-minutes: 15
+        run: bash scripts/ci/run_bsan.sh
+      - name: Upload BorrowSanitizer logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: borrow-sanitizer-logs
+          path: target/bsan-logs/
+          if-no-files-found: warn
+          retention-days: 14
+
   gnu-stack-check:
     if: github.repository_owner == 'aws'
     name: Verify (${{ matrix.host }}) GNU-stack section
