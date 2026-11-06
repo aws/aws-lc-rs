@@ -34,7 +34,9 @@ concurrency:
 # Jobs that build or generate files run third-party code (cross and its images,
 # crates.io build scripts, toolchains), so they only get read access and hand
 # their output to a commit-* job as a patch. Only the commit-* jobs can push,
-# and each only accepts changes under the paths its stage owns.
+# and each only accepts changes under the paths its stage owns. This isolates
+# write credentials; it does not prove generated content is benign. See
+# scripts/ci/README.md for the security boundary and regeneration requirements.
 permissions:
   contents: read
 
