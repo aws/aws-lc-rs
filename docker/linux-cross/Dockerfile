@@ -1,5 +1,9 @@
 ARG CROSS_BASE_IMAGE=ubuntu:20.04
-FROM $CROSS_BASE_IMAGE
+# Lets the bindings-generator workflows pin the base image by digest. (Setting the
+# digest as cross's target image instead makes cross use it to tag the image
+# built from this file, which docker rejects.)
+ARG AWS_LC_CROSS_BASE_IMAGE=${CROSS_BASE_IMAGE}
+FROM ${AWS_LC_CROSS_BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG GO_VERSION=1.23.8
