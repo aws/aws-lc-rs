@@ -149,5 +149,16 @@ Both targets use wasi-sdk 34, with the target's `CC` set to its Clang and
 context ABI. Direct `aws-lc-sys` users must disable the default `all-bindings`
 feature to use universal bindings on these targets.
 
+### OpenHarmony
+
+SDK cross-compilation is supported for `aarch64-unknown-linux-ohos`,
+`armv7-unknown-linux-ohos`, and `x86_64-unknown-linux-ohos`. SDK CI builds
+and links the `cipher` example for each target but does not run the binaries.
+
+For native OpenHarmony builds with neither an SDK nor a CMake toolchain file,
+the CMake builder uses a Linux-compatible platform with the processor derived
+from Cargo's target architecture. SDK and user-provided CMake toolchains are
+preserved. This native fallback has not been validated on an OpenHarmony device.
+
 [AWS-LC]: https://github.com/aws/aws-lc
 [platform-support]: https://doc.rust-lang.org/rustc/platform-support.html
