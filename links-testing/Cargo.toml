@@ -8,6 +8,10 @@ publish = false
 [features]
 default = ["aws-lc-sys"]
 aws-lc-rs = ["dep:aws-lc-rs"]
+# aws-lc-rs ships the universal bindings, whose libcrypto leaves out the sources
+# they never reach; `all-bindings` on the sys crate is how C code that calls
+# past them (X.509, PEM, ...) gets the full archive back.
+aws-lc-rs-all-bindings = ["aws-lc-rs", "dep:aws-lc-sys-all-bindings"]
 aws-lc-rs-fips = ["aws-lc-rs", "aws-lc-rs/fips"]
 aws-lc-sys = ["dep:aws-lc-sys"]
 aws-lc-sys-ssl = ["aws-lc-sys", "aws-lc-sys/ssl"]
@@ -17,6 +21,10 @@ aws-lc-fips-sys-ssl = ["aws-lc-fips-sys", "aws-lc-fips-sys/ssl"]
 [dependencies]
 aws-lc-rs = { path = "../aws-lc-rs", optional = true }
 aws-lc-sys = { path = "../aws-lc-sys", optional = true }
+# The same package under another name, so enabling its feature does not also
+# enable this crate's `aws-lc-sys` feature (which selects the sys crate as the
+# dependency under test).
+aws-lc-sys-all-bindings = { package = "aws-lc-sys", path = "../aws-lc-sys", optional = true, features = ["all-bindings"] }
 aws-lc-fips-sys = { path = "../aws-lc-fips-sys", optional = true }
 
 [build-dependencies]
@@ -24,4 +32,4 @@ cc.workspace = true
 toml_edit.workspace = true
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["aws-lc-rs", "aws-lc-sys", "aws-lc-fips-sys"] # the sys crate is only used through a C library build
+normal = ["aws-lc-rs", "aws-lc-sys", "aws-lc-sys-all-bindings", "aws-lc-fips-sys"] # the sys crate is only used through a C library build

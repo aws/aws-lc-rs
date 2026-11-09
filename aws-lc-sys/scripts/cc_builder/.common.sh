@@ -17,6 +17,9 @@ BUILD_CFG_DIR="${SYS_CRATE_DIR}/builder/cc_builder"
 BUILD_CFG_FILE="${BUILD_CFG_DIR}/${SCRIPT_NAME}".rs
 mkdir -p "${BUILD_CFG_DIR}"
 
+# Writes a Rust module declaring a `&[&str]` constant of the given paths.
+# The constant is named `CRYPTO_LIBRARY` unless `OUTPUT_CONST_NAME` is set; a
+# non-empty `OUTPUT_DOC_COMMENT` (newline-separated `///` lines) precedes it.
 function generate_output() {
     TIMESTAMP="$(date -u)"
     cat << EOF
@@ -24,8 +27,11 @@ function generate_output() {
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 // $TIMESTAMP
 
-pub(super) const CRYPTO_LIBRARY: &[&str] = &[
 EOF
+    if [[ -n "${OUTPUT_DOC_COMMENT:-}" ]]; then
+        echo "${OUTPUT_DOC_COMMENT}"
+    fi
+    echo "pub(super) const ${OUTPUT_CONST_NAME:-CRYPTO_LIBRARY}: &[&str] = &["
     for FILE in "${@}"; do
         echo "    \"${FILE}\","
     done

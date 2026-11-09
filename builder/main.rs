@@ -799,6 +799,11 @@ trait Builder {
     fn check_dependencies(&self) -> Result<(), String>;
     fn build(&self) -> Result<(), String>;
     fn name(&self) -> &str;
+    /// Whether the libcrypto this builder provides defines every AWS-LC symbol, not
+    /// only those the universal bindings reach. Exported as `cargo:libcrypto_full`.
+    fn builds_full_libcrypto(&self) -> bool {
+        true
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -837,6 +842,7 @@ static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_SANITIZER: Option<String> = None;
 static mut SYS_LINK_WHOLE_ARCHIVE: bool = false;
+static mut SYS_FULL_LIBCRYPTO: bool = false;
 static mut SYS_STATIC: Option<bool> = None;
 static mut SYS_SYSTEM_DIR: Option<PathBuf> = None;
 static mut SYS_USE_SYSTEM: Option<bool> = None;
@@ -862,6 +868,7 @@ fn initialize() {
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
         SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
         SYS_LINK_WHOLE_ARCHIVE = env_crate_var_to_bool("LINK_WHOLE_ARCHIVE").unwrap_or(false);
+        SYS_FULL_LIBCRYPTO = env_crate_var_to_bool("FULL_LIBCRYPTO").unwrap_or(false);
         SYS_STATIC = env_crate_var_to_bool("STATIC");
         SYS_SYSTEM_DIR = optional_env_crate_target("SYSTEM_DIR").map(PathBuf::from);
         SYS_USE_SYSTEM = env_crate_var_to_bool("USE_SYSTEM");
@@ -1012,6 +1019,16 @@ fn is_no_pregenerated_src() -> bool {
 /// flag does both.
 fn is_link_whole_archive() -> bool {
     unsafe { SYS_LINK_WHOLE_ARCHIVE }
+}
+
+/// Returns true when `AWS_LC_SYS_FULL_LIBCRYPTO=1` asks the cc builder to compile
+/// every libcrypto source, including those the universal bindings never reach
+/// (`cc_builder::universal_bindings_excluded`). Builds that can call past the
+/// universal bindings already compile everything; this is the override for C code
+/// that reaches libcrypto through the `links` metadata of a universal-bindings
+/// build. See `cc_builder::builds_full_libcrypto`.
+fn is_full_libcrypto() -> bool {
+    unsafe { SYS_FULL_LIBCRYPTO }
 }
 
 fn disable_jitter_entropy() -> Option<bool> {
@@ -1423,6 +1440,13 @@ fn main() {
         For more information, see the aws-lc-rs User Guide: https://aws.github.io/aws-lc-rs/index.html"
     );
     builder.build().unwrap();
+
+    // Whether downstream C code may call libcrypto functions outside the
+    // universal bindings; see `cc_builder::builds_full_libcrypto`.
+    println!(
+        "cargo:libcrypto_full={}",
+        u8::from(builder.builds_full_libcrypto())
+    );
 
     // Emitted unconditionally regardless of which builder ran: the OpenSSL
     // compatibility-conf macro list is a property of AWS-LC's API surface,
