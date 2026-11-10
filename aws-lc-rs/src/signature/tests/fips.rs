@@ -210,6 +210,110 @@ ecdsa_with_digest_asn1! {
         (ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_ASN1, SHA256);
 }
 
+/// A key pair rebound with `with_algorithm` signs and verifies with the same approval status as
+/// one constructed directly for the target algorithm.
+#[test]
+fn ecdsa_with_algorithm() {
+    static P256_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+        signing_with_digest(&ECDSA_P256_SHA256_ASN1_SIGNING, &digest::SHA384);
+    static P256_SHA384_ASN1: EcdsaVerificationAlgorithm =
+        verification_with_digest(&ECDSA_P256_SHA256_ASN1, &digest::SHA384);
+    static P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+        signing_with_digest(&ECDSA_P256_SHA256_ASN1_SIGNING, &digest::SHA512);
+    static P256_SHA512_ASN1: EcdsaVerificationAlgorithm =
+        verification_with_digest(&ECDSA_P256_SHA256_ASN1, &digest::SHA512);
+
+    let rng = SystemRandom::new();
+
+    let key_pair = assert_fips_status_indicator!(
+        EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING),
+        FipsServiceStatus::Approved
+    )
+    .unwrap();
+
+    let algorithms: [(&'static EcdsaSigningAlgorithm, &EcdsaVerificationAlgorithm); 3] = [
+        (&P256_SHA384_ASN1_SIGNING, &P256_SHA384_ASN1),
+        (&P256_SHA512_ASN1_SIGNING, &P256_SHA512_ASN1),
+        (&ECDSA_P256_SHA256_FIXED_SIGNING, &ECDSA_P256_SHA256_FIXED),
+    ];
+    for (signing_alg, verification_alg) in algorithms {
+        let rebound = assert_fips_status_indicator!(
+            key_pair.with_algorithm(signing_alg),
+            FipsServiceStatus::Unset
+        )
+        .unwrap();
+        assert_eq!(rebound.algorithm(), signing_alg);
+
+        let signature = assert_fips_status_indicator!(
+            rebound.sign(&rng, TEST_MESSAGE.as_bytes()),
+            FipsServiceStatus::Approved
+        )
+        .unwrap();
+
+        assert_fips_status_indicator!(
+            verification_alg.verify_sig(
+                rebound.public_key().as_ref(),
+                TEST_MESSAGE.as_bytes(),
+                signature.as_ref()
+            ),
+            FipsServiceStatus::Approved
+        )
+        .unwrap();
+    }
+}
+
+#[test]
+fn ecdsa_with_algorithm_rejects_curve_mismatch_without_crypto() {
+    let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING).unwrap();
+
+    assert_fips_status_indicator!(
+        key_pair.with_algorithm(&ECDSA_P384_SHA384_ASN1_SIGNING),
+        FipsServiceStatus::Unset
+    )
+    .unwrap_err();
+    assert_eq!(key_pair.algorithm(), &ECDSA_P256_SHA256_ASN1_SIGNING);
+}
+
+#[test]
+fn ecdsa_sign_digest_rejects_mismatch_before_signing() {
+    static P256_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+        signing_with_digest(&ECDSA_P256_SHA256_ASN1_SIGNING, &digest::SHA512);
+    static P256_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+        signing_with_digest(&ECDSA_P256_SHA256_FIXED_SIGNING, &digest::SHA512);
+
+    let original = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING).unwrap();
+    let message_digest = digest::digest(&digest::SHA512, TEST_MESSAGE.as_bytes());
+    // Identical bytes and length ensure rejection depends on the algorithm, not the digest value.
+    let wrong_digest =
+        digest::Digest::import_less_safe(message_digest.as_ref(), &digest::SHA3_512).unwrap();
+
+    for algorithm in [&P256_SHA512_ASN1_SIGNING, &P256_SHA512_FIXED_SIGNING] {
+        for key_pair in [
+            EcdsaKeyPair::generate(algorithm).unwrap(),
+            original.with_algorithm(algorithm).unwrap(),
+        ] {
+            assert!(assert_fips_status_indicator!(
+                key_pair.sign_digest(&wrong_digest),
+                FipsServiceStatus::Unset
+            )
+            .is_err());
+
+            let signature = assert_fips_status_indicator!(
+                key_pair.sign_digest(&message_digest),
+                FipsServiceStatus::NonApproved
+            )
+            .unwrap();
+            algorithm
+                .verify_sig(
+                    key_pair.public_key().as_ref(),
+                    TEST_MESSAGE.as_bytes(),
+                    signature.as_ref(),
+                )
+                .unwrap();
+        }
+    }
+}
+
 #[test]
 fn ed25519() {
     let rng = SystemRandom::new();

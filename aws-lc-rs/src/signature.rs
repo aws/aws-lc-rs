@@ -22,7 +22,9 @@
 //! An application that must interoperate using a curve and digest combination
 //! that has no constant can declare its own from an existing constant with
 //! [`EcdsaSigningAlgorithm::with_digest_algorithm`] or
-//! [`EcdsaVerificationAlgorithm::with_digest_algorithm`].
+//! [`EcdsaVerificationAlgorithm::with_digest_algorithm`]. An [`EcdsaKeyPair`] is
+//! bound to one algorithm; to sign with the same key under another algorithm for
+//! its curve, use [`EcdsaKeyPair::with_algorithm`].
 //!
 //! For most use cases, prefer passing the full message to the signing and
 //! verification APIs, which hash it as part of the operation. Signing and
