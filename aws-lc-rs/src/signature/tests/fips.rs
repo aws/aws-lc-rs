@@ -3,23 +3,24 @@
 
 #![cfg(debug_assertions)]
 
+use crate::digest;
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 use crate::rand::SystemRandom;
 use crate::signature::{
-    EcdsaKeyPair, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair, VerificationAlgorithm,
-    ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED,
-    ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1, ECDSA_P384_SHA256_ASN1,
-    ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED,
-    ECDSA_P384_SHA384_FIXED_SIGNING, ECDSA_P384_SHA3_384_ASN1, ECDSA_P384_SHA3_384_ASN1_SIGNING,
-    ECDSA_P384_SHA3_384_FIXED, ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA3_512_ASN1,
-    ECDSA_P521_SHA3_512_ASN1_SIGNING, ECDSA_P521_SHA3_512_FIXED, ECDSA_P521_SHA3_512_FIXED_SIGNING,
-    ECDSA_P521_SHA512_ASN1, ECDSA_P521_SHA512_ASN1_SIGNING, ECDSA_P521_SHA512_FIXED,
-    ECDSA_P521_SHA512_FIXED_SIGNING, RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_2048_8192_SHA256, RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512,
-    RSA_PKCS1_SHA256, RSA_PKCS1_SHA384, RSA_PKCS1_SHA512, RSA_PSS_2048_8192_SHA256,
-    RSA_PSS_2048_8192_SHA384, RSA_PSS_2048_8192_SHA512, RSA_PSS_SHA256, RSA_PSS_SHA384,
-    RSA_PSS_SHA512,
+    EcdsaKeyPair, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, Ed25519KeyPair,
+    EdDSAParameters, KeyPair, RsaKeyPair, VerificationAlgorithm, ECDSA_P256_SHA256_ASN1,
+    ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA256_FIXED_SIGNING,
+    ECDSA_P256_SHA384_ASN1, ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1,
+    ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED, ECDSA_P384_SHA384_FIXED_SIGNING,
+    ECDSA_P384_SHA3_384_ASN1, ECDSA_P384_SHA3_384_ASN1_SIGNING, ECDSA_P384_SHA3_384_FIXED,
+    ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA3_512_ASN1, ECDSA_P521_SHA3_512_ASN1_SIGNING,
+    ECDSA_P521_SHA3_512_FIXED, ECDSA_P521_SHA3_512_FIXED_SIGNING, ECDSA_P521_SHA512_ASN1,
+    ECDSA_P521_SHA512_ASN1_SIGNING, ECDSA_P521_SHA512_FIXED, ECDSA_P521_SHA512_FIXED_SIGNING,
+    RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY, RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY, RSA_PKCS1_2048_8192_SHA256,
+    RSA_PKCS1_2048_8192_SHA384, RSA_PKCS1_2048_8192_SHA512, RSA_PKCS1_SHA256, RSA_PKCS1_SHA384,
+    RSA_PKCS1_SHA512, RSA_PSS_2048_8192_SHA256, RSA_PSS_2048_8192_SHA384, RSA_PSS_2048_8192_SHA512,
+    RSA_PSS_SHA256, RSA_PSS_SHA384, RSA_PSS_SHA512,
 };
 
 mod keys;
@@ -137,6 +138,77 @@ ecdsa_generate_sign_verify!(
     FipsServiceStatus::Approved,
     FipsServiceStatus::Approved
 );
+
+const fn signing_with_digest(
+    base: &EcdsaSigningAlgorithm,
+    digest: &'static digest::Algorithm,
+) -> EcdsaSigningAlgorithm {
+    match base.with_digest_algorithm(digest) {
+        Some(algorithm) => algorithm,
+        None => panic!("unsupported ECDSA digest algorithm"),
+    }
+}
+
+const fn verification_with_digest(
+    base: &EcdsaVerificationAlgorithm,
+    digest: &'static digest::Algorithm,
+) -> EcdsaVerificationAlgorithm {
+    match base.with_digest_algorithm(digest) {
+        Some(algorithm) => algorithm,
+        None => panic!("unsupported ECDSA digest algorithm"),
+    }
+}
+
+// (curve, digest) pairs with no predefined signing constant, declared with
+// `with_digest_algorithm`.
+macro_rules! ecdsa_with_digest_asn1 {
+    ($($name:ident = ($signing_base:ident, $verification_base:ident, $digest:ident);)+) => {
+        $(
+            ecdsa_generate_sign_verify!(
+                $name,
+                {
+                    static SIGNING: EcdsaSigningAlgorithm =
+                        signing_with_digest(&$signing_base, &digest::$digest);
+                    &SIGNING
+                },
+                {
+                    static VERIFICATION: EcdsaVerificationAlgorithm =
+                        verification_with_digest(&$verification_base, &digest::$digest);
+                    &VERIFICATION
+                },
+                FipsServiceStatus::Approved,
+                FipsServiceStatus::Approved
+            );
+        )+
+    };
+}
+// The digest is at least as strong as the curve.
+ecdsa_with_digest_asn1! {
+    ecdsa_p256_sha384_asn1_with_digest =
+        (ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_ASN1, SHA384);
+    ecdsa_p256_sha512_asn1_with_digest =
+        (ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_ASN1, SHA512);
+    ecdsa_p384_sha512_asn1_with_digest =
+        (ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_ASN1, SHA512);
+    ecdsa_p256_sha512_256_asn1_with_digest =
+        (ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_ASN1, SHA512_256);
+    ecdsa_p256_sha3_256_asn1_with_digest =
+        (ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_ASN1, SHA3_256);
+}
+
+// The digest is weaker than the curve. FIPS 186-5 says such a digest "shall not be used"
+// (section 6.1.1) and "ordinarily should not be used" (section 6.4). AWS-LC's service indicator
+// evaluates the curve and the digest independently and does not compare their strengths. These
+// tests record the indicator's current result, not compliance; expect them to change if the
+// indicator starts comparing strengths.
+ecdsa_with_digest_asn1! {
+    ecdsa_p256_sha224_asn1_with_digest =
+        (ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_ASN1, SHA224);
+    ecdsa_p384_sha224_asn1_with_digest =
+        (ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_ASN1, SHA224);
+    ecdsa_p384_sha256_asn1_with_digest =
+        (ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_ASN1, SHA256);
+}
 
 #[test]
 fn ed25519() {

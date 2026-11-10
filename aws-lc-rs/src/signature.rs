@@ -17,6 +17,13 @@
 //! reduce the risks of algorithm agility and to provide consistency with ECDSA
 //! and `EdDSA`.
 //!
+//! Prefer the recommended ECDSA constants, which pair curves with digests of
+//! matching security strength; other constants are retained for interoperability.
+//! An application that must interoperate using a curve and digest combination
+//! that has no constant can declare its own from an existing constant with
+//! [`EcdsaSigningAlgorithm::with_digest_algorithm`] or
+//! [`EcdsaVerificationAlgorithm::with_digest_algorithm`].
+//!
 //! For most use cases, prefer passing the full message to the signing and
 //! verification APIs, which hash it as part of the operation. Signing and
 //! verifying a separately-computed digest is also supported for ECDSA and RSA:
@@ -388,7 +395,8 @@ pub trait VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
     // The following conditions must be met:
     // * RSA Key Sizes: 1024, 2048, 3072, 4096
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
@@ -411,7 +419,8 @@ pub trait VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
     // The following conditions must be met:
     // * RSA Key Sizes: 1024, 2048, 3072, 4096
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
@@ -556,7 +565,8 @@ impl ParsedPublicKey {
     // The following conditions must be met:
     // * RSA Key Sizes: 1024, 2048, 3072, 4096
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
     //
     /// # Errors
     /// `error::Unspecified` if the signature is invalid or verification fails.
@@ -653,7 +663,8 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     // The following conditions must be met:
     // * RSA Key Sizes: 1024, 2048, 3072, 4096
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
@@ -1067,101 +1078,101 @@ pub const ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerifica
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P256_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
 pub const ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P384_SHA384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
 pub const ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P384_SHA3_384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
 /// # ⚠️ Warning
 /// The security design strength of SHA-224 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA224_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA224_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA224_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
 /// # ⚠️ Warning
 /// The security design strength of SHA-256 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA256_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
 /// # ⚠️ Warning
 /// The security design strength of SHA-384 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA384_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
 pub const ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA512_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
 pub const ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA3_512_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
 pub const ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P256K1_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
 pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_FIXED);
+    EcdsaSigningAlgorithm(ECDSA_P256K1_SHA3_256_FIXED);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P256_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub const ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P384_SHA384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
 pub const ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P384_SHA3_384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
 /// # ⚠️ Warning
 /// The security design strength of SHA-224 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA224_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA224_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA224_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
 /// # ⚠️ Warning
 /// The security design strength of SHA-256 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA256_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
 /// # ⚠️ Warning
 /// The security design strength of SHA-384 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA384_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
 pub const ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA512_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
 pub const ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P521_SHA3_512_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
 pub const ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P256K1_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
 pub const ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_ASN1);
+    EcdsaSigningAlgorithm(ECDSA_P256K1_SHA3_256_ASN1);
 
 /// Verification of Ed25519 signatures.
 pub const ED25519: EdDSAParameters = EdDSAParameters {};

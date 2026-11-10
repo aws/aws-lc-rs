@@ -219,7 +219,10 @@ impl EcdsaKeyPair {
     // # FIPS
     // The following conditions must be met:
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384,
+    //   SHA3_512
+    // * The digest's security strength is at least the curve's (FIPS 186-5, section 6.1.1).
+    //   AWS-LC's service indicator does not compare the two strengths.
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
         let out_sig = self.evp_pkey.sign(
