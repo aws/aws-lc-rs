@@ -318,6 +318,10 @@ impl CcBuilder {
             }
             if target_os() == "linux" || target_os() == "emscripten" {
                 build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
+            } else if target_os() == "nto" || target_os() == "qnx" {
+                // QNX hides POSIX extensions such as PTHREAD_RWLOCK_INITIALIZER and
+                // struct in6_addr unless _QNX_SOURCE is defined.
+                build_options.push(BuildOption::define("_QNX_SOURCE", "1"));
             } else if target_vendor() != "apple" {
                 // Needed by illumos
                 build_options.push(BuildOption::define("__EXTENSIONS__", "1"));
@@ -490,7 +494,7 @@ impl CcBuilder {
         let mut je_builder = self.prepare_jitter_entropy_builder(&je_cflags_guards, is_cl_like);
         je_builder.flag(format!(
             "{}{}",
-            if is_cl_like { "/FI" } else { "--include=" },
+            if is_cl_like { "/FI" } else { "-include" },
             self.manifest_dir
                 .join("generated-include")
                 .join("openssl")
@@ -647,7 +651,8 @@ impl CcBuilder {
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
         let is_cl_like = compiler_is_cl_like(&cc_build.get_compiler());
 
-        let force_include_option = if is_cl_like { "/FI" } else { "--include=" };
+        // `-include<file>` (joined) is accepted by GCC, Clang and QNX's qcc driver; qcc rejects `--include=`.
+        let force_include_option = if is_cl_like { "/FI" } else { "-include" };
         // s2n-bignum is compiled separately due to needing extra flags
         let mut s2n_bignum_builder = cc_build.clone();
         s2n_bignum_builder.flag(format!(
