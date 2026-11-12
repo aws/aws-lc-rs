@@ -28,6 +28,12 @@ libraries AWS-LC requires; a build script linking the static `libcrypto_path`
 artifact must link these too. On `*-windows-gnu` it is `bcrypt`, which MinGW/GCC
 does not pick up from AWS-LC's `#pragma comment(lib, "bcrypt.lib")`.
 
+`bindings` is the path of the Rust bindings file the crate compiles. A build
+script can inspect it to check whether an AWS-LC function is declared, for
+example when a pre-installed AWS-LC (`AWS_LC_FIPS_SYS_SYSTEM_DIR`) may predate
+it. The file is bindgen output whose formatting is not guaranteed: a
+declaration is written `fn NAME(` when formatted and `fn NAME (` when not.
+
 On Windows, `libcrypto_path` and `libssl_path` refer to the link-time artifact
 -- for dynamic builds this is the import library (`*.lib` for MSVC,
 `lib*.dll.a` for MinGW), not the runtime DLL. For builds from source the DLL is

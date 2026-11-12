@@ -1,7 +1,18 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::env;
+use std::path::Path;
+use std::{env, fs};
+
+/// AWS-LC functions that aws-lc-rs only uses when the sys crate's bindings declare them, because
+/// some supported configurations lack them (for example, a system-installed AWS-LC below the
+/// release that added the function).
+///
+/// For each function declared by the bindings the sys crate compiles, `build.rs` sets
+/// `cfg(aws_lc_has = "<function name>")`. The `cfg` is unset when that cannot be determined
+/// (such as with a sys crate that does not export its `bindings` path), so code gated on it
+/// must have a fallback.
+const OPTIONAL_AWS_LC_FUNCTIONS: &[&str] = &["EVP_PKEY_get_private_seed"];
 
 fn main() {
     let has_mutually_exclusive_features = cfg!(feature = "non-fips") && cfg!(feature = "fips");
@@ -72,10 +83,59 @@ fn main() {
         println!("cargo:rustc-link-arg=/ignore:4099");
     }
 
-    export_sys_vars(sys_crate);
+    let selected = export_sys_vars(sys_crate);
+    emit_optional_function_cfgs(&selected);
 }
 
-fn export_sys_vars(sys_crate: &str) {
+/// Emits `cfg(aws_lc_has = "...")` for each of `OPTIONAL_AWS_LC_FUNCTIONS` declared by the
+/// bindings that the sys crate exports as `bindings`.
+fn emit_optional_function_cfgs(selected: &str) {
+    let values: Vec<String> = OPTIONAL_AWS_LC_FUNCTIONS
+        .iter()
+        .map(|name| format!("\"{name}\""))
+        .collect();
+    println!(
+        "cargo:rustc-check-cfg=cfg(aws_lc_has, values({}))",
+        values.join(", ")
+    );
+
+    let var = format!("{selected}BINDINGS");
+    // Older sys crates do not export their bindings path; every optional function is then
+    // treated as unavailable.
+    let Some(path) = env::var_os(&var) else {
+        return;
+    };
+    let path = Path::new(&path);
+    println!("cargo:rerun-if-changed={}", path.display());
+    let bindings = match fs::read_to_string(path) {
+        Ok(bindings) => bindings,
+        Err(err) => {
+            println!(
+                "cargo:warning=Unable to read AWS-LC bindings {}: {err}",
+                path.display()
+            );
+            return;
+        }
+    };
+
+    for name in OPTIONAL_AWS_LC_FUNCTIONS {
+        if declares_function(&bindings, name) {
+            println!("cargo:rustc-cfg=aws_lc_has=\"{name}\"");
+        }
+    }
+}
+
+/// Whether `bindings` declares the function `name`. bindgen writes the declaration as
+/// `fn NAME(` when its output is formatted (by rustfmt or prettyplease) and as `fn NAME (`
+/// when it is not.
+fn declares_function(bindings: &str, name: &str) -> bool {
+    [format!(" fn {name}("), format!(" fn {name} (")]
+        .iter()
+        .any(|pattern| bindings.contains(pattern.as_str()))
+}
+
+/// Re-exports the selected sys crate's metadata, returning its `DEP_*` variable prefix.
+fn export_sys_vars(sys_crate: &str) -> String {
     let prefix = if sys_crate == "aws-lc-fips-sys" {
         "DEP_AWS_LC_FIPS_"
     } else {
@@ -113,13 +173,14 @@ fn export_sys_vars(sys_crate: &str) {
     for (name, value) in candidates {
         try_export_var(&selected, &name, &value);
     }
+
+    selected
 }
 
 fn try_export_var(selected: &str, name: &str, value: &str) {
     assert!(!selected.is_empty(), "missing selected prefix");
 
     if let Some(var) = name.strip_prefix(selected) {
-        eprintln!("cargo:rerun-if-env-changed={name}");
         let var = var.to_lowercase();
         println!("cargo:{var}={value}");
     }
