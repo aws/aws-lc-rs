@@ -1,9 +1,20 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#[cfg(all(feature = "unstable", not(feature = "fips")))]
+use crate::aws_lc::EVP_PKEY_get_private_seed;
+#[cfg(all(feature = "unstable", any(feature = "fips", test)))]
+use crate::aws_lc::{
+    CBS_data, CBS_get_asn1, CBS_len, CBS_ASN1_CONTEXT_SPECIFIC, CBS_ASN1_INTEGER,
+    CBS_ASN1_OCTETSTRING, CBS_ASN1_SEQUENCE, CBS_ASN1_TAG,
+};
 use crate::aws_lc::{
     EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY, EVP_PKEY_PQDSA,
 };
+#[cfg(all(feature = "unstable", any(feature = "fips", test)))]
+use crate::cbs::build_CBS;
+#[cfg(feature = "unstable")]
+use crate::encoding::PqdsaSeedRaw;
 use crate::encoding::{AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw};
 use crate::error::{KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
@@ -166,6 +177,9 @@ impl PqdsaKeyPair {
     /// can be retrieved via [`Self::private_key`] and serialized via
     /// [`PqdsaPrivateKey::as_raw_bytes`].
     ///
+    /// With the `unstable` feature, `PqdsaKeyPair::seed` returns the seed of a key pair from
+    /// [`Self::generate`], so it can be stored and later passed back to this method.
+    ///
     /// # Errors
     ///
     /// Returns `KeyRejected::too_small()` if `seed.len() < 32`.
@@ -213,6 +227,46 @@ impl PqdsaKeyPair {
                 .as_const()
                 .marshal_rfc5208_private_key(Version::V1)?,
         ))
+    }
+
+    /// Returns the 32-byte seed this key pair was generated from.
+    ///
+    /// The seed can be passed back to [`Self::from_seed`] to reconstruct the same key pair.
+    ///
+    /// # Errors
+    /// Returns `Unspecified` if the seed is not available, for example when this
+    /// [`PqdsaKeyPair`] was constructed from the expanded private key via
+    /// [`Self::from_raw_private_key`].
+    #[cfg(feature = "unstable")]
+    pub fn seed(&self) -> Result<PqdsaSeedRaw<'static>, Unspecified> {
+        let seed_len = self.algorithm.0.id.seed_size_bytes();
+
+        #[cfg(not(feature = "fips"))]
+        {
+            let mut seed = vec![0u8; seed_len];
+            let mut out_len = seed.len();
+            if 1 != unsafe {
+                EVP_PKEY_get_private_seed(
+                    self.evp_pkey.as_const_ptr(),
+                    seed.as_mut_ptr(),
+                    &mut out_len,
+                )
+            } || out_len != seed_len
+            {
+                return Err(Unspecified);
+            }
+            Ok(PqdsaSeedRaw::new(seed))
+        }
+
+        // The FIPS module does not provide `EVP_PKEY_get_private_seed`.
+        #[cfg(feature = "fips")]
+        {
+            let pkcs8 = self.to_pkcs8v1()?;
+            Ok(PqdsaSeedRaw::new(seed_from_pkcs8v1(
+                pkcs8.as_ref(),
+                seed_len,
+            )?))
+        }
     }
 
     /// Deprecated alias for [`Self::to_pkcs8v1`].
@@ -263,6 +317,42 @@ impl PqdsaKeyPair {
 unsafe impl Send for PqdsaKeyPair {}
 
 unsafe impl Sync for PqdsaKeyPair {}
+
+// Reads the seed out of a PKCS#8 v1 `PrivateKeyInfo`. The privateKey OCTET STRING must hold
+// exactly a `[0] IMPLICIT OCTET STRING` of `seed_len` bytes. Anything else, such as the expanded
+// form, is rejected rather than returned as a seed.
+#[cfg(all(feature = "unstable", any(feature = "fips", test)))]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn seed_from_pkcs8v1(pkcs8: &[u8], seed_len: usize) -> Result<Vec<u8>, Unspecified> {
+    let mut input = build_CBS(pkcs8);
+    let mut info = build_CBS(&[]);
+    let mut skipped = build_CBS(&[]);
+    let mut private_key = build_CBS(&[]);
+    let mut seed = build_CBS(&[]);
+    if 1 != unsafe { CBS_get_asn1(&mut input, &mut info, CBS_ASN1_SEQUENCE as CBS_ASN1_TAG) }
+        || 1 != unsafe { CBS_get_asn1(&mut info, &mut skipped, CBS_ASN1_INTEGER as CBS_ASN1_TAG) }
+        || 1 != unsafe { CBS_get_asn1(&mut info, &mut skipped, CBS_ASN1_SEQUENCE as CBS_ASN1_TAG) }
+        || 1 != unsafe {
+            CBS_get_asn1(
+                &mut info,
+                &mut private_key,
+                CBS_ASN1_OCTETSTRING as CBS_ASN1_TAG,
+            )
+        }
+        || 1 != unsafe {
+            CBS_get_asn1(
+                &mut private_key,
+                &mut seed,
+                CBS_ASN1_CONTEXT_SPECIFIC as CBS_ASN1_TAG,
+            )
+        }
+        || 0 != unsafe { CBS_len(&private_key) }
+        || seed_len != unsafe { CBS_len(&seed) }
+    {
+        return Err(Unspecified);
+    }
+    Ok(unsafe { core::slice::from_raw_parts(CBS_data(&seed), seed_len) }.to_vec())
+}
 
 pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let params_fn = |ctx| {
@@ -586,6 +676,75 @@ mod tests {
                 kp.to_pkcs8().unwrap().as_ref(),
                 kp.to_pkcs8v1().unwrap().as_ref()
             );
+        }
+    }
+
+    #[cfg(feature = "unstable")]
+    #[test]
+    fn test_seed_roundtrip() {
+        for &alg in TEST_ALGORITHMS {
+            let kp = PqdsaKeyPair::generate(alg).unwrap();
+            let seed = kp.seed().unwrap();
+            assert_eq!(seed.as_ref().len(), alg.seed_len());
+            let kp2 = PqdsaKeyPair::from_seed(alg, seed.as_ref()).unwrap();
+            assert_eq!(kp.public_key().as_ref(), kp2.public_key().as_ref());
+        }
+    }
+
+    #[cfg(feature = "unstable")]
+    #[test]
+    fn test_seed_matches_pkcs8v1() {
+        for &alg in TEST_ALGORITHMS {
+            let kp = PqdsaKeyPair::generate(alg).unwrap();
+            let seed = kp.seed().unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
+            let mut seed_choice = vec![0x80, 0x20];
+            seed_choice.extend_from_slice(seed.as_ref());
+            assert!(pkcs8.as_ref().ends_with(&seed_choice));
+        }
+    }
+
+    #[cfg(feature = "unstable")]
+    #[test]
+    fn test_seed_unavailable_for_expanded_key() {
+        for &alg in TEST_ALGORITHMS {
+            let kp = PqdsaKeyPair::generate(alg).unwrap();
+            let raw = kp.private_key().as_raw_bytes().unwrap();
+            let expanded_kp = PqdsaKeyPair::from_raw_private_key(alg, raw.as_ref()).unwrap();
+            assert!(expanded_kp.seed().is_err());
+        }
+    }
+
+    // The FIPS fallback must reject a PKCS#8 encoding that carries the expanded private key
+    // instead of the seed, rather than returning expanded-key bytes as a seed.
+    #[cfg(feature = "unstable")]
+    #[test]
+    fn test_seed_from_pkcs8v1_rejects_expanded_form() {
+        #[allow(clippy::cast_possible_truncation)]
+        fn tlv(tag: u8, content: &[u8]) -> Vec<u8> {
+            let mut out = vec![tag];
+            if content.len() < 0x80 {
+                out.push(content.len() as u8);
+            } else {
+                out.extend_from_slice(&[0x82, (content.len() >> 8) as u8, content.len() as u8]);
+            }
+            out.extend_from_slice(content);
+            out
+        }
+        for &alg in TEST_ALGORITHMS {
+            let kp = PqdsaKeyPair::generate(alg).unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
+            let seed = kp.seed().unwrap();
+            assert_eq!(
+                seed_from_pkcs8v1(pkcs8.as_ref(), alg.seed_len()).unwrap(),
+                seed.as_ref()
+            );
+
+            // version INTEGER and AlgorithmIdentifier are the 16 bytes after the outer header.
+            let header = &pkcs8.as_ref()[2..18];
+            let raw = kp.private_key().as_raw_bytes().unwrap();
+            let expanded = [header, &tlv(0x04, &tlv(0x04, raw.as_ref()))].concat();
+            assert!(seed_from_pkcs8v1(&tlv(0x30, &expanded), alg.seed_len()).is_err());
         }
     }
 
