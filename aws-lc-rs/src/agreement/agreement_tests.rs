@@ -315,7 +315,6 @@ fn test_agreement_ecdh_p521() {
 #[test]
 fn agreement_traits() {
     use crate::test;
-    use regex::{self, Regex};
 
     let mut rng = rand::SystemRandom::new();
     let private_key = PrivateKey::generate_for_test(&ECDH_P256, &mut rng).unwrap();
@@ -339,15 +338,13 @@ fn agreement_traits() {
     );
 
     let public_key = private_key.compute_public_key().unwrap();
-    let pubkey_re = Regex::new(
-        "PublicKey \\{ algorithm: Algorithm \\{ curve: P256 \\}, bytes: \"[0-9a-f]+\" \\}",
-    )
-    .unwrap();
     let pubkey_debug = format!("{public_key:?}");
-
-    assert!(
-        pubkey_re.is_match(&pubkey_debug),
-        "pubkey_debug: {pubkey_debug}"
+    assert_eq!(
+        pubkey_debug,
+        format!(
+            "PublicKey {{ algorithm: Algorithm {{ curve: P256 }}, bytes: \"{}\" }}",
+            ::hex::encode(public_key.as_ref())
+        )
     );
 
     #[allow(clippy::redundant_clone)]
@@ -358,11 +355,6 @@ fn agreement_traits() {
     test::compile_time_assert_clone::<PublicKey>();
     test::compile_time_assert_send::<PublicKey>();
     test::compile_time_assert_sync::<PublicKey>();
-
-    // Verify `PublicKey` implements `Debug`.
-    //
-    // TODO: Test the actual output.
-    let _: &dyn core::fmt::Debug = &public_key;
 
     test::compile_time_assert_clone::<UnparsedPublicKey<&[u8]>>();
     test::compile_time_assert_copy::<UnparsedPublicKey<&[u8]>>();
