@@ -612,9 +612,9 @@ where
     B: AsRef<[u8]>,
 {
     #[inline]
-    fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
-        let mut n_bn = public_component_to_bn(self.n.as_ref()).map_err(|_| ())?;
-        let mut e_bn = public_component_to_bn(self.e.as_ref()).map_err(|_| ())?;
+    fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+        let mut n_bn = public_component_to_bn(self.n.as_ref())?;
+        let mut e_bn = public_component_to_bn(self.e.as_ref())?;
 
         let mut rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
         if 1 != unsafe {
@@ -625,14 +625,22 @@ where
                 null_mut(),
             )
         } {
-            return Err(());
+            return Err(KeyRejected::unspecified());
         }
         n_bn.detach();
         e_bn.detach();
 
+        // The DER-parsing paths (`RSA_parse_public_key`, `RSA_public_key_from_bytes`) run
+        // `RSA_check_key` on the decoded `(n, e)`. Apply the same validation here so that a
+        // given `(n, e)` is accepted or rejected regardless of how it arrives, and so that
+        // `as_der` cannot emit a `SubjectPublicKeyInfo` this crate would itself reject.
+        if 1 != unsafe { RSA_check_key(rsa.as_mut_ptr()) } {
+            return Err(KeyRejected::inconsistent_components());
+        }
+
         let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
         if 1 != unsafe { EVP_PKEY_assign_RSA(pkey.as_mut_ptr(), rsa.as_mut_ptr()) } {
-            return Err(());
+            return Err(KeyRejected::unspecified());
         }
         rsa.detach();
 
@@ -678,7 +686,10 @@ where
     /// behavior of [`crate::signature::ParsedPublicKey::new`].
     ///
     /// # Errors
-    /// `KeyRejected` if `self` does not form a valid RSA public key.
+    /// `KeyRejected` if `self` does not form a valid RSA public key. This
+    /// includes `InvalidEncoding` when a component is empty or has a leading
+    /// zero byte, and `InconsistentComponents` when `n` or `e` is not a valid
+    /// RSA public component (for example, an even `n`, an even `e`, or `e = 1`).
     ///
     /// # Examples
     ///
@@ -704,9 +715,7 @@ where
         &self,
         params: &'static RsaParameters,
     ) -> Result<crate::signature::ParsedPublicKey, KeyRejected> {
-        let pkey = self
-            .build_rsa()
-            .map_err(|()| KeyRejected::inconsistent_components())?;
+        let pkey = self.build_rsa()?;
         Ok(crate::signature::ParsedPublicKey::from_rsa_evp_pkey(
             params, pkey,
         )?)
