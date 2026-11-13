@@ -34,7 +34,7 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-const ALLOWED_HEADERS: [&str; 30] = [
+const ALLOWED_HEADERS: [&str; 31] = [
     "aead.h",
     "aes.h",
     "base.h",
@@ -65,6 +65,7 @@ const ALLOWED_HEADERS: [&str; 30] = [
     "rand.h",
     "rsa.h",
     "sha.h",
+    "sshkdf.h",
 ];
 
 // Excluded from universal bindings: platform-dependent parameter types or

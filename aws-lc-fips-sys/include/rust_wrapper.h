@@ -73,6 +73,7 @@
 #include "openssl/sha.h"
 #include "openssl/siphash.h"
 #include "openssl/span.h"
+#include "openssl/sshkdf.h"
 #include "openssl/stack.h"
 #include "openssl/thread.h"
 #include "openssl/trust_token.h"
