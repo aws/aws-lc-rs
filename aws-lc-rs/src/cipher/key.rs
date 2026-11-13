@@ -3,7 +3,9 @@
 
 use crate::aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
 #[cfg(feature = "legacy-des")]
-use crate::aws_lc::{DES_cblock, DES_key_schedule, DES_set_key};
+use crate::aws_lc::{
+    DES_cblock, DES_is_weak_key, DES_key_schedule, DES_set_key_unchecked, DES_set_odd_parity,
+};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 #[cfg(feature = "legacy-des")]
@@ -16,6 +18,8 @@ use core::ffi::c_uint;
 use core::mem::{size_of, MaybeUninit};
 use core::ptr::copy_nonoverlapping;
 use zeroize::Zeroize;
+#[cfg(feature = "legacy-des")]
+use zeroize::Zeroizing;
 
 pub(crate) enum SymmetricCipherKey {
     Aes128 {
@@ -150,38 +154,31 @@ impl SymmetricCipherKey {
         }
     }
 
-    /// Validates single DES key material and computes the key schedule.
+    /// Computes the single DES key schedule, stored as `[ks, zeroed, zeroed]`
+    /// (only slot 0 is used).
     ///
-    /// Returns the schedule as `[ks, zeroed, zeroed]` (only slot 0 is used).
-    /// This is the shared validation/preparation step used by both
-    /// [`SymmetricCipherKey::des`] and
+    /// Key strength is not checked here, so that existing ciphertexts remain
+    /// decryptable. Encryption constructors check it separately via
     /// [`UnboundCipherKey::validate_key_material`].
     #[cfg(feature = "legacy-des")]
-    pub(crate) fn prepare_des(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
+    pub(crate) fn des(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         if key_bytes.len() != DES_KEY_LEN {
             return Err(KeyRejected::unspecified());
         }
-        let k: &[u8; 8] = key_bytes.try_into().expect("length already checked");
-        let ks = Self::des_set_key(k)?;
+        let key: &[u8; 8] = key_bytes.try_into().expect("length already checked");
+        let ks = Self::des_key_schedule(key);
         let zero = MaybeUninit::<DES_key_schedule>::zeroed();
-        unsafe { Ok([ks, zero.assume_init(), zero.assume_init()]) }
-    }
-
-    #[cfg(feature = "legacy-des")]
-    pub(crate) fn des(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         Ok(SymmetricCipherKey::Des {
-            key: DesKey(Self::prepare_des(key_bytes)?),
+            key: DesKey(unsafe { [ks, zero.assume_init(), zero.assume_init()] }),
         })
     }
 
-    /// Validates 2TDEA key material and computes the three DES key schedules.
+    /// Computes the 2TDEA key schedules, stored as `[ks1, ks2, ks1]`
+    /// (K3 = K1 for 2TDEA).
     ///
-    /// Returns the schedules as `[ks1, ks2, ks1]` (K3 = K1 for 2TDEA).
-    /// This is the shared validation/preparation step used by both
-    /// [`SymmetricCipherKey::des_ede`] and
-    /// [`UnboundCipherKey::validate_key_material`].
+    /// Key strength is not checked here; see [`SymmetricCipherKey::des`].
     #[cfg(feature = "legacy-des")]
-    pub(crate) fn prepare_des_ede(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
+    pub(crate) fn des_ede(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         if key_bytes.len() != DES_EDE_KEY_LEN {
             return Err(KeyRejected::unspecified());
         }
@@ -190,49 +187,21 @@ impl SymmetricCipherKey {
         let first_key: &[u8; 8] = key_bytes[0..8].try_into().expect("length already checked");
         let second_key: &[u8; 8] = key_bytes[8..16].try_into().expect("length already checked");
 
-        // SP 800-67 §3.1 requires K1 != K2 for 2-Key TDEA; if they are equal
-        // the cipher degenerates to single-DES (56-bit effective security).
-        if constant_time::verify_slices_are_equal(first_key, second_key).is_ok() {
-            return Err(KeyRejected::inconsistent_components());
-        }
-
         // 2TDEA is defined as E_K1(D_K2(E_K1(.))), so K3 is always a copy of
         // K1. `DES_key_schedule` is `Copy`, so we only need to run the key
         // schedule for K1 once.
-        let ks1 = Self::des_set_key(first_key)?;
-        let ks2 = Self::des_set_key(second_key)?;
-        Ok([ks1, ks2, ks1])
-    }
-
-    #[cfg(feature = "legacy-des")]
-    pub(crate) fn des_ede(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
+        let ks1 = Self::des_key_schedule(first_key);
+        let ks2 = Self::des_key_schedule(second_key);
         Ok(SymmetricCipherKey::DesEde {
-            key: DesKey(Self::prepare_des_ede(key_bytes)?),
+            key: DesKey([ks1, ks2, ks1]),
         })
     }
 
-    #[cfg(feature = "legacy-des")]
-    fn des_set_key(key_bytes: &[u8; 8]) -> Result<DES_key_schedule, KeyRejected> {
-        let mut ks = MaybeUninit::<DES_key_schedule>::uninit();
-        // DES_set_key return values (see openssl/des.h):
-        //   0  => key is not weak and has odd parity (preferred)
-        //  -1  => key parity is not odd (schedule is still valid; most callers
-        //         do not maintain DES parity bits, so we accept this)
-        //  -2  => key is a weak or semi-weak DES key; reject it
-        // Any other non-zero value is treated as a failure.
-        match unsafe { DES_set_key(key_bytes.as_ptr().cast::<DES_cblock>(), ks.as_mut_ptr()) } {
-            0 | -1 => Ok(unsafe { ks.assume_init() }),
-            _ => Err(KeyRejected::unspecified()),
-        }
-    }
-
-    /// Validates 3TDEA key material and computes the three DES key schedules.
+    /// Computes the 3TDEA key schedules.
     ///
-    /// This is the shared validation/preparation step used by both
-    /// [`SymmetricCipherKey::des_ede3`] and
-    /// [`UnboundCipherKey::validate_key_material`].
+    /// Key strength is not checked here; see [`SymmetricCipherKey::des`].
     #[cfg(feature = "legacy-des")]
-    pub(crate) fn prepare_des_ede3(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
+    pub(crate) fn des_ede3(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         if key_bytes.len() != DES_EDE3_KEY_LEN {
             return Err(KeyRejected::unspecified());
         }
@@ -243,6 +212,61 @@ impl SymmetricCipherKey {
         let third_key: &[u8; 8] = key_bytes[16..24]
             .try_into()
             .expect("length already checked");
+        Ok(SymmetricCipherKey::DesEde3 {
+            key: DesKey([
+                Self::des_key_schedule(first_key),
+                Self::des_key_schedule(second_key),
+                Self::des_key_schedule(third_key),
+            ]),
+        })
+    }
+
+    #[cfg(feature = "legacy-des")]
+    fn des_key_schedule(key_bytes: &[u8; 8]) -> DES_key_schedule {
+        let mut ks = MaybeUninit::<DES_key_schedule>::uninit();
+        // SAFETY: `key_bytes` matches DES_cblock's size and alignment (one), and
+        // DES_set_key_unchecked always initializes the schedule.
+        unsafe { DES_set_key_unchecked(key_bytes.as_ptr().cast::<DES_cblock>(), ks.as_mut_ptr()) };
+        unsafe { ks.assume_init() }
+    }
+
+    /// Rejects single DES key material that is weak or semi-weak, ignoring
+    /// parity bits.
+    #[cfg(feature = "legacy-des")]
+    pub(crate) fn validate_des(key_bytes: &[u8]) -> Result<(), KeyRejected> {
+        if key_bytes.len() != DES_KEY_LEN {
+            return Err(KeyRejected::unspecified());
+        }
+        let key = Self::des_key_with_odd_parity::<DES_KEY_LEN>(key_bytes);
+        Self::reject_weak_des_subkeys(&key[..])
+    }
+
+    /// Rejects 2TDEA key material containing a weak or semi-weak subkey, or
+    /// with K1 == K2, ignoring parity bits.
+    #[cfg(feature = "legacy-des")]
+    pub(crate) fn validate_des_ede(key_bytes: &[u8]) -> Result<(), KeyRejected> {
+        if key_bytes.len() != DES_EDE_KEY_LEN {
+            return Err(KeyRejected::unspecified());
+        }
+        let key = Self::des_key_with_odd_parity::<DES_EDE_KEY_LEN>(key_bytes);
+
+        // SP 800-67 §3.1 requires K1 != K2 for 2-Key TDEA; if they are equal
+        // the cipher degenerates to single-DES (56-bit effective security).
+        if constant_time::verify_slices_are_equal(&key[0..8], &key[8..16]).is_ok() {
+            return Err(KeyRejected::inconsistent_components());
+        }
+        Self::reject_weak_des_subkeys(&key[..])
+    }
+
+    /// Rejects 3TDEA key material containing a weak or semi-weak subkey, or
+    /// with any two subkeys equal, ignoring parity bits.
+    #[cfg(feature = "legacy-des")]
+    pub(crate) fn validate_des_ede3(key_bytes: &[u8]) -> Result<(), KeyRejected> {
+        if key_bytes.len() != DES_EDE3_KEY_LEN {
+            return Err(KeyRejected::unspecified());
+        }
+        let key = Self::des_key_with_odd_parity::<DES_EDE3_KEY_LEN>(key_bytes);
+        let (first_key, second_key, third_key) = (&key[0..8], &key[8..16], &key[16..24]);
 
         // SP 800-67 §2 (Keying Option 1) requires K1, K2 and K3 to be
         // pairwise independent. We enforce that all three subkeys are distinct
@@ -262,19 +286,36 @@ impl SymmetricCipherKey {
         if any_equal != 0 {
             return Err(KeyRejected::inconsistent_components());
         }
-
-        Ok([
-            Self::des_set_key(first_key)?,
-            Self::des_set_key(second_key)?,
-            Self::des_set_key(third_key)?,
-        ])
+        Self::reject_weak_des_subkeys(&key[..])
     }
 
     #[cfg(feature = "legacy-des")]
-    pub(crate) fn des_ede3(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
-        Ok(SymmetricCipherKey::DesEde3 {
-            key: DesKey(Self::prepare_des_ede3(key_bytes)?),
-        })
+    fn reject_weak_des_subkeys(key_bytes: &[u8]) -> Result<(), KeyRejected> {
+        let mut any_weak = 0;
+        for subkey in key_bytes.chunks_exact(DES_KEY_LEN) {
+            // SAFETY: Each chunk is eight bytes, matching DES_cblock's size and
+            // alignment (one).
+            any_weak |= unsafe { DES_is_weak_key(subkey.as_ptr().cast::<DES_cblock>()) };
+        }
+        if any_weak != 0 {
+            return Err(KeyRejected::unspecified());
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "legacy-des")]
+    fn des_key_with_odd_parity<const N: usize>(key_bytes: &[u8]) -> Zeroizing<[u8; N]> {
+        let mut key = Zeroizing::new([0u8; N]);
+        key.copy_from_slice(key_bytes);
+        // DES ignores parity bits, but AWS-LC's weak-key table uses odd parity.
+        // Canonicalize before weak-key and subkey-equality checks.
+        debug_assert_eq!(N % DES_KEY_LEN, 0);
+        for subkey in key.chunks_exact_mut(DES_KEY_LEN) {
+            // SAFETY: Each chunk is an exclusively borrowed eight-byte buffer,
+            // matching DES_cblock's size and alignment (one).
+            unsafe { DES_set_odd_parity(subkey.as_mut_ptr().cast::<DES_cblock>()) };
+        }
+        key
     }
 
     #[allow(dead_code)]
@@ -304,6 +345,18 @@ mod tests {
     use crate::cipher::block::{Block, BLOCK_LEN};
     use crate::cipher::key::SymmetricCipherKey;
     use crate::test::from_hex;
+
+    #[test]
+    #[cfg(feature = "legacy-des")]
+    fn test_des_key_odd_parity() {
+        for byte in 0..=u8::MAX {
+            let key = SymmetricCipherKey::des_key_with_odd_parity::<8>(&[byte; 8]);
+            for normalized in key.iter() {
+                assert_eq!(normalized & 0xfe, byte & 0xfe);
+                assert_eq!(normalized.count_ones() % 2, 1);
+            }
+        }
+    }
 
     #[test]
     fn test_encrypt_block_aes_128() {
