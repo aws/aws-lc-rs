@@ -3,7 +3,9 @@
 
 // NOTE: This module is intended to produce an equivalent "libcrypto" static library to the one
 // produced by the CMake. Changes to CMake relating to compiler checks and/or special build flags
-// may require modifications to the logic in this module.
+// may require modifications to the logic in this module. The one intended difference is that a
+// build whose Rust code can only reach the universal bindings leaves out the sources those
+// bindings never reach; see `builds_full_libcrypto`.
 
 mod apple_aarch64;
 mod apple_x86_64;
@@ -12,7 +14,8 @@ mod linux_arm;
 mod linux_ppc64le;
 mod linux_x86;
 mod linux_x86_64;
-mod universal;
+mod portable;
+mod universal_bindings_excluded;
 mod win_aarch64;
 mod win_x86;
 mod win_x86_64;
@@ -20,10 +23,11 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command,
-    export_crate_compilers, find_clang_cl, get_crate_cc, get_crate_cflags, is_cross_compiling,
-    is_link_whole_archive, is_no_asm, is_small, out_dir, requested_c_std, set_env_for_target,
-    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
-    target_vendor, use_prebuilt_nasm, CStdRequested, EnvGuard, OutputLibType,
+    export_crate_compilers, find_clang_cl, get_crate_cc, get_crate_cflags, is_all_bindings,
+    is_bindgen_required, is_cross_compiling, is_full_libcrypto, is_link_whole_archive, is_no_asm,
+    is_small, out_dir, requested_c_std, set_env_for_target, should_build_jitter_entropy, target,
+    target_arch, target_env, target_is_msvc, target_os, target_vendor, use_prebuilt_nasm,
+    CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -48,9 +52,29 @@ pub(crate) struct CcBuilder {
 
 use std::fs;
 
+/// Whether to compile every libcrypto source.
+///
+/// Rust code can only call what its bindings declare, and nothing the universal
+/// bindings declare reaches `universal_bindings_excluded::SOURCES`, so a build that
+/// ships those bindings leaves them out. Everything is compiled when Rust can call
+/// past the universal bindings (`all-bindings`, or bindings generated during the
+/// build, which cover every header) and when `AWS_LC_SYS_FULL_LIBCRYPTO=1` asks for
+/// it: that is the override for C code that calls libcrypto through the `links`
+/// metadata of a universal-bindings build, which the build script cannot detect.
+pub(crate) fn builds_full_libcrypto() -> bool {
+    is_full_libcrypto() || is_all_bindings() || is_bindgen_required()
+}
+
+fn portable_sources(full_libcrypto: bool) -> Vec<&'static str> {
+    portable::CRYPTO_LIBRARY
+        .iter()
+        .copied()
+        .filter(|source| full_libcrypto || !universal_bindings_excluded::SOURCES.contains(source))
+        .collect()
+}
+
 fn identify_sources() -> Vec<&'static str> {
-    let mut source_files: Vec<&'static str> = vec![];
-    source_files.append(&mut Vec::from(universal::CRYPTO_LIBRARY));
+    let mut source_files = portable_sources(builds_full_libcrypto());
     let mut target_specific_source_found = true;
     if target_os() == "windows" {
         if target_arch() == "x86_64" {
@@ -1158,6 +1182,13 @@ impl crate::Builder for CcBuilder {
 
         println!("cargo:root={}", self.out_dir.display());
         let sources = crate::cc_builder::identify_sources();
+        if !builds_full_libcrypto() {
+            emit_warning(format!(
+                "Compiling the libcrypto for the universal bindings: {} sources skipped. \
+                 See `libcrypto for the universal bindings` in aws-lc-sys/README.md.",
+                universal_bindings_excluded::SOURCES.len()
+            ));
+        }
         self.build_library(sources.as_slice());
 
         crate::emit_source_library_metadata(
@@ -1173,6 +1204,10 @@ impl crate::Builder for CcBuilder {
 
     fn name(&self) -> &'static str {
         "CC"
+    }
+
+    fn builds_full_libcrypto(&self) -> bool {
+        builds_full_libcrypto()
     }
 }
 
@@ -1672,5 +1707,61 @@ mod tests {
                 ),
             ]
         );
+    }
+
+    // The generated exclusion list must stay a strict, duplicate-free subset of
+    // the portable sources; a rename in AWS-LC that is not followed by
+    // regenerating it would otherwise leave an entry that excludes nothing.
+    #[test]
+    fn test_universal_bindings_excluded_are_portable_sources() {
+        assert_ne!(
+            universal_bindings_excluded::SOURCES.len(),
+            0,
+            "empty exclusion list; run aws-lc-sys/scripts/cc_builder/universal_bindings_excluded.sh"
+        );
+        assert!(universal_bindings_excluded::SOURCES.len() < portable::CRYPTO_LIBRARY.len());
+        for (i, source) in universal_bindings_excluded::SOURCES.iter().enumerate() {
+            assert!(
+                portable::CRYPTO_LIBRARY.contains(source),
+                "{source} is not a portable source"
+            );
+            assert!(
+                !universal_bindings_excluded::SOURCES[..i].contains(source),
+                "{source} is listed twice"
+            );
+        }
+    }
+
+    #[test]
+    fn test_portable_sources() {
+        assert_eq!(portable_sources(true), portable::CRYPTO_LIBRARY);
+
+        let reduced = portable_sources(false);
+        assert_eq!(
+            reduced.len() + universal_bindings_excluded::SOURCES.len(),
+            portable::CRYPTO_LIBRARY.len()
+        );
+        for source in universal_bindings_excluded::SOURCES {
+            assert!(!reduced.contains(source), "{source} was not excluded");
+        }
+        // Everything the universal bindings declare reaches these.
+        for source in [
+            "crypto/fipsmodule/bcm.c",
+            "crypto/fipsmodule/cpucap/cpucap.c",
+            "crypto/err/err.c",
+            "generated-src/err_data.c",
+        ] {
+            assert!(reduced.contains(&source), "{source} must never be excluded");
+        }
+        // Conditionally compiled sources define nothing on most hosts and must
+        // stay in, since another target may need them.
+        for source in [
+            "crypto/refcount_lock.c",
+            "crypto/refcount_c11.c",
+            "crypto/thread_win.c",
+            "crypto/rand_extra/windows.c",
+        ] {
+            assert!(reduced.contains(&source), "{source} must never be excluded");
+        }
     }
 }
