@@ -210,13 +210,85 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! # SSH Key Derivation Function (SSHKDF)
+//!
+//! [`sshkdf`] provides the key derivation function of the SSH Transport Layer Protocol,
+//! specified in Section 7.2 of [RFC 4253](https://www.rfc-editor.org/rfc/rfc4253#section-7.2)
+//! and in Section 5.2 of [NIST SP 800-135r1](https://doi.org/10.6028/NIST.SP.800-135r1).
+//! An SSH client or server derives each of its six keys and initial IVs with it, from the
+//! shared secret, the exchange hash and the session identifier of a key exchange.
+//!
+//! ## Example: Deriving the client-to-server encryption key
+//!
+//! ```rust
+//! # use std::error::Error;
+//! use aws_lc_rs::kdf::{
+//!         get_sshkdf_algorithm, sshkdf, SshkdfAlgorithm, SshkdfAlgorithmId, SshkdfKeyType,
+//!     };
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::error::Unspecified;
+//!
+//! const ENCRYPTION_KEY_LEN: usize = 24;
+//!
+//! // The shared secret K, encoded as an mpint as RFC 4253 hashes it.
+//! let shared_secret: &[u8] = &[
+//!     0x00, 0x00, 0x00, 0x81, 0x00, 0x87, 0x5c, 0x55, 0x1c, 0xef, 0x52, 0x6a, 0x4a, 0x8b, 0xe1,
+//!     0xa7, 0xdf, 0x27, 0xe9, 0xed, 0x35, 0x4b, 0xac, 0x9a, 0xfb, 0x71, 0xf5, 0x3d, 0xba, 0xe9,
+//!     0x05, 0x67, 0x9d, 0x14, 0xf9, 0xfa, 0xf2, 0x46, 0x9c, 0x53, 0x45, 0x7c, 0xf8, 0x0a, 0x36,
+//!     0x6b, 0xe2, 0x78, 0x96, 0x5b, 0xa6, 0x25, 0x52, 0x76, 0xca, 0x2d, 0x9f, 0x4a, 0x97, 0xd2,
+//!     0x71, 0xf7, 0x1e, 0x50, 0xd8, 0xa9, 0xec, 0x46, 0x25, 0x3a, 0x6a, 0x90, 0x6a, 0xc2, 0xc5,
+//!     0xe4, 0xf4, 0x8b, 0x27, 0xa6, 0x3c, 0xe0, 0x8d, 0x80, 0x39, 0x0a, 0x49, 0x2a, 0xa4, 0x3b,
+//!     0xad, 0x9d, 0x88, 0x2c, 0xca, 0xc2, 0x3d, 0xac, 0x88, 0xbc, 0xad, 0xa4, 0xb4, 0xd4, 0x26,
+//!     0xa3, 0x62, 0x08, 0x3d, 0xab, 0x65, 0x69, 0xc5, 0x4c, 0x22, 0x4d, 0xd2, 0xd8, 0x76, 0x43,
+//!     0xaa, 0x22, 0x76, 0x93, 0xe1, 0x41, 0xad, 0x16, 0x30, 0xce, 0x13, 0x14, 0x4e,
+//! ];
+//!
+//! // The exchange hash H of this key exchange.
+//! let exchange_hash: &[u8] = &[
+//!     0x0e, 0x68, 0x3f, 0xc8, 0xa9, 0xed, 0x7c, 0x2f, 0xf0, 0x2d, 0xef, 0x23, 0xb2, 0x74, 0x5e,
+//!     0xbc, 0x99, 0xb2, 0x67, 0xda, 0xa8, 0x6a, 0x4a, 0xa7, 0x69, 0x72, 0x39, 0x08, 0x82, 0x53,
+//!     0xf6, 0x42,
+//! ];
+//!
+//! // The session identifier: the exchange hash of the connection's first key exchange.
+//! let session_id: &[u8] = exchange_hash;
+//!
+//! let mut encryption_key = [0u8; ENCRYPTION_KEY_LEN];
+//!
+//! let sshkdf_sha256: &SshkdfAlgorithm =
+//!     get_sshkdf_algorithm(SshkdfAlgorithmId::Sha256).ok_or(Unspecified)?;
+//!
+//! sshkdf(
+//!     sshkdf_sha256,
+//!     shared_secret,
+//!     exchange_hash,
+//!     session_id,
+//!     SshkdfKeyType::EncryptionKeyClientToServer,
+//!     &mut encryption_key,
+//! )?;
+//!
+//! assert_eq!(
+//!     encryption_key,
+//!     [
+//!         0x4a, 0x63, 0x14, 0xd2, 0xf7, 0x51, 0x1b, 0xf8, 0x8f, 0xad, 0x39, 0xfb, 0x68, 0x92,
+//!         0xf3, 0xf2, 0x18, 0xca, 0xfd, 0x53, 0x0e, 0x72, 0xfe, 0x43
+//!     ]
+//! );
+//! # Ok(())
+//! # }
+//! ```
 
 mod kbkdf;
+mod sshkdf;
 mod sskdf;
 
 pub use kbkdf::{
     get_kbkdf_ctr_hmac_algorithm, kbkdf_ctr_hmac, KbkdfCtrHmacAlgorithm, KbkdfCtrHmacAlgorithmId,
 };
+
+pub use sshkdf::{get_sshkdf_algorithm, sshkdf, SshkdfAlgorithm, SshkdfAlgorithmId, SshkdfKeyType};
 
 pub use sskdf::{
     get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm, sskdf_digest, sskdf_hmac,
@@ -227,9 +299,87 @@ pub use sskdf::{
 mod tests {
     use crate::kdf::sskdf::SskdfHmacAlgorithmId;
     use crate::kdf::{
-        get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
-        kbkdf_ctr_hmac, sskdf_digest, sskdf_hmac, KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId,
+        get_kbkdf_ctr_hmac_algorithm, get_sshkdf_algorithm, get_sskdf_digest_algorithm,
+        get_sskdf_hmac_algorithm, kbkdf_ctr_hmac, sshkdf, sskdf_digest, sskdf_hmac,
+        KbkdfCtrHmacAlgorithmId, SshkdfAlgorithmId, SshkdfKeyType, SskdfDigestAlgorithmId,
     };
+
+    #[test]
+    fn sshkdf_test() {
+        for id in [
+            SshkdfAlgorithmId::Sha1,
+            SshkdfAlgorithmId::Sha224,
+            SshkdfAlgorithmId::Sha256,
+            SshkdfAlgorithmId::Sha384,
+            SshkdfAlgorithmId::Sha512,
+        ] {
+            let alg = get_sshkdf_algorithm(id).expect("supported");
+            assert_eq!(id, alg.id());
+            assert_eq!(format!("{id:?}"), format!("{alg:?}"));
+            assert_eq!(format!("{id:?}"), format!("{:?}", alg.id()));
+            for key_type in [
+                SshkdfKeyType::InitialIvClientToServer,
+                SshkdfKeyType::InitialIvServerToClient,
+                SshkdfKeyType::EncryptionKeyClientToServer,
+                SshkdfKeyType::EncryptionKeyServerToClient,
+                SshkdfKeyType::IntegrityKeyClientToServer,
+                SshkdfKeyType::IntegrityKeyServerToClient,
+            ] {
+                // Shorter than, equal to and longer than every digest's output.
+                for len in [16, 32, 64, 100] {
+                    let mut output = vec![0u8; len];
+                    sshkdf(
+                        alg,
+                        &[1u8; 32],
+                        &[2u8; 32],
+                        &[3u8; 32],
+                        key_type,
+                        &mut output,
+                    )
+                    .expect("success");
+                    assert_ne!(output, vec![0u8; len]);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sshkdf_key_types_differ() {
+        let alg = get_sshkdf_algorithm(SshkdfAlgorithmId::Sha256).expect("supported");
+        let mut outputs = Vec::new();
+        for key_type in [
+            SshkdfKeyType::InitialIvClientToServer,
+            SshkdfKeyType::InitialIvServerToClient,
+            SshkdfKeyType::EncryptionKeyClientToServer,
+            SshkdfKeyType::EncryptionKeyServerToClient,
+            SshkdfKeyType::IntegrityKeyClientToServer,
+            SshkdfKeyType::IntegrityKeyServerToClient,
+        ] {
+            let mut output = [0u8; 32];
+            sshkdf(
+                alg,
+                &[1u8; 32],
+                &[2u8; 32],
+                &[3u8; 32],
+                key_type,
+                &mut output,
+            )
+            .expect("success");
+            assert!(!outputs.contains(&output), "{key_type:?} repeats a value");
+            outputs.push(output);
+        }
+    }
+
+    #[test]
+    fn sshkdf_empty_inputs() {
+        let alg = get_sshkdf_algorithm(SshkdfAlgorithmId::Sha256).expect("supported");
+        let key_type = SshkdfKeyType::EncryptionKeyClientToServer;
+        let mut output = [0u8; 32];
+        assert!(sshkdf(alg, &[], &[2u8; 32], &[3u8; 32], key_type, &mut output).is_err());
+        assert!(sshkdf(alg, &[1u8; 32], &[], &[3u8; 32], key_type, &mut output).is_err());
+        assert!(sshkdf(alg, &[1u8; 32], &[2u8; 32], &[], key_type, &mut output).is_err());
+        assert!(sshkdf(alg, &[1u8; 32], &[2u8; 32], &[3u8; 32], key_type, &mut []).is_err());
+    }
 
     #[test]
     fn zero_length_output() {
