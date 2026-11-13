@@ -1802,22 +1802,175 @@ des_padded_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
+#[cfg(feature = "legacy-des")]
+// The four weak and twelve semi-weak keys in odd parity (SP 800-67r2, section 3.3.2).
+const DES_WEAK_AND_SEMI_WEAK_KEYS: [&str; 16] = [
+    "0101010101010101",
+    "fefefefefefefefe",
+    "1f1f1f1f0e0e0e0e",
+    "e0e0e0e0f1f1f1f1",
+    "01fe01fe01fe01fe",
+    "fe01fe01fe01fe01",
+    "1fe01fe00ef10ef1",
+    "e01fe01ff10ef10e",
+    "01e001e001f101f1",
+    "e001e001f101f101",
+    "1ffe1ffe0efe0efe",
+    "fe1ffe1ffe0efe0e",
+    "011f011f010e010e",
+    "1f011f010e010e01",
+    "e0fee0fef1fef1fe",
+    "fee0fee0fef1fef1",
+];
+
+#[cfg(feature = "legacy-des")]
+fn des_test_subkeys() -> [[u8; 8]; 3] {
+    ["0123456789abcdef", "23456789abcdef01", "456789abcdef0123"]
+        .map(|key| from_hex(key).unwrap().try_into().unwrap())
+}
+
+#[cfg(feature = "legacy-des")]
+fn des_parity_variant(mut key: [u8; 8], mask: u8) -> [u8; 8] {
+    for (index, byte) in key.iter_mut().enumerate() {
+        *byte ^= (mask >> index) & 1;
+    }
+    key
+}
+
+#[cfg(feature = "legacy-des")]
+fn des_key_parity_variant(key_bytes: &[u8], mask: u8, variant_position: usize) -> Vec<u8> {
+    let subkey_count = key_bytes.len() / 8;
+    let mut variant = key_bytes.to_vec();
+    for (position, subkey) in variant.chunks_exact_mut(8).enumerate() {
+        if position == variant_position || variant_position == subkey_count {
+            let key = (&*subkey).try_into().unwrap();
+            subkey.copy_from_slice(&des_parity_variant(key, mask));
+        }
+    }
+    variant
+}
+
+#[cfg(feature = "legacy-des")]
+fn assert_des_key_validation(
+    algorithm: &'static Algorithm,
+    key_bytes: &[u8],
+    encryption_should_accept: bool,
+) {
+    let unbound = || {
+        UnboundCipherKey::new(algorithm, key_bytes)
+            .expect("UnboundCipherKey must defer DES weak-key and subkey-distinctness checks")
+    };
+    for (path, accepted) in [
+        (
+            "unpadded CBC encrypt",
+            EncryptingKey::cbc(unbound()).is_ok(),
+        ),
+        (
+            "unpadded ECB encrypt",
+            EncryptingKey::ecb(unbound()).is_ok(),
+        ),
+        (
+            "padded CBC encrypt",
+            PaddedBlockEncryptingKey::cbc_pkcs7(unbound()).is_ok(),
+        ),
+        (
+            "padded ECB encrypt",
+            PaddedBlockEncryptingKey::ecb_pkcs7(unbound()).is_ok(),
+        ),
+        (
+            "streaming CBC encrypt",
+            StreamingEncryptingKey::less_safe_cbc_pkcs7(
+                unbound(),
+                EncryptionContext::Iv64(FixedLength::from([0u8; 8])),
+            )
+            .is_ok(),
+        ),
+        (
+            "streaming ECB encrypt",
+            StreamingEncryptingKey::ecb_pkcs7(unbound()).is_ok(),
+        ),
+    ] {
+        assert_eq!(
+            accepted, encryption_should_accept,
+            "{algorithm:?}, key {key_bytes:02x?}, {path}"
+        );
+    }
+
+    // Decryption must remain available for legacy weak and degenerate keys.
+    for (path, accepted) in [
+        (
+            "unpadded CBC decrypt",
+            DecryptingKey::cbc(unbound()).is_ok(),
+        ),
+        (
+            "unpadded ECB decrypt",
+            DecryptingKey::ecb(unbound()).is_ok(),
+        ),
+        (
+            "padded CBC decrypt",
+            PaddedBlockDecryptingKey::cbc_pkcs7(unbound()).is_ok(),
+        ),
+        (
+            "padded ECB decrypt",
+            PaddedBlockDecryptingKey::ecb_pkcs7(unbound()).is_ok(),
+        ),
+        (
+            "ISO10126 CBC decrypt",
+            PaddedBlockDecryptingKey::cbc_iso10126(unbound()).is_ok(),
+        ),
+        (
+            "streaming CBC decrypt",
+            StreamingDecryptingKey::cbc_pkcs7(
+                unbound(),
+                DecryptionContext::Iv64(FixedLength::from([0u8; 8])),
+            )
+            .is_ok(),
+        ),
+        (
+            "streaming ECB decrypt",
+            StreamingDecryptingKey::ecb_pkcs7(unbound(), DecryptionContext::None).is_ok(),
+        ),
+    ] {
+        assert!(accepted, "{algorithm:?}, key {key_bytes:02x?}, {path}");
+    }
+}
+
 #[test]
 #[cfg(feature = "legacy-des")]
 #[allow(deprecated)]
 fn test_des_weak_keys_rejected() {
-    // The four DES weak keys (with parity bits set).
-    let weak_keys: &[&str] = &[
-        "0101010101010101",
-        "fefefefefefefefe",
-        "e0e0e0e0f1f1f1f1",
-        "1f1f1f1f0e0e0e0e",
-    ];
-    for hex_key in weak_keys {
-        let key_bytes = from_hex(hex_key).unwrap();
-        let unbound_key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-        EncryptingKey::cbc(unbound_key)
-            .expect_err(&format!("weak key {hex_key} should be rejected"));
+    for hex_key in DES_WEAK_AND_SEMI_WEAK_KEYS {
+        let weak_key = from_hex(hex_key).unwrap().try_into().unwrap();
+        for mask in 0..=u8::MAX {
+            assert_des_key_validation(
+                &DES_FOR_LEGACY_USE_ONLY,
+                &des_parity_variant(weak_key, mask),
+                false,
+            );
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_ede_weak_subkeys_rejected() {
+    let valid_subkeys = des_test_subkeys();
+    for (algorithm, subkey_count) in [
+        (&DES_EDE_FOR_LEGACY_USE_ONLY, 2),
+        (&DES_EDE3_FOR_LEGACY_USE_ONLY, 3),
+    ] {
+        for hex_key in DES_WEAK_AND_SEMI_WEAK_KEYS {
+            let weak_key = from_hex(hex_key).unwrap().try_into().unwrap();
+            for position in 0..subkey_count {
+                for mask in 0..=u8::MAX {
+                    let mut subkeys = valid_subkeys;
+                    subkeys[position] = des_parity_variant(weak_key, mask);
+                    let key_bytes = subkeys[..subkey_count].concat();
+                    assert_des_key_validation(algorithm, &key_bytes, false);
+                }
+            }
+        }
     }
 }
 
@@ -1825,57 +1978,372 @@ fn test_des_weak_keys_rejected() {
 #[cfg(feature = "legacy-des")]
 #[allow(deprecated)]
 fn test_des_ede_rejects_k1_equals_k2() {
-    // 2TDEA with K1 == K2 degenerates to single DES; must be rejected.
-    let k1 = "0123456789abcdef";
-    let key_bytes = from_hex(&format!("{k1}{k1}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::cbc(unbound).expect_err("2TDEA K1==K2 should be rejected");
-
-    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::ecb(unbound).expect_err("2TDEA K1==K2 should be rejected (ECB)");
-
-    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    assert!(
-        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
-        "2TDEA K1==K2 should be rejected (streaming CBC)"
-    );
+    // 2TDEA degenerates to single DES even when K1 and K2 differ in parity bits.
+    let k1 = des_test_subkeys()[0];
+    for mask in 0..=u8::MAX {
+        let k2 = des_parity_variant(k1, mask);
+        for subkeys in [[k1, k2], [k2, k1]] {
+            assert_des_key_validation(&DES_EDE_FOR_LEGACY_USE_ONLY, &subkeys.concat(), false);
+        }
+    }
 }
 
 #[test]
 #[cfg(feature = "legacy-des")]
 #[allow(deprecated)]
 fn test_des_ede3_rejects_pairwise_equal_keys() {
-    let k1 = "0123456789abcdef";
-    let k2 = "23456789abcdef01";
-    let k3 = "456789abcdef0123";
+    let valid_subkeys = des_test_subkeys();
+    for mask in 0..=u8::MAX {
+        // K1 == K3 reduces to 2TDEA, so that pair must also be checked.
+        for (first, second) in [(0, 1), (0, 2), (1, 2)] {
+            let mut subkeys = valid_subkeys;
+            subkeys[second] = des_parity_variant(subkeys[first], mask);
+            assert_des_key_validation(&DES_EDE3_FOR_LEGACY_USE_ONLY, &subkeys.concat(), false);
 
-    // K1 == K2
-    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K2 should be rejected");
+            subkeys.swap(first, second);
+            assert_des_key_validation(&DES_EDE3_FOR_LEGACY_USE_ONLY, &subkeys.concat(), false);
+        }
 
-    // K2 == K3
-    let key_bytes = from_hex(&format!("{k1}{k2}{k2}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::cbc(unbound).expect_err("3TDEA K2==K3 should be rejected");
+        let k1 = valid_subkeys[0];
+        let subkeys = [
+            k1,
+            des_parity_variant(k1, mask),
+            des_parity_variant(k1, mask.rotate_left(1)),
+        ];
+        assert_des_key_validation(&DES_EDE3_FOR_LEGACY_USE_ONLY, &subkeys.concat(), false);
+    }
+}
 
-    // K1 == K3 (degenerates to 2TDEA)
-    let key_bytes = from_hex(&format!("{k1}{k2}{k1}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K3 should be rejected");
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_parity_variants_accepted() {
+    let valid_subkeys = des_test_subkeys();
+    let plaintext =
+        from_hex("6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51").unwrap();
+    for (algorithm, subkey_count, ciphertext_hex) in [
+        (
+            &DES_FOR_LEGACY_USE_ONLY,
+            1,
+            "7277a00dc1c1c36b2256338b7a9f36ef6e511022cfebec489a4a53a1c7d22e5b",
+        ),
+        (
+            &DES_EDE_FOR_LEGACY_USE_ONLY,
+            2,
+            "06ede3d82884090aff322c19f0518486730576972a666e58b6c88cf107340d3d",
+        ),
+        (
+            &DES_EDE3_FOR_LEGACY_USE_ONLY,
+            3,
+            "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87",
+        ),
+    ] {
+        let expected_ciphertext = from_hex(ciphertext_hex).unwrap();
+        let base_key = valid_subkeys[..subkey_count].concat();
+        for mask in 0..=u8::MAX {
+            // Change each subkey alone, then all subkeys together.
+            for variant_position in 0..=subkey_count {
+                let key_bytes = des_key_parity_variant(&base_key, mask, variant_position);
+                assert_des_key_validation(algorithm, &key_bytes, true);
 
-    // All three equal
-    let key_bytes = from_hex(&format!("{k1}{k1}{k1}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    EncryptingKey::ecb(unbound).expect_err("3TDEA K1==K2==K3 should be rejected");
+                let unbound = UnboundCipherKey::new(algorithm, &key_bytes).unwrap();
+                let encrypting_key = EncryptingKey::ecb(unbound).unwrap();
+                let mut in_out = plaintext.clone();
+                let context = encrypting_key.encrypt(&mut in_out).unwrap();
+                assert_eq!(
+                    expected_ciphertext, in_out,
+                    "{algorithm:?}, key {key_bytes:02x?} must have the same ECB ciphertext"
+                );
 
-    // Streaming path
-    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
-    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
-    assert!(
-        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
-        "3TDEA K1==K2 should be rejected (streaming)"
-    );
+                let unbound = UnboundCipherKey::new(algorithm, &key_bytes).unwrap();
+                let decrypting_key = DecryptingKey::ecb(unbound).unwrap();
+                assert_eq!(
+                    plaintext.as_slice(),
+                    decrypting_key.decrypt(&mut in_out, context).unwrap(),
+                    "{algorithm:?}, key {key_bytes:02x?} must decrypt the same ECB ciphertext"
+                );
+            }
+        }
+    }
+}
+
+#[cfg(feature = "legacy-des")]
+const DES_DECRYPTION_PLAINTEXT: [u8; 8] = *b"DES test";
+
+#[cfg(feature = "legacy-des")]
+const DES_DECRYPTION_IV: [u8; 8] = [0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17];
+
+#[cfg(feature = "legacy-des")]
+fn des_test_decryption_context(mode: OperatingMode) -> DecryptionContext {
+    match mode {
+        OperatingMode::CBC => DecryptionContext::Iv64(FixedLength::from(DES_DECRYPTION_IV)),
+        OperatingMode::ECB => DecryptionContext::None,
+        _ => panic!("unsupported DES fixture mode"),
+    }
+}
+
+#[cfg(feature = "legacy-des")]
+fn assert_des_legacy_decryption(
+    algorithm: &'static Algorithm,
+    key_bytes: &[u8],
+    ciphertexts: &[Vec<u8>; 3],
+) {
+    let [cbc_pkcs7, ecb_pkcs7, cbc_iso10126] = ciphertexts;
+    let unbound = || UnboundCipherKey::new(algorithm, key_bytes).unwrap();
+    for (mode, ciphertext) in [
+        (OperatingMode::CBC, cbc_pkcs7),
+        (OperatingMode::ECB, ecb_pkcs7),
+    ] {
+        let context = || des_test_decryption_context(mode);
+        let unpadded = if mode == OperatingMode::CBC {
+            DecryptingKey::cbc(unbound())
+        } else {
+            DecryptingKey::ecb(unbound())
+        }
+        .unwrap();
+        let mut in_out = ciphertext[..DES_DECRYPTION_PLAINTEXT.len()].to_vec();
+        assert_eq!(
+            DES_DECRYPTION_PLAINTEXT.as_slice(),
+            unpadded.decrypt(&mut in_out, context()).unwrap(),
+            "{algorithm:?}, key {key_bytes:02x?}, unpadded {mode:?}"
+        );
+
+        let padded = if mode == OperatingMode::CBC {
+            PaddedBlockDecryptingKey::cbc_pkcs7(unbound())
+        } else {
+            PaddedBlockDecryptingKey::ecb_pkcs7(unbound())
+        }
+        .unwrap();
+        let mut in_out = ciphertext.clone();
+        assert_eq!(
+            DES_DECRYPTION_PLAINTEXT.as_slice(),
+            padded.decrypt(&mut in_out, context()).unwrap(),
+            "{algorithm:?}, key {key_bytes:02x?}, padded {mode:?}"
+        );
+
+        let streaming = if mode == OperatingMode::CBC {
+            StreamingDecryptingKey::cbc_pkcs7(unbound(), context())
+        } else {
+            StreamingDecryptingKey::ecb_pkcs7(unbound(), context())
+        }
+        .unwrap();
+        assert_eq!(
+            DES_DECRYPTION_PLAINTEXT.as_slice(),
+            step_decrypt(streaming, ciphertext, 3).as_ref(),
+            "{algorithm:?}, key {key_bytes:02x?}, streaming {mode:?}"
+        );
+    }
+
+    let iso10126 = PaddedBlockDecryptingKey::cbc_iso10126(unbound()).unwrap();
+    for ciphertext in [cbc_pkcs7, cbc_iso10126] {
+        let mut in_out = ciphertext.clone();
+        assert_eq!(
+            DES_DECRYPTION_PLAINTEXT.as_slice(),
+            iso10126
+                .decrypt(&mut in_out, des_test_decryption_context(OperatingMode::CBC))
+                .unwrap(),
+            "{algorithm:?}, key {key_bytes:02x?}, ISO10126 CBC"
+        );
+    }
+}
+
+// Weak, semi-weak, and degenerate DES keys with known ciphertexts.
+// Generated with OpenSSL 3.5.9 using the default and legacy providers:
+// openssl enc -<des|des-ede|des-ede3>-<cbc|ecb> -provider default
+//   -provider legacy -nosalt -K KEY [-iv f69f2445df4f9b17]
+// Plaintext is 4445532074657374 ("DES test"). Each fixture contains CBC
+// PKCS#7, ECB PKCS#7, then CBC ISO10126 ciphertext. The latter encrypts
+// 4445532074657374a1b2c3d4e5f60708 with -nopad (nonuniform padding).
+// The first block of each PKCS#7 ciphertext is also the unpadded fixture.
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+const DES_LEGACY_KEY_FIXTURES: &[(&Algorithm, &str, [&str; 3])] = &[
+    // DES weak key.
+    (
+        &DES_FOR_LEGACY_USE_ONLY,
+        "0101010101010101",
+        [
+            "370e5fde6401df68a314e621a1edb5db",
+            "3b0c2665c89c7ea67e422822773666c0",
+            "370e5fde6401df68814fa47589c8b6b8",
+        ],
+    ),
+    // DES semi-weak key.
+    (
+        &DES_FOR_LEGACY_USE_ONLY,
+        "01fe01fe01fe01fe",
+        [
+            "13ec4012f5dd1b23e59ea106bd64e72a",
+            "e235ecd549b7ae7705aa0cf305fecae6",
+            "13ec4012f5dd1b23aa196891bb792784",
+        ],
+    ),
+    // 2TDEA weak subkey K1.
+    (
+        &DES_EDE_FOR_LEGACY_USE_ONLY,
+        "010101010101010123456789abcdef01",
+        [
+            "9ba619eee0d9700dbfa9c008fe31a8b9",
+            "5c1be11367f9beca2a63be4fe0e55a2e",
+            "9ba619eee0d9700d1196281fd80803cc",
+        ],
+    ),
+    // 2TDEA weak subkey K2.
+    (
+        &DES_EDE_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef0101010101010101",
+        [
+            "4abbdea814f458c8c73916ec6fb66395",
+            "14f4c730d3a763c75ced66355b27466f",
+            "4abbdea814f458c8684ef15f3326c9df",
+        ],
+    ),
+    // 3TDEA weak subkey K1.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "010101010101010123456789abcdef01456789abcdef0123",
+        [
+            "9766b0a05e09aac80bd556399c9f23c1",
+            "41300804f9cf03847ec4c52a307e1637",
+            "9766b0a05e09aac8a5c740762cbb7a57",
+        ],
+    ),
+    // 3TDEA weak subkey K2.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef0101010101010101456789abcdef0123",
+        [
+            "2a32e2bd6ef15c6f1c6f8528d75464e2",
+            "1ab84f5977880e0e28a90b068e120f81",
+            "2a32e2bd6ef15c6f6756dbe6aca59911",
+        ],
+    ),
+    // 3TDEA weak subkey K3.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef23456789abcdef010101010101010101",
+        [
+            "26834c529e1222e230e641363254b25c",
+            "cc6bb8616c943129449455390145518f",
+            "26834c529e1222e2fa0ab4eb62deca1c",
+        ],
+    ),
+    // 2TDEA semi-weak subkey K1.
+    (
+        &DES_EDE_FOR_LEGACY_USE_ONLY,
+        "01fe01fe01fe01fe23456789abcdef01",
+        [
+            "0d3233a576c0b3435b3619f96e26a2e6",
+            "da16f6b793c42db71b9df4fdb24714df",
+            "0d3233a576c0b343c37a56f6feefa232",
+        ],
+    ),
+    // 2TDEA semi-weak subkey K2.
+    (
+        &DES_EDE_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef01fe01fe01fe01fe",
+        [
+            "445bb392ecaf1b8643f414458f52661f",
+            "06fc4725590ad01db78ca9e5c90788a6",
+            "445bb392ecaf1b86ed68ce0c8bc70bc8",
+        ],
+    ),
+    // 3TDEA semi-weak subkey K1.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "01fe01fe01fe01fe23456789abcdef01456789abcdef0123",
+        [
+            "747e2668482aedf646ae951f294f4292",
+            "fd80324e9996e715bc18279ea09da454",
+            "747e2668482aedf6f51133b7bc9092d4",
+        ],
+    ),
+    // 3TDEA semi-weak subkey K2.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef01fe01fe01fe01fe456789abcdef0123",
+        [
+            "54dd578faf4ba21f6d99ab6bad011f60",
+            "464e09d5517f94fa94b5a3371def126c",
+            "54dd578faf4ba21f1da3ac508276bc5d",
+        ],
+    ),
+    // 3TDEA semi-weak subkey K3.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef23456789abcdef0101fe01fe01fe01fe",
+        [
+            "1bbe6a88f62dc93d2ddd9acc60af784b",
+            "612ab62bdfcb48477e4b2794961de7bf",
+            "1bbe6a88f62dc93d5fdf97b9a8d1276b",
+        ],
+    ),
+    // 2TDEA K1 == K2.
+    (
+        &DES_EDE_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef0123456789abcdef",
+        [
+            "06ba8888c9f78471791d4d42192595c1",
+            "b0c0454b0a5025ce086f9a1d74c94d4e",
+            "06ba8888c9f78471067bc2d8f8192f7e",
+        ],
+    ),
+    // 3TDEA K1 == K2.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef0123456789abcdef456789abcdef0123",
+        [
+            "9d4a0a218d15315d3358306b4334241c",
+            "366330165ebefbb3042cd660fded50fc",
+            "9d4a0a218d15315d7b0f50b8440e8dfe",
+        ],
+    ),
+    // 3TDEA K1 == K3.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef23456789abcdef010123456789abcdef",
+        [
+            "80647273f24dc75e31a0aab909db63fc",
+            "46f8c3cb9fbc0a685db28100613ac225",
+            "80647273f24dc75ee16e919962e3242c",
+        ],
+    ),
+    // 3TDEA K2 == K3.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef23456789abcdef0123456789abcdef01",
+        [
+            "06ba8888c9f78471791d4d42192595c1",
+            "b0c0454b0a5025ce086f9a1d74c94d4e",
+            "06ba8888c9f78471067bc2d8f8192f7e",
+        ],
+    ),
+    // 3TDEA all subkeys equal.
+    (
+        &DES_EDE3_FOR_LEGACY_USE_ONLY,
+        "0123456789abcdef0123456789abcdef0123456789abcdef",
+        [
+            "06ba8888c9f78471791d4d42192595c1",
+            "b0c0454b0a5025ce086f9a1d74c94d4e",
+            "06ba8888c9f78471067bc2d8f8192f7e",
+        ],
+    ),
+];
+
+#[test]
+#[cfg(feature = "legacy-des")]
+fn test_des_legacy_keys_decrypt_known_ciphertexts() {
+    for &(algorithm, key_hex, ciphertext_hex) in DES_LEGACY_KEY_FIXTURES {
+        let base_key = from_hex(key_hex).unwrap();
+        let subkey_count = base_key.len() / 8;
+        let ciphertexts = ciphertext_hex.map(|hex| from_hex(hex).unwrap());
+        for mask in 0..=u8::MAX {
+            for variant_position in 0..=subkey_count {
+                let key_bytes = des_key_parity_variant(&base_key, mask, variant_position);
+                assert_des_legacy_decryption(algorithm, &key_bytes, &ciphertexts);
+            }
+        }
+    }
 }
 
 #[test]
