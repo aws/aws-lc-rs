@@ -477,44 +477,18 @@ fn test_rsa_public_key_components_to_parsed_public_key() {
     );
 }
 
-// Zero or empty modulus/exponent are invalid RSA components and must be
-// rejected before any DER parsing happens. The error must describe the
-// problem as inconsistent components rather than invalid encoding.
+// `PublicKeyComponents` must apply the same validation as the DER-parsing paths
+// (`ParsedPublicKey::new`, `PublicEncryptingKey::from_der`), so that a given
+// `(n, e)` is accepted or rejected regardless of how it arrives and `as_der`
+// never emits a `SubjectPublicKeyInfo` that this crate would itself reject
+// (https://github.com/aws/aws-lc-rs/issues/1299).
+//
+// Malformed encodings (empty or leading-zero components) are reported as
+// `InvalidEncoding`, matching `KeyPair::from_components`. Values that are not
+// valid RSA public components (`e = 1`, even `e`, `e` wider than 33 bits, even
+// `n`) are caught by `RSA_check_key` and reported as `InconsistentComponents`.
 #[test]
-fn test_rsa_public_key_components_to_parsed_public_key_rejects_empty_modulus() {
-    let n: [u8; 0] = [];
-    let e: [u8; 3] = [0x01, 0x00, 0x01];
-    let components = RsaPublicKeyComponents {
-        n: n.as_slice(),
-        e: e.as_slice(),
-    };
-    let err = components
-        .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
-        .expect_err("empty modulus should be rejected");
-    assert_eq!(err.description_(), "InconsistentComponents");
-}
-
-// `AsDer<PublicKeyX509Der>` must also reject invalid components.
-#[test]
-fn test_rsa_public_key_components_as_der_rejects_empty_modulus() {
-    let n: [u8; 0] = [];
-    let e: [u8; 3] = [0x01, 0x00, 0x01];
-    let components = RsaPublicKeyComponents {
-        n: n.as_slice(),
-        e: e.as_slice(),
-    };
-    let result: Result<PublicKeyX509Der<'_>, _> = components.as_der();
-    assert!(result.is_err(), "as_der should reject empty modulus");
-}
-
-// Empty exponents (and exponents with a leading zero byte, since big-endian
-// components are expected without leading zeros) are invalid RSA components
-// and must be rejected on both the `to_parsed_public_key` and `as_der` paths.
-// This is the symmetric case of the empty-modulus tests above: `build_rsa`
-// applies the same validation to `e` as it does to `n`, so both surfaces are
-// exercised here.
-#[test]
-fn test_rsa_public_key_components_rejects_invalid_exponent() {
+fn test_rsa_public_key_components_rejects_invalid_components() {
     // 2048-bit modulus of `data/rsa_test_private_key_2048.p8`.
     const N_HEX: &str = concat!(
         "c8a78500a5a250db8ed36c85b8dcf83c4be1953114faaac7616e0ea24922fa6b",
@@ -526,23 +500,80 @@ fn test_rsa_public_key_components_rejects_invalid_exponent() {
         "5811245c52d56cc09d4916d4f2a50bcf5ae0a2637f4cfa6bf9daafc113dba838",
         "3b6dd7da6dd8db22d8510a8d3115983308909a1a0332517aa55e896e154249b3",
     );
-    let n = aws_lc_rs::test::from_hex(N_HEX).unwrap();
+    const E: &[u8] = &[0x01, 0x00, 0x01];
 
-    for bad_e in [&[][..], &[0x00, 0x01, 0x00, 0x01][..]] {
-        let components = RsaPublicKeyComponents {
-            n: n.as_slice(),
-            e: bad_e,
-        };
+    let n = test::from_hex(N_HEX).unwrap();
+    let zero_prefixed_n = [&[0x00][..], &n].concat();
+    let mut even_n = n.clone();
+    *even_n.last_mut().unwrap() &= 0xFE;
+
+    // (label, n, e, expected `KeyRejected` description)
+    let cases: [(&str, &[u8], &[u8], &str); 8] = [
+        ("empty n", &[], E, "InvalidEncoding"),
+        ("leading zero on n", &zero_prefixed_n, E, "InvalidEncoding"),
+        ("empty e", &n, &[], "InvalidEncoding"),
+        (
+            "leading zero on e",
+            &n,
+            &[0x00, 0x01, 0x00, 0x01],
+            "InvalidEncoding",
+        ),
+        ("e = 1", &n, &[0x01], "InconsistentComponents"),
+        ("even e", &n, &[0x01, 0x00, 0x00], "InconsistentComponents"),
+        // 2^33 + 1: odd, but 34 bits wide.
+        (
+            "e wider than 33 bits",
+            &n,
+            &[0x02, 0x00, 0x00, 0x00, 0x01],
+            "InconsistentComponents",
+        ),
+        ("even n", &even_n, E, "InconsistentComponents"),
+    ];
+
+    for (label, n, e, expected) in cases {
+        let components = RsaPublicKeyComponents { n, e };
+
         let err = components
             .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
-            .expect_err("invalid exponent should be rejected by to_parsed_public_key");
-        assert_eq!(err.description_(), "InconsistentComponents");
-        let der_result: Result<PublicKeyX509Der<'_>, _> = components.as_der();
+            .expect_err(label);
+        assert_eq!(expected, err.description_(), "{label}");
+
+        let der: Result<PublicKeyX509Der<'_>, _> = components.as_der();
+        assert!(der.is_err(), "{label}: as_der accepted invalid components");
+
+        let encrypting_key: Result<PublicEncryptingKey, _> = components.try_into();
         assert!(
-            der_result.is_err(),
-            "invalid exponent should be rejected by as_der"
+            encrypting_key.is_err(),
+            "{label}: PublicEncryptingKey accepted invalid components"
+        );
+
+        assert!(
+            components
+                .verify(&signature::RSA_PKCS1_2048_8192_SHA256, b"", &[0u8; 256])
+                .is_err(),
+            "{label}: verify accepted invalid components"
         );
     }
+
+    // Positive control at the exponent-width boundary: 2^32 + 1 is exactly 33
+    // bits and must be accepted by every path, including round-tripping the
+    // emitted DER back through the parsing APIs.
+    let components = RsaPublicKeyComponents {
+        n: n.as_slice(),
+        e: &[0x01, 0x00, 0x00, 0x00, 0x01][..],
+    };
+    components
+        .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
+        .expect("33-bit e should be accepted by to_parsed_public_key");
+    let der: PublicKeyX509Der<'_> = components
+        .as_der()
+        .expect("33-bit e should be accepted by as_der");
+    ParsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256, der.as_ref())
+        .expect("ParsedPublicKey::new should accept as_der output");
+    PublicEncryptingKey::from_der(der.as_ref())
+        .expect("PublicEncryptingKey::from_der should accept as_der output");
+    let encrypting_key: Result<PublicEncryptingKey, _> = components.try_into();
+    encrypting_key.expect("33-bit e should be accepted by TryInto<PublicEncryptingKey>");
 }
 
 // A 1024-bit RSA key is below the algorithm's accepted range
