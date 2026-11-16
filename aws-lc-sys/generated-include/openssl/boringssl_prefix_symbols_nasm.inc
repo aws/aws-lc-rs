@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_47_0
+%define BORINGSSL_PREFIX aws_lc_0_48_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1474,6 +1474,7 @@
 %xdefine _EVP_blake2b256 _ %+ BORINGSSL_PREFIX %+ _EVP_blake2b256
 %xdefine _EVP_cast5_cbc _ %+ BORINGSSL_PREFIX %+ _EVP_cast5_cbc
 %xdefine _EVP_cast5_ecb _ %+ BORINGSSL_PREFIX %+ _EVP_cast5_ecb
+%xdefine _EVP_chacha20 _ %+ BORINGSSL_PREFIX %+ _EVP_chacha20
 %xdefine _EVP_chacha20_poly1305 _ %+ BORINGSSL_PREFIX %+ _EVP_chacha20_poly1305
 %xdefine _EVP_cleanup _ %+ BORINGSSL_PREFIX %+ _EVP_cleanup
 %xdefine _EVP_des_cbc _ %+ BORINGSSL_PREFIX %+ _EVP_des_cbc
@@ -2291,13 +2292,15 @@
 %xdefine _SHA512_get_state _ %+ BORINGSSL_PREFIX %+ _SHA512_get_state
 %xdefine _SHAKE128 _ %+ BORINGSSL_PREFIX %+ _SHAKE128
 %xdefine _SHAKE128_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Absorb_once_x4
-%xdefine _SHAKE128_Init_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Init_x4
 %xdefine _SHAKE128_Squeezeblocks_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Squeezeblocks_x4
 %xdefine _SHAKE256 _ %+ BORINGSSL_PREFIX %+ _SHAKE256
+%xdefine _SHAKE256_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE256_Absorb_once_x4
+%xdefine _SHAKE256_Squeezeblocks_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE256_Squeezeblocks_x4
 %xdefine _SHAKE256_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE256_x4
 %xdefine _SHAKE_Absorb _ %+ BORINGSSL_PREFIX %+ _SHAKE_Absorb
 %xdefine _SHAKE_Final _ %+ BORINGSSL_PREFIX %+ _SHAKE_Final
 %xdefine _SHAKE_Init _ %+ BORINGSSL_PREFIX %+ _SHAKE_Init
+%xdefine _SHAKE_Init_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE_Init_x4
 %xdefine _SHAKE_Squeeze _ %+ BORINGSSL_PREFIX %+ _SHAKE_Squeeze
 %xdefine _SIPHASH_24 _ %+ BORINGSSL_PREFIX %+ _SIPHASH_24
 %xdefine _SMIME_read_PKCS7 _ %+ BORINGSSL_PREFIX %+ _SMIME_read_PKCS7
@@ -4091,6 +4094,7 @@
 %xdefine _tree_jitter_free_thread_drbg _ %+ BORINGSSL_PREFIX %+ _tree_jitter_free_thread_drbg
 %xdefine _tree_jitter_get_seed _ %+ BORINGSSL_PREFIX %+ _tree_jitter_get_seed
 %xdefine _tree_jitter_initialize _ %+ BORINGSSL_PREFIX %+ _tree_jitter_initialize
+%xdefine _tree_jitter_zeroize_reseed_material_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _tree_jitter_zeroize_reseed_material_FOR_TESTING
 %xdefine _tree_jitter_zeroize_thread_drbg _ %+ BORINGSSL_PREFIX %+ _tree_jitter_zeroize_thread_drbg
 %xdefine _tty_in _ %+ BORINGSSL_PREFIX %+ _tty_in
 %xdefine _tty_new _ %+ BORINGSSL_PREFIX %+ _tty_new
@@ -5649,6 +5653,7 @@
 %xdefine EVP_blake2b256 BORINGSSL_PREFIX %+ _EVP_blake2b256
 %xdefine EVP_cast5_cbc BORINGSSL_PREFIX %+ _EVP_cast5_cbc
 %xdefine EVP_cast5_ecb BORINGSSL_PREFIX %+ _EVP_cast5_ecb
+%xdefine EVP_chacha20 BORINGSSL_PREFIX %+ _EVP_chacha20
 %xdefine EVP_chacha20_poly1305 BORINGSSL_PREFIX %+ _EVP_chacha20_poly1305
 %xdefine EVP_cleanup BORINGSSL_PREFIX %+ _EVP_cleanup
 %xdefine EVP_des_cbc BORINGSSL_PREFIX %+ _EVP_des_cbc
@@ -6466,13 +6471,15 @@
 %xdefine SHA512_get_state BORINGSSL_PREFIX %+ _SHA512_get_state
 %xdefine SHAKE128 BORINGSSL_PREFIX %+ _SHAKE128
 %xdefine SHAKE128_Absorb_once_x4 BORINGSSL_PREFIX %+ _SHAKE128_Absorb_once_x4
-%xdefine SHAKE128_Init_x4 BORINGSSL_PREFIX %+ _SHAKE128_Init_x4
 %xdefine SHAKE128_Squeezeblocks_x4 BORINGSSL_PREFIX %+ _SHAKE128_Squeezeblocks_x4
 %xdefine SHAKE256 BORINGSSL_PREFIX %+ _SHAKE256
+%xdefine SHAKE256_Absorb_once_x4 BORINGSSL_PREFIX %+ _SHAKE256_Absorb_once_x4
+%xdefine SHAKE256_Squeezeblocks_x4 BORINGSSL_PREFIX %+ _SHAKE256_Squeezeblocks_x4
 %xdefine SHAKE256_x4 BORINGSSL_PREFIX %+ _SHAKE256_x4
 %xdefine SHAKE_Absorb BORINGSSL_PREFIX %+ _SHAKE_Absorb
 %xdefine SHAKE_Final BORINGSSL_PREFIX %+ _SHAKE_Final
 %xdefine SHAKE_Init BORINGSSL_PREFIX %+ _SHAKE_Init
+%xdefine SHAKE_Init_x4 BORINGSSL_PREFIX %+ _SHAKE_Init_x4
 %xdefine SHAKE_Squeeze BORINGSSL_PREFIX %+ _SHAKE_Squeeze
 %xdefine SIPHASH_24 BORINGSSL_PREFIX %+ _SIPHASH_24
 %xdefine SMIME_read_PKCS7 BORINGSSL_PREFIX %+ _SMIME_read_PKCS7
@@ -8266,6 +8273,7 @@
 %xdefine tree_jitter_free_thread_drbg BORINGSSL_PREFIX %+ _tree_jitter_free_thread_drbg
 %xdefine tree_jitter_get_seed BORINGSSL_PREFIX %+ _tree_jitter_get_seed
 %xdefine tree_jitter_initialize BORINGSSL_PREFIX %+ _tree_jitter_initialize
+%xdefine tree_jitter_zeroize_reseed_material_FOR_TESTING BORINGSSL_PREFIX %+ _tree_jitter_zeroize_reseed_material_FOR_TESTING
 %xdefine tree_jitter_zeroize_thread_drbg BORINGSSL_PREFIX %+ _tree_jitter_zeroize_thread_drbg
 %xdefine tty_in BORINGSSL_PREFIX %+ _tty_in
 %xdefine tty_new BORINGSSL_PREFIX %+ _tty_new
