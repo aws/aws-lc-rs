@@ -81,6 +81,20 @@ pub fn ERR_GET_FUNC(_packed_error: u32) -> i32 {
 
 use core::ffi::{c_char, c_long, c_void};
 
+// `BIO_get_mem_data` was hardened to an `unsafe fn` in aws-lc-sys (aws/aws-lc-rs#1257).
+// Applying the same change to aws-lc-fips-sys is a breaking (minor) API change, which we
+// defer so this crate can keep shipping on its current 0.14.x line. The `fips` feature is
+// enabled for every real build of this crate, so the historical safe signature is what
+// ships; the hardened `unsafe` form is retained below for parity with aws-lc-sys and for
+// the eventual FIPS API break.
+
+/// Returns a memory BIO's length and writes a pointer to its contents to `pp`.
+#[cfg(feature = "fips")]
+#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
+pub fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
+    unsafe { BIO_ctrl(b, BIO_CTRL_INFO, 0, pp.cast::<c_void>()) }
+}
+
 /// Returns a memory BIO's length and writes a pointer to its contents to `pp`.
 ///
 /// # Safety
@@ -94,6 +108,7 @@ use core::ffi::{c_char, c_long, c_void};
 /// ```compile_fail,E0133
 /// aws_lc_fips_sys::BIO_get_mem_data(core::ptr::null_mut(), core::ptr::null_mut());
 /// ```
+#[cfg(not(feature = "fips"))]
 #[allow(non_snake_case)]
 pub unsafe fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
     unsafe { BIO_ctrl(b, BIO_CTRL_INFO, 0, pp.cast::<c_void>()) }
