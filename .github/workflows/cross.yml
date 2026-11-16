@@ -107,7 +107,7 @@ jobs:
         # module to shared memory) is caught here rather than by downstream
         # browser consumers.
         run: |
-          python3 scripts/ci/assert_wasm_unshared.py target/wasm32-unknown-emscripten/release/deps
+          python3 scripts/ci/assert_wasm_unshared.py target/wasm32-unknown-emscripten/release
       - if: ${{ matrix.target[1] == '1' }}
         name: Cross-compilation (test FIPS release)
         env:
@@ -457,12 +457,13 @@ jobs:
       - name: cargo test for x86_64-pc-windows-msvc
         if: matrix.host == 'windows-latest' && matrix.target == 'x86_64-pc-windows-msvc'
         env:
-          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+          # Override cargo-xwin's Wine runner and execute the test, not an interactive shell.
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe /d /c'
         run: cargo xwin test -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
       - name: cargo test for aarch64-pc-windows-msvc
         if: matrix.host == 'windows-11-arm' && matrix.target == 'aarch64-pc-windows-msvc'
         env:
-          CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+          CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe /d /c'
         run: cargo xwin test -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
 
   aws-lc-rs-windows-msvc:
@@ -709,7 +710,8 @@ jobs:
             ninja
             cc
             go
-            ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
+            make
+            ${{ (matrix.nasm == 'nasm' && 'nasm') || '' }}
       - name: Update Environment
         shell: bash
         run: |
