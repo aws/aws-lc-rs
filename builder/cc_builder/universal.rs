@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Mon Oct 26 18:37:48 UTC 2026
+// Mon Nov 16 20:36:58 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/asn1/asn1_lib.c",
@@ -63,6 +63,7 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/cipher_extra/e_aesgcmsiv.c",
     "crypto/cipher_extra/e_aes_cbc_hmac_sha1.c",
     "crypto/cipher_extra/e_aes_cbc_hmac_sha256.c",
+    "crypto/cipher_extra/e_chacha20.c",
     "crypto/cipher_extra/e_chacha20poly1305.c",
     "crypto/cipher_extra/e_des.c",
     "crypto/cipher_extra/e_null.c",
