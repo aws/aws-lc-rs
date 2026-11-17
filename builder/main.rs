@@ -420,9 +420,60 @@ pub(crate) fn is_lto_flag(flag: &str) -> bool {
     flag.starts_with("-flto") || flag == "-ffat-lto-objects" || flag == "-fno-fat-lto-objects"
 }
 
+/// Returns `ld_library_path` without the entries that resolve inside `native_sysroot`,
+/// or `None` if no entry was removed.
+fn filter_ld_library_path(ld_library_path: &OsStr, native_sysroot: &Path) -> Option<OsString> {
+    let native_sysroot = native_sysroot.canonicalize().ok()?;
+    let mut removed = false;
+    let kept: Vec<PathBuf> = env::split_paths(ld_library_path)
+        .filter(|entry| {
+            if entry.as_os_str().is_empty() {
+                return true;
+            }
+            let inside = entry
+                .canonicalize()
+                .is_ok_and(|entry| entry.starts_with(&native_sysroot));
+            removed |= inside;
+            !inside
+        })
+        .collect();
+    if !removed {
+        return None;
+    }
+    env::join_paths(kept).ok()
+}
+
+/// The Yocto SDK's `cargo` is a wrapper script that exports `LD_LIBRARY_PATH` pointing at
+/// the SDK's own glibc. Host executables spawned during the build (e.g., `/bin/sh` run by
+/// the SDK's `make` under `CMake`) then load that glibc with the host's dynamic loader and
+/// fail with symbol lookup errors. SDK executables don't need these entries since their
+/// interpreter is relocated to the SDK's loader.
+/// See: <https://github.com/aws/aws-lc-rs/issues/673>
+fn yocto_sdk_ld_library_path() -> Option<&'static OsString> {
+    static FILTERED: OnceLock<Option<OsString>> = OnceLock::new();
+    FILTERED
+        .get_or_init(|| {
+            let native_sysroot = optional_env("OECORE_NATIVE_SYSROOT")?;
+            let ld_library_path = env::var_os("LD_LIBRARY_PATH")?;
+            let filtered = filter_ld_library_path(&ld_library_path, Path::new(&native_sysroot))?;
+            emit_warning(format!(
+                "Yocto SDK detected; removing OECORE_NATIVE_SYSROOT entries from LD_LIBRARY_PATH \
+                 for spawned build tools: '{}'",
+                filtered.to_string_lossy()
+            ));
+            Some(filtered)
+        })
+        .as_ref()
+}
+
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> CommandResult {
-    match Command::new(executable).args(args).output() {
+    let mut command = Command::new(executable);
+    command.args(args);
+    if let Some(ld_library_path) = yocto_sdk_ld_library_path() {
+        command.env("LD_LIBRARY_PATH", ld_library_path);
+    }
+    match command.output() {
         Ok(mut result) => {
             let exit_code = result.status.code();
             result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
@@ -1973,5 +2024,71 @@ mod tests {
         assert!(!is_lto_flag("-ffunction-sections"));
         assert!(!is_lto_flag("-fdata-sections"));
         assert!(!is_lto_flag("-fuse-ld=lld"));
+    }
+
+    // -------------------------------------------------------------------------
+    // filter_ld_library_path tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_filter_ld_library_path_removes_sysroot_entries() {
+        let temp = tempfile::tempdir().unwrap();
+        let sysroot = temp.path().join("sysroots").join("x86_64-pokysdk-linux");
+        let sdk_bin = sysroot.join("usr").join("bin");
+        let sdk_lib = sysroot.join("lib");
+        let sdk_usr_lib = sysroot.join("usr").join("lib");
+        let outside = temp.path().join("target").join("debug").join("deps");
+        for dir in [&sdk_bin, &sdk_lib, &sdk_usr_lib, &outside] {
+            std::fs::create_dir_all(dir).unwrap();
+        }
+
+        // The Yocto cargo wrapper writes `$bindir/../../lib`-style entries.
+        let ld_library_path = env::join_paths([
+            outside.clone(),
+            sdk_usr_lib,
+            sdk_bin.join("..").join("..").join("lib"),
+            PathBuf::from("/nonexistent/lib"),
+        ])
+        .unwrap();
+
+        let filtered = filter_ld_library_path(&ld_library_path, &sysroot).unwrap();
+        assert_eq!(
+            env::split_paths(&filtered).collect::<Vec<_>>(),
+            vec![outside, PathBuf::from("/nonexistent/lib")]
+        );
+    }
+
+    #[test]
+    fn test_filter_ld_library_path_all_removed() {
+        let temp = tempfile::tempdir().unwrap();
+        let sdk_lib = temp.path().join("lib");
+        std::fs::create_dir_all(&sdk_lib).unwrap();
+
+        let filtered = filter_ld_library_path(sdk_lib.as_os_str(), temp.path()).unwrap();
+        assert!(filtered.is_empty());
+    }
+
+    #[test]
+    fn test_filter_ld_library_path_unchanged() {
+        let sysroot = tempfile::tempdir().unwrap();
+        let other = tempfile::tempdir().unwrap();
+        assert_eq!(
+            filter_ld_library_path(other.path().as_os_str(), sysroot.path()),
+            None
+        );
+        // A sysroot sharing a string prefix is not a parent directory.
+        let sibling = PathBuf::from(format!("{}-other", sysroot.path().display()));
+        std::fs::create_dir_all(&sibling).unwrap();
+        let result = filter_ld_library_path(sibling.as_os_str(), sysroot.path());
+        std::fs::remove_dir_all(&sibling).unwrap();
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_filter_ld_library_path_missing_sysroot() {
+        assert_eq!(
+            filter_ld_library_path(OsStr::new("/usr/lib"), Path::new("/nonexistent/sysroot")),
+            None
+        );
     }
 }
