@@ -101,14 +101,21 @@ impl WindowsArm64Generator {
     }
 }
 
-/// The `CMake` build type for a Windows FIPS build. AWS-LC rejects Debug FIPS
-/// builds on Windows, and `RelWithDebInfo` FIPS builds on Windows ARM64.
-fn windows_fips_build_type(opt_level: &str, target_arch: &str) -> &'static str {
-    if matches!(opt_level, "0" | "1" | "2") && target_arch != "aarch64" {
-        "RELWITHDEBINFO"
-    } else {
-        "RELEASE"
-    }
+/// Select both `CMAKE_BUILD_TYPE` and the `--config` used by multi-config
+/// generators. AWS-LC rejects Debug FIPS builds on Windows and also rejects
+/// `RelWithDebInfo` on Windows ARM64.
+fn configure_windows_fips_profile(cfg: &mut cmake::Config, opt_level: &str, arch: &str) {
+    let profile = match (opt_level, arch) {
+        ("0" | "1" | "2", "aarch64") => {
+            emit_warning(format!(
+                "AWS-LC only supports Release for Windows/{arch} FIPS builds; ignoring OPT_LEVEL={opt_level}."
+            ));
+            "Release"
+        }
+        ("0" | "1" | "2", _) => "RelWithDebInfo",
+        _ => "Release",
+    };
+    cfg.profile(profile);
 }
 
 pub(crate) struct CmakeBuilder {
@@ -318,9 +325,10 @@ impl CmakeBuilder {
 
         if target_os() == "windows" {
             if is_fips_build() {
-                cmake_cfg.define(
-                    "CMAKE_BUILD_TYPE",
-                    windows_fips_build_type(&cargo_env("OPT_LEVEL"), &target_arch()),
+                configure_windows_fips_profile(
+                    &mut cmake_cfg,
+                    &cargo_env("OPT_LEVEL"),
+                    &target_arch(),
                 );
             } else if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
@@ -899,8 +907,8 @@ impl crate::Builder for CmakeBuilder {
 #[cfg(test)]
 mod tests {
     use super::{
-        cmake_bool, cmake_nasm_small_flags, cmake_path, requested_cmake_generator, strip_lto_flags,
-        windows_fips_build_type, CmakeBuilder, WindowsArm64Generator,
+        cmake_bool, cmake_nasm_small_flags, cmake_path, configure_windows_fips_profile,
+        requested_cmake_generator, strip_lto_flags, CmakeBuilder, WindowsArm64Generator,
     };
     use crate::{EnvGuard, ENV_MUTEX};
     use std::path::{Path, PathBuf};
@@ -1022,17 +1030,20 @@ mod tests {
     }
 
     #[test]
-    fn test_windows_fips_build_type() {
+    fn test_windows_fips_profile() {
+        let check = |opt_level, arch, expected| {
+            let mut cfg = cmake::Config::new(".");
+            cfg.generator("Ninja Multi-Config");
+            configure_windows_fips_profile(&mut cfg, opt_level, arch);
+            assert_eq!(cfg.get_profile(), expected);
+        };
         for opt_level in ["0", "1", "2"] {
-            assert_eq!(
-                windows_fips_build_type(opt_level, "x86_64"),
-                "RELWITHDEBINFO"
-            );
-            assert_eq!(windows_fips_build_type(opt_level, "aarch64"), "RELEASE");
+            check(opt_level, "x86_64", "RelWithDebInfo");
+            check(opt_level, "aarch64", "Release");
         }
         for opt_level in ["3", "s", "z"] {
-            assert_eq!(windows_fips_build_type(opt_level, "x86_64"), "RELEASE");
-            assert_eq!(windows_fips_build_type(opt_level, "aarch64"), "RELEASE");
+            check(opt_level, "x86_64", "Release");
+            check(opt_level, "aarch64", "Release");
         }
     }
 }
