@@ -17,13 +17,13 @@ require **bindgen** unless pre-generated bindings are available for the target p
 
 ### Pre-generated FIPS Bindings
 
-Pre-generated bindings for `aws-lc-fips-sys` are available for the following targets. All other
-FIPS targets require bindgen.
+The table below lists the availability of pre-generated bindings for `aws-lc-fips-sys`.
+Supported FIPS targets without pre-generated bindings require bindgen.
 
 | Platform                     | Pre-generated FIPS Bindings |
 |------------------------------|-----------------------------|
 | `aarch64-apple-darwin`       | ✓                           |
-| `aarch64-pc-windows-msvc`    | ✗ (bindgen required) ¹      |
+| `aarch64-pc-windows-msvc`    | ✗ (FIPS not supported)      |
 | `aarch64-unknown-linux-gnu`  | ✓                           |
 | `aarch64-unknown-linux-musl` | ✓                           |
 | `x86_64-apple-darwin`        | ✓                           |
@@ -31,7 +31,7 @@ FIPS targets require bindgen.
 | `x86_64-unknown-linux-gnu`   | ✓                           |
 | `x86_64-unknown-linux-musl`  | ✓                           |
 
-¹ FIPS is supported on this platform but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)
+¹ FIPS on `x86_64-pc-windows-msvc` requires bindgen because no pre-generated FIPS bindings are available for Windows.
 
 ### Bindgen for FIPS Builds
 
@@ -109,10 +109,14 @@ See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.
 
 | Platform                  | Build | Tests | FIPS  |
 |---------------------------|-------|-------|-------|
-| `aarch64-pc-windows-msvc` | ✓     | ✓     | ✓     |
+| `aarch64-pc-windows-msvc` | ✓     | ✓     | Not supported |
 | `i686-pc-windows-msvc`    | ✓     | ✓     |       |
 | `x86_64-pc-windows-gnu`   | ✓     | ✓     |       |
 | `x86_64-pc-windows-msvc`  | ✓     | ✓     | ✓     |
+
+The Windows ARM64 build and test entries refer to non-FIPS builds. The currently vendored
+`aws-lc-fips-sys` module fails its runtime integrity check even on native Windows ARM64.
+See [Windows Requirements](requirements/windows.md#build-requirements) for details.
 
 ### Android Platforms
 

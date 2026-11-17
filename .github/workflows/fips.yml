@@ -73,7 +73,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-latest ]
+        os:
+          - windows-latest
+          # Re-enable after aws-lc-fips-sys vendors the June 2026 FIPS branch
+          # with the Windows ARM64 integrity-generation fixes:
+          # https://github.com/aws/aws-lc/pull/3013 and https://github.com/aws/aws-lc/pull/3133
+          # - windows-11-arm
         args:
           - --all-targets --features fips,unstable
           - --all-targets --features fips,bindgen,unstable
@@ -83,7 +88,8 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify,unstable
           - --no-default-features --features fips,alloc,unstable
     steps:
-      - uses: ilammy/setup-nasm@v1
+      - if: ${{ matrix.os != 'windows-11-arm' }}
+        uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v7
         with:
           submodules: 'recursive'

@@ -486,6 +486,7 @@ jobs:
         exclude:
           - target: "i686-pc-windows-msvc"
             fips: '1'
+          # FIPS builds for Windows ARM64 cannot be cross-compiled from x64.
           - target: "aarch64-pc-windows-msvc"
             fips: '1'
     steps:
@@ -517,6 +518,40 @@ jobs:
         run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen${{ (matrix.fips == '1' && ',fips') || '' }}
       - name: Release Build for ${{ matrix.target }}
         run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}${{ (matrix.fips == '1' && ' --features fips') || '' }}
+
+  # Visual Studio uses the ClangCL toolset; Ninja and NMake need clang-cl for ASM.
+  # See: https://github.com/aws/aws-lc-rs/issues/1306
+  aws-lc-rs-windows-arm64-cmake:
+    if: ${{ github.repository_owner == 'aws' }}
+    name: aarch64-pc-windows-msvc CMake builder - ${{ matrix.generator }} generator
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        generator:
+          - 'default'
+          - 'Ninja'
+          - 'NMake Makefiles'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: "recursive"
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target aarch64-pc-windows-msvc --no-self-update
+          rustup default stable
+      - if: ${{ matrix.generator == 'Ninja' }}
+        name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v6
+      - if: ${{ matrix.generator != 'default' }}
+        name: Select cross-target CMake generator
+        run: echo "TARGET_CMAKE_GENERATOR=${{ matrix.generator }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Debug build
+        run: cargo build -p aws-lc-rs --all-targets --target aarch64-pc-windows-msvc
+      - name: Release build
+        run: cargo build --release -p aws-lc-rs --all-targets --target aarch64-pc-windows-msvc
 
   freebsd:
     if: github.repository_owner == 'aws'
