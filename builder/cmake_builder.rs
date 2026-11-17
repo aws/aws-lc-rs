@@ -15,6 +15,7 @@ use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::str::FromStr;
 
 use crate::is_lto_flag;
@@ -55,6 +56,46 @@ fn msvc_tools_component(arch: &str) -> &'static str {
         "aarch64" => "Microsoft.VisualStudio.Component.VC.Tools.ARM64",
         _ => "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
     }
+}
+
+fn parse_printenv_output(stdout: &[u8]) -> Result<HashMap<String, String>, &'static str> {
+    // cmd /d /u /c set writes UTF-16LE without a BOM to the pipe.
+    let pairs = stdout.chunks_exact(2);
+    if !pairs.remainder().is_empty() {
+        return Err("odd byte count");
+    }
+    let units: Vec<_> = pairs
+        .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
+        .collect();
+    // An ill-formed variable should not fail the build: only its own value is affected.
+    let stdout = String::from_utf16_lossy(&units);
+    Ok(stdout
+        .lines()
+        .filter_map(|line| line.split_once('='))
+        .map(|(var, val)| (var.to_string(), val.to_string()))
+        .collect())
+}
+
+fn capture_printenv(command: &mut Command) -> Result<HashMap<String, String>, String> {
+    // stdout is environment data, not a log: capture it in full and never print it.
+    let output = command.output();
+    let program = command.get_program().to_string_lossy();
+    let output = output.map_err(|err| format!("Failed to start {program}: {err}"))?;
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = stderr.trim_end();
+    if !output.status.success() {
+        let mut error = format!("{program} failed ({})", output.status);
+        if !stderr.is_empty() {
+            error.push_str(":\n");
+            error.push_str(stderr);
+        }
+        return Err(error);
+    }
+    if !stderr.is_empty() {
+        eprintln!("{stderr}");
+    }
+    parse_printenv_output(&output.stdout)
+        .map_err(|err| format!("{program} returned invalid UTF-16LE on stdout: {err}"))
 }
 
 pub(crate) struct CmakeBuilder {
@@ -493,26 +534,11 @@ impl CmakeBuilder {
     }
 
     fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
-        let mut map: HashMap<String, String> = HashMap::new();
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
-        let arch = OsString::from(Self::vcvarsall_arch());
-        let tools_component = OsString::from(msvc_tools_component(&target_arch()));
-        let result = execute_command(
-            script_path.as_os_str(),
-            &[arch.as_os_str(), tools_component.as_os_str()],
-        );
-        if !result.status {
-            eprintln!("{}", result.stdout);
-            return Err("Failed to run vcvarsall.bat.".to_owned());
-        }
-        eprintln!("{}", result.stdout);
-        let lines = result.stdout.lines();
-        for line in lines {
-            if let Some((var, val)) = line.split_once('=') {
-                map.insert(var.to_string(), val.to_string());
-            }
-        }
-        Ok(map)
+        capture_printenv(
+            Command::new(script_path)
+                .args([Self::vcvarsall_arch(), msvc_tools_component(&target_arch())]),
+        )
     }
 
     fn configure_prebuilt_nasm(&self, cmake_cfg: &mut cmake::Config) {
@@ -774,7 +800,12 @@ impl crate::Builder for CmakeBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::{cmake_bool, cmake_nasm_small_flags, msvc_tools_component, strip_lto_flags};
+    #[cfg(any(unix, windows))]
+    use super::{capture_printenv, Command};
+    use super::{
+        cmake_bool, cmake_nasm_small_flags, msvc_tools_component, parse_printenv_output,
+        strip_lto_flags,
+    };
 
     #[test]
     fn test_cmake_bool() {
@@ -805,6 +836,74 @@ mod tests {
             msvc_tools_component("aarch64"),
             "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
         );
+    }
+
+    #[test]
+    fn test_parse_printenv_output() {
+        let stdout: Vec<_> =
+            "LIB=C:\\VS\\lib\\x64\r\nPATH=C:\\VS=\u{e9}\u{1f680}\\bin;C:\\Windows\r\n"
+                .encode_utf16()
+                .flat_map(u16::to_le_bytes)
+                .collect();
+        let environment = parse_printenv_output(&stdout).unwrap();
+        assert_eq!(environment.len(), 2);
+        assert_eq!(environment["LIB"], "C:\\VS\\lib\\x64");
+        assert_eq!(
+            environment["PATH"],
+            "C:\\VS=\u{e9}\u{1f680}\\bin;C:\\Windows"
+        );
+    }
+
+    #[test]
+    fn test_parse_printenv_invalid_utf16le() {
+        assert_eq!(parse_printenv_output(&[b'A']), Err("odd byte count"));
+    }
+
+    #[test]
+    fn test_parse_printenv_unpaired_surrogate() {
+        let mut units: Vec<u16> = "A=1\r\nB=".encode_utf16().collect();
+        units.push(0xd800);
+        units.extend("\r\nC=3\r\n".encode_utf16());
+        let stdout: Vec<_> = units.into_iter().flat_map(u16::to_le_bytes).collect();
+        let environment = parse_printenv_output(&stdout).unwrap();
+        assert_eq!(environment.len(), 3);
+        assert_eq!(environment["A"], "1");
+        assert_eq!(environment["B"], "\u{fffd}");
+        assert_eq!(environment["C"], "3");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_capture_printenv_large_stdout() {
+        let mut command = Command::new(std::env::var_os("ComSpec").expect("ComSpec"));
+        let sentinel = "caf\u{e9}=\u{1f680}";
+        command
+            .args(["/d", "/u", "/c", "set"])
+            .env_clear()
+            .env(
+                "SystemRoot",
+                std::env::var_os("SystemRoot").expect("SystemRoot"),
+            )
+            .env("AWS_LC_PRINTENV_Z_SENTINEL", sentinel);
+        // These six values sort before the sentinel and take up 36 KiB in UTF-16LE.
+        let filler = "x".repeat(3072);
+        for i in 0..6 {
+            command.env(format!("AWS_LC_PRINTENV_A_{i}"), &filler);
+        }
+        let environment = capture_printenv(&mut command).unwrap();
+        assert_eq!(environment["AWS_LC_PRINTENV_A_0"], filler);
+        assert_eq!(environment["AWS_LC_PRINTENV_Z_SENTINEL"], sentinel);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_capture_printenv_failure() {
+        let script =
+            "printf 'ENV_VAR=not for logging\\n'; printf 'no usable toolset\\n' >&2; exit 7";
+        let error = capture_printenv(Command::new("sh").args(["-c", script])).unwrap_err();
+        assert!(error.contains("exit status: 7"), "{error}");
+        assert!(error.contains("no usable toolset"), "{error}");
+        assert!(!error.contains("ENV_VAR"), "{error}");
     }
 
     #[test]
