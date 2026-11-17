@@ -16,6 +16,14 @@ unused = "allow"
 name = "builder"
 path = "../builder/main.rs"
 
+# A stand-in for vswhere.exe, which tests/printenv_test.rs runs builder/printenv.bat
+# against. Cargo builds a package's binaries before its integration tests.
+[[bin]]
+name = "fake-vswhere"
+path = "src/bin/fake_vswhere.rs"
+test = false
+doc = false
+
 [dependencies]
 # All dependencies that builder/main.rs requires
 cc = { workspace = true, features = ["parallel"] }
