@@ -50,6 +50,13 @@ const fn cmake_nasm_small_flags(value: bool) -> &'static str {
     }
 }
 
+fn msvc_tools_component(arch: &str) -> &'static str {
+    match arch {
+        "aarch64" => "Microsoft.VisualStudio.Component.VC.Tools.ARM64",
+        _ => "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+    }
+}
+
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
     out_dir: PathBuf,
@@ -489,7 +496,11 @@ impl CmakeBuilder {
         let mut map: HashMap<String, String> = HashMap::new();
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
         let arch = OsString::from(Self::vcvarsall_arch());
-        let result = execute_command(script_path.as_os_str(), &[arch.as_os_str()]);
+        let tools_component = OsString::from(msvc_tools_component(&target_arch()));
+        let result = execute_command(
+            script_path.as_os_str(),
+            &[arch.as_os_str(), tools_component.as_os_str()],
+        );
         if !result.status {
             eprintln!("{}", result.stdout);
             return Err("Failed to run vcvarsall.bat.".to_owned());
@@ -763,7 +774,7 @@ impl crate::Builder for CmakeBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::{cmake_bool, cmake_nasm_small_flags, strip_lto_flags};
+    use super::{cmake_bool, cmake_nasm_small_flags, msvc_tools_component, strip_lto_flags};
 
     #[test]
     fn test_cmake_bool() {
@@ -778,6 +789,22 @@ mod tests {
             "-DOPENSSL_SMALL=1 -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=1"
         );
         assert_eq!(cmake_nasm_small_flags(false), "");
+    }
+
+    #[test]
+    fn test_msvc_tools_component() {
+        assert_eq!(
+            msvc_tools_component("x86_64"),
+            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+        );
+        assert_eq!(
+            msvc_tools_component("x86"),
+            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+        );
+        assert_eq!(
+            msvc_tools_component("aarch64"),
+            "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
+        );
     }
 
     #[test]

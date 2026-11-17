@@ -1,8 +1,11 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+set "VC_TOOLS_COMPONENT=%~2"
+if "%VC_TOOLS_COMPONENT%"=="" set "VC_TOOLS_COMPONENT=Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+
 set "TOP_DIR=%ProgramFiles(x86)%\Microsoft Visual Studio"
-for /f "usebackq tokens=* delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
+for /f "usebackq tokens=* delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires %VC_TOOLS_COMPONENT% -property installationPath`) do (
     set "TOP_DIR=%%i"
     echo VS Installation: "!TOP_DIR!"
     if exist "!TOP_DIR!\VC\Auxiliary\Build\vcvarsall.bat" (
