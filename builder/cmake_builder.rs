@@ -496,19 +496,6 @@ impl CmakeBuilder {
         arm64_generator: Option<WindowsArm64Generator>,
     ) {
         if is_fips_build() {
-            // FIPS branches that still capture the integrity hash this way run the
-            // built module; newer ones read it from a linker map instead.
-            let runs_module = self
-                .manifest_dir
-                .join("aws-lc/util/fipstools/capture_hash")
-                .exists();
-            if runs_module && cfg!(target_arch = "x86_64") && target_arch() == "aarch64" {
-                emit_warning(
-                    "This FIPS build for Windows ARM64 runs an ARM64 executable to capture the \
-                     module's integrity hash, so it cannot be cross-compiled on an x64 machine.",
-                );
-            }
-
             let env_map = self
                 .collect_vcvarsall_bat()
                 .map_err(|x| panic!("{}", x))
@@ -548,6 +535,49 @@ impl CmakeBuilder {
         // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
         if target().contains("-win7-windows-gnu") {
             cmake_cfg.cflag("-DAWSLC_WINDOWS_7_COMPAT");
+        }
+    }
+
+    /// Sources predating aws/aws-lc#3013 link the ARM64 module twice; the links
+    /// differ, so even a native build fails its runtime integrity check. Later
+    /// sources still need to run the module until aws/aws-lc#3133 replaces
+    /// `capture_hash` with the Windows linker-map mode of `inject_hash`.
+    fn check_windows_arm64_fips_sources(&self) -> Result<(), String> {
+        if !(is_fips_build()
+            && target_os() == "windows"
+            && target_arch() == "aarch64"
+            && target_is_msvc())
+        {
+            return Ok(());
+        }
+        let aws_lc = self.manifest_dir.join("aws-lc");
+        let tools = aws_lc.join("util/fipstools");
+        let capture_hash = tools.join("capture_hash/capture_hash.go");
+        match std::fs::read_to_string(&capture_hash) {
+            Ok(source) if !source.contains("patch-dll") => {
+                Err("FIPS builds for Windows ARM64 are not supported with this AWS-LC FIPS branch".into())
+            }
+            Ok(_) if is_cross_compiling() => Err(
+                "FIPS builds for Windows ARM64 cannot be cross-compiled with this AWS-LC FIPS branch; \
+                 build on a Windows ARM64 host".into(),
+            ),
+            Ok(_) => Ok(()),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                // Older trees also have an inject_hash.go, but only for ELF and Mach-O.
+                let inject_hash = tools.join("inject_hash/inject_hash.go");
+                let source = std::fs::read_to_string(&inject_hash)
+                    .map_err(|err| format!("Cannot read {}: {err}", inject_hash.display()))?;
+                if !source.contains(r#"flag.Bool("windows","#)
+                    || !source.contains(r#"flag.String("map","#)
+                {
+                    return Err(format!("{} lacks Windows linker map support", inject_hash.display()));
+                }
+                let go_mod = aws_lc.join("go.mod");
+                std::fs::read_to_string(&go_mod)
+                    .map_err(|err| format!("Cannot read {}: {err}", go_mod.display()))?;
+                Ok(())
+            }
+            Err(err) => Err(format!("Cannot read {}: {err}", capture_hash.display())),
         }
     }
 
@@ -825,6 +855,11 @@ impl CmakeBuilder {
 
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
+        // Fail here rather than warn: Cargo hides warnings from registry
+        // dependencies, and a native build would otherwise succeed silently.
+        self.check_windows_arm64_fips_sources().map_err(|reason| {
+            format!("{reason}. See: https://aws.github.io/aws-lc-rs/requirements/windows.html")
+        })?;
         let mut missing_dependency = false;
         if target_os() == "windows" && target_arch() == "x86_64" {
             if is_no_asm() && Some(true) == allow_prebuilt_nasm() {
@@ -910,7 +945,7 @@ mod tests {
         cmake_bool, cmake_nasm_small_flags, cmake_path, configure_windows_fips_profile,
         requested_cmake_generator, strip_lto_flags, CmakeBuilder, WindowsArm64Generator,
     };
-    use crate::{EnvGuard, ENV_MUTEX};
+    use crate::{Builder, EnvGuard, OutputLibType, ENV_MUTEX};
     use std::path::{Path, PathBuf};
 
     #[test]
@@ -1027,6 +1062,85 @@ mod tests {
     )]
     fn test_windows_arm64_rejects_unsupported_generator() {
         WindowsArm64Generator::from_name(Some("Unix Makefiles"));
+    }
+
+    #[test]
+    fn test_check_dependencies_rejects_unsupported_windows_arm64_fips() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let manifest_dir = tempfile::tempdir().unwrap();
+        let _target = [
+            EnvGuard::new("CARGO_PKG_NAME", "aws-lc-fips-sys"),
+            EnvGuard::new("CARGO_CFG_TARGET_OS", "windows"),
+            EnvGuard::new("CARGO_CFG_TARGET_ARCH", "aarch64"),
+            EnvGuard::new("CARGO_CFG_TARGET_ENV", "msvc"),
+            EnvGuard::new("TARGET", "aarch64-pc-windows-msvc"),
+        ];
+        let builder = CmakeBuilder::new(
+            manifest_dir.path().to_path_buf(),
+            PathBuf::new(),
+            None,
+            OutputLibType::Dynamic,
+        );
+        let native = "aarch64-pc-windows-msvc";
+        let cross = "x86_64-pc-windows-msvc";
+        let rejection = |host: &str| {
+            let _host = EnvGuard::new("HOST", host);
+            builder.check_windows_arm64_fips_sources().err()
+        };
+
+        // Some source packages omit the Go tools entirely. Older branches also
+        // ship an inject_hash.go that only supports Linux and Apple targets.
+        let tools = manifest_dir.path().join("aws-lc/util/fipstools");
+        let inject_dir = tools.join("inject_hash");
+        let inject_hash = inject_dir.join("inject_hash.go");
+        for host in [native, cross] {
+            let err = rejection(host).unwrap();
+            assert!(err.contains("inject_hash.go"), "{err}");
+        }
+        std::fs::create_dir_all(&inject_dir).unwrap();
+        std::fs::write(&inject_hash, r#"flag.Bool("apple", false, "")"#).unwrap();
+        assert!(rejection(cross).unwrap().contains("linker map"));
+
+        // Sources with aws/aws-lc#3133 support Windows linker maps.
+        std::fs::write(
+            &inject_hash,
+            "flag.Bool(\"windows\", false, \"\")\nflag.String(\"map\", \"\", \"\")",
+        )
+        .unwrap();
+        assert!(rejection(cross).unwrap().contains("go.mod"));
+        std::fs::write(
+            manifest_dir.path().join("aws-lc/go.mod"),
+            "module github.com/aws/aws-lc\n",
+        )
+        .unwrap();
+        assert_eq!(rejection(native), None);
+        assert_eq!(rejection(cross), None);
+
+        let capture_hash_dir = tools.join("capture_hash");
+        std::fs::create_dir_all(&capture_hash_dir).unwrap();
+        let capture_hash = capture_hash_dir.join("capture_hash.go");
+
+        // A read error other than NotFound must not select the linker-map path.
+        std::fs::write(&capture_hash, [0xff]).unwrap();
+        let err = rejection(cross).unwrap();
+        assert!(err.contains("capture_hash.go"), "{err}");
+
+        // Sources without aws/aws-lc#3013 fail the integrity check even natively.
+        std::fs::write(&capture_hash, "package main\n").unwrap();
+        for host in [native, cross] {
+            let err = rejection(host).unwrap();
+            assert!(err.contains("not supported"), "{err}");
+        }
+
+        // Sources with only aws/aws-lc#3013 must run the ARM64 module.
+        std::fs::write(&capture_hash, r#"flag.String("patch-dll", "", "")"#).unwrap();
+        assert_eq!(rejection(native), None);
+        let _host = EnvGuard::new("HOST", cross);
+        let err = builder.check_dependencies().unwrap_err();
+        assert!(err.contains("Windows ARM64 host"), "{err}");
+
+        let _x64 = EnvGuard::new("CARGO_CFG_TARGET_ARCH", "x86_64");
+        assert_eq!(rejection(cross), None);
     }
 
     #[test]

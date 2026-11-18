@@ -486,7 +486,7 @@ jobs:
         exclude:
           - target: "i686-pc-windows-msvc"
             fips: '1'
-          # FIPS builds for Windows ARM64 cannot be cross-compiled from x64.
+          # aws-lc-fips-sys still vendors a branch without Windows ARM64 integrity support.
           - target: "aarch64-pc-windows-msvc"
             fips: '1'
     steps:
@@ -527,6 +527,7 @@ jobs:
     runs-on: windows-latest
     env:
       AWS_LC_SYS_CMAKE_BUILDER: 1
+      AWS_LC_SYS_USE_SYSTEM: 0
     strategy:
       fail-fast: false
       matrix:
@@ -552,6 +553,12 @@ jobs:
         run: cargo build -p aws-lc-rs --all-targets --target aarch64-pc-windows-msvc
       - name: Release build
         run: cargo build --release -p aws-lc-rs --all-targets --target aarch64-pc-windows-msvc
+      # Unlike aws-lc-fips-sys, the aws-lc-sys checkout has the linker-map FIPS tools.
+      - name: Cross-build the ARM64 FIPS DLL from aws-lc-sys sources
+        if: ${{ matrix.generator == 'Ninja' }}
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}\lc
+        run: cargo build --release -p aws-lc-sys --features fips --target aarch64-pc-windows-msvc
 
   freebsd:
     if: github.repository_owner == 'aws'

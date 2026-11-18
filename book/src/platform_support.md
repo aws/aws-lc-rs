@@ -12,8 +12,8 @@ without any additional tooling beyond a C/C++ compiler.
 
 ## FIPS Builds (`aws-lc-fips-sys`)
 
-FIPS builds always require **CMake** and **Go** in addition to a C/C++ compiler. FIPS builds also
-require **bindgen** unless pre-generated bindings are available for the target platform.
+Building the vendored FIPS module requires **CMake** and **Go** in addition to a C/C++ compiler.
+These builds also require **bindgen** unless pre-generated bindings are available for the target platform.
 
 ### Pre-generated FIPS Bindings
 
@@ -23,7 +23,7 @@ Supported FIPS targets without pre-generated bindings require bindgen.
 | Platform                     | Pre-generated FIPS Bindings |
 |------------------------------|-----------------------------|
 | `aarch64-apple-darwin`       | ✓                           |
-| `aarch64-pc-windows-msvc`    | ✗ (FIPS not supported)      |
+| `aarch64-pc-windows-msvc`    | ✗ (Vendored FIPS build not supported)      |
 | `aarch64-unknown-linux-gnu`  | ✓                           |
 | `aarch64-unknown-linux-musl` | ✓                           |
 | `x86_64-apple-darwin`        | ✓                           |
@@ -109,7 +109,7 @@ See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.
 
 | Platform                  | Build | Tests | FIPS  |
 |---------------------------|-------|-------|-------|
-| `aarch64-pc-windows-msvc` | ✓     | ✓     | Not supported |
+| `aarch64-pc-windows-msvc` | ✓     | ✓     | Vendored build not supported |
 | `i686-pc-windows-msvc`    | ✓     | ✓     |       |
 | `x86_64-pc-windows-gnu`   | ✓     | ✓     |       |
 | `x86_64-pc-windows-msvc`  | ✓     | ✓     | ✓     |

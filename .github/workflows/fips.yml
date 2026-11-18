@@ -75,9 +75,8 @@ jobs:
       matrix:
         os:
           - windows-latest
-          # Re-enable after aws-lc-fips-sys vendors the June 2026 FIPS branch
-          # with the Windows ARM64 integrity-generation fixes:
-          # https://github.com/aws/aws-lc/pull/3013 and https://github.com/aws/aws-lc/pull/3133
+          # Re-enable once the FIPS branch vendored by aws-lc-fips-sys includes
+          # the Windows ARM64 integrity fix from https://github.com/aws/aws-lc/pull/3013.
           # - windows-11-arm
         args:
           - --all-targets --features fips,unstable

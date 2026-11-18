@@ -2,7 +2,7 @@
 
 ## Build Requirements
 
-The following build requirements apply on Windows:
+The following requirements apply when building the vendored AWS-LC sources on Windows:
 
 | Platform                  | *default*                      | **fips**                                     |
 |---------------------------|--------------------------------|----------------------------------------------|
@@ -14,15 +14,14 @@ The following build requirements apply on Windows:
 \* NASM is recommended on x86-64 but can be avoided using prebuilt NASM objects. See the
 [Prebuilt NASM objects](#prebuilt-nasm-objects) section below.
 
-> **Note:** FIPS builds on Windows also require `bindgen`, as there are no pre-generated FIPS
+> **Note:** Vendored FIPS builds on Windows also require `bindgen`, as there are no pre-generated FIPS
 > bindings for Windows platforms.
 > See [Platform Support](../platform_support.md) for more details.
 
-> **Note:** The Windows ARM64 FIPS module currently vendored by `aws-lc-fips-sys` fails its
-> runtime integrity check even on native Windows ARM64, so FIPS is not usable or supported on
-> `aarch64-pc-windows-msvc`. Separately, the current build cannot cross-compile the FIPS module
-> from an x64 host because it must run an ARM64 executable to capture the module's integrity hash.
-> These limitations do not affect non-FIPS Windows builds or FIPS builds for `x86_64-pc-windows-msvc`.
+> **Note:** `aws-lc-fips-sys` rejects builds from its currently vendored sources for `aarch64-pc-windows-msvc`.
+> The module fails its runtime integrity check even on native Windows ARM64. Cross-compiling from x64
+> also requires running an ARM64 executable to capture the module's integrity hash.
+> This source check does not run when linking an existing system installation.
 
 ## C/C++ Compiler
 
