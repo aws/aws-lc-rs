@@ -1447,6 +1447,7 @@ EVP_bf_ofb
 EVP_blake2b256
 EVP_cast5_cbc
 EVP_cast5_ecb
+EVP_chacha20
 EVP_chacha20_poly1305
 EVP_cleanup
 EVP_des_cbc
@@ -2261,13 +2262,15 @@ SHA512_Update
 SHA512_get_state
 SHAKE128
 SHAKE128_Absorb_once_x4
-SHAKE128_Init_x4
 SHAKE128_Squeezeblocks_x4
 SHAKE256
+SHAKE256_Absorb_once_x4
+SHAKE256_Squeezeblocks_x4
 SHAKE256_x4
 SHAKE_Absorb
 SHAKE_Final
 SHAKE_Init
+SHAKE_Init_x4
 SHAKE_Squeeze
 SIPHASH_24
 SMIME_read_PKCS7
@@ -3701,6 +3704,7 @@ tree_jitter_drbg_destructor
 tree_jitter_free_thread_drbg
 tree_jitter_get_seed
 tree_jitter_initialize
+tree_jitter_zeroize_reseed_material_FOR_TESTING
 tree_jitter_zeroize_thread_drbg
 used_for_hmac
 v2i_GENERAL_NAME
