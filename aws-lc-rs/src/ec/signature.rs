@@ -66,7 +66,7 @@ impl EcdsaVerificationAlgorithm {
     #[inline]
     pub const fn get(
         curve: EcdsaCurve,
-        digest: &'static digest::Algorithm,
+        digest: &digest::Algorithm,
         sig_format: EcdsaSignatureFormat,
     ) -> Option<&'static Self> {
         match EcdsaSigningAlgorithm::get(curve, digest, sig_format) {
@@ -149,7 +149,7 @@ impl EcdsaSigningAlgorithm {
     #[inline]
     pub const fn get(
         curve: EcdsaCurve,
-        digest: &'static digest::Algorithm,
+        digest: &digest::Algorithm,
         sig_format: EcdsaSignatureFormat,
     ) -> Option<&'static Self> {
         use EcdsaSignatureFormat::{Fixed, ASN1};

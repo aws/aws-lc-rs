@@ -22,8 +22,9 @@
 //! [`EcdsaSigningAlgorithm::get`] or [`EcdsaVerificationAlgorithm::get`]. Both
 //! are `const fn` lookups that take a curve, digest, and signature format and
 //! return `Option<&'static Self>` without allocating, at compile time or at
-//! runtime. Callers must enforce their protocol's algorithm policy: `Some`
-//! means the combination is supported, not that the protocol permits it.
+//! runtime. The returned algorithm does not borrow the caller's digest algorithm.
+//! Callers must enforce their protocol's algorithm policy: `Some` means the
+//! combination is supported, not that the protocol permits it.
 //! Legacy SHA-1 verification is available only via existing named constants
 //! such as [`ECDSA_P256_SHA1_ASN1`], not through either lookup.
 //!

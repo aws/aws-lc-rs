@@ -421,12 +421,12 @@ fn ecdsa_algorithm_lifetimes() {
     for format in ECDSA_SIGNATURE_FORMATS {
         let (key_pair, verifying, unparsed, parsed) = {
             let curve = EcdsaCurve::P384;
-            let digest_alg = &SHA512_256;
+            let digest_alg = SHA512_256;
             let original_alg =
                 EcdsaSigningAlgorithm::get(curve, &SHA384, EcdsaSignatureFormat::ASN1).unwrap();
             let original = EcdsaKeyPair::generate(original_alg).unwrap();
-            let signing = EcdsaSigningAlgorithm::get(curve, digest_alg, format).unwrap();
-            let verifying = EcdsaVerificationAlgorithm::get(curve, digest_alg, format).unwrap();
+            let signing = EcdsaSigningAlgorithm::get(curve, &digest_alg, format).unwrap();
+            let verifying = EcdsaVerificationAlgorithm::get(curve, &digest_alg, format).unwrap();
             let key_pair = original.with_algorithm(signing).unwrap();
             let public_key = key_pair.public_key().as_ref();
             let unparsed = UnparsedPublicKey::new(verifying, public_key.to_vec());
