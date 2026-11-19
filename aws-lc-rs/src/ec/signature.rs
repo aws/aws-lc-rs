@@ -56,7 +56,7 @@ impl EcdsaVerificationAlgorithm {
     /// };
     ///
     /// let algorithm =
-    ///     EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1)
+    ///     EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::ASN1)
     ///         .ok_or(Unspecified)?;
     /// # let public_key: &[u8] = &[];
     /// let public_key = UnparsedPublicKey::new(algorithm, public_key);
@@ -125,7 +125,7 @@ impl EcdsaSigningAlgorithm {
     /// };
     ///
     /// const ALGORITHM: &EcdsaSigningAlgorithm = match EcdsaSigningAlgorithm::get(
-    ///     EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1,
+    ///     EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::ASN1,
     /// ) {
     ///     Some(algorithm) => algorithm,
     ///     None => panic!("unsupported ECDSA parameters"),
@@ -152,7 +152,7 @@ impl EcdsaSigningAlgorithm {
         digest: &'static digest::Algorithm,
         sig_format: EcdsaSignatureFormat,
     ) -> Option<&'static Self> {
-        use EcdsaSignatureFormat::{Asn1, Fixed};
+        use EcdsaSignatureFormat::{Fixed, ASN1};
 
         // Each match arm borrows a constant expression, so even runtime choices yield a
         // 'static reference without allocating or reading a static in a const fn on Rust 1.71.
@@ -176,13 +176,13 @@ impl EcdsaSigningAlgorithm {
         }
 
         match (curve, sig_format) {
-            (EcdsaCurve::P256, Asn1) => by_digest!(ECDSA_P256, Asn1),
+            (EcdsaCurve::P256, ASN1) => by_digest!(ECDSA_P256, ASN1),
             (EcdsaCurve::P256, Fixed) => by_digest!(ECDSA_P256, Fixed),
-            (EcdsaCurve::P384, Asn1) => by_digest!(ECDSA_P384, Asn1),
+            (EcdsaCurve::P384, ASN1) => by_digest!(ECDSA_P384, ASN1),
             (EcdsaCurve::P384, Fixed) => by_digest!(ECDSA_P384, Fixed),
-            (EcdsaCurve::P521, Asn1) => by_digest!(ECDSA_P521, Asn1),
+            (EcdsaCurve::P521, ASN1) => by_digest!(ECDSA_P521, ASN1),
             (EcdsaCurve::P521, Fixed) => by_digest!(ECDSA_P521, Fixed),
-            (EcdsaCurve::P256K1, Asn1) => by_digest!(ECDSA_P256K1, Asn1),
+            (EcdsaCurve::P256K1, ASN1) => by_digest!(ECDSA_P256K1, ASN1),
             (EcdsaCurve::P256K1, Fixed) => by_digest!(ECDSA_P256K1, Fixed),
         }
     }
@@ -234,7 +234,7 @@ impl sealed::Sealed for EcdsaSigningAlgorithm {}
 #[non_exhaustive]
 pub enum EcdsaSignatureFormat {
     /// ASN.1 DER-encoded `ECDSA-Sig-Value` (RFC 3279), as used in X.509 and PKCS#10.
-    Asn1,
+    ASN1,
     /// Fixed-length `r || s` (IEEE P1363 / PKCS#11 style), with each value zero-padded to the
     /// curve's scalar size.
     Fixed,
@@ -428,7 +428,7 @@ impl EcdsaVerificationAlgorithm {
         public_key: &LcPtr<EVP_PKEY>,
     ) -> Result<(), Unspecified> {
         match self.sig_format {
-            EcdsaSignatureFormat::Asn1 => {
+            EcdsaSignatureFormat::ASN1 => {
                 verify_asn1_signature(self.digest, public_key, msg, signature)
             }
             EcdsaSignatureFormat::Fixed => {
@@ -450,7 +450,7 @@ impl EcdsaVerificationAlgorithm {
             return Err(Unspecified);
         }
         match self.sig_format {
-            EcdsaSignatureFormat::Asn1 => {
+            EcdsaSignatureFormat::ASN1 => {
                 verify_asn1_digest_signature(digest, public_key, signature)
             }
             EcdsaSignatureFormat::Fixed => {
