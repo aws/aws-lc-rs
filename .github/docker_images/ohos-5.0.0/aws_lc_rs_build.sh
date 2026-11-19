@@ -18,7 +18,13 @@ function build_ohos_targets() {
   for target in aarch64-unknown-linux-ohos armv7-unknown-linux-ohos x86_64-unknown-linux-ohos
   do
     export CPATH=/ohos/linux/native/sysroot/usr/include/:/ohos/linux/native/sysroot/usr/include/${target_map[${target}]}
-    cargo build -p aws-lc-rs --target ${target}
+    # Retain the entire native archive and disable section GC so unused code
+    # cannot hide unresolved assembly references. Cross-built binaries are not run.
+    AWS_LC_SYS_LINK_WHOLE_ARCHIVE=1 cargo rustc -p aws-lc-rs --example cipher --target "${target}" -- \
+      -C link-dead-code=yes \
+      -C linker=/ohos/linux/native/llvm/bin/clang \
+      -C link-arg=--target="${target_map[${target}]}" \
+      -C link-arg=--sysroot=/ohos/linux/native/sysroot
     cargo clean
   done
 }

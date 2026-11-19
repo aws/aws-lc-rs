@@ -5,11 +5,12 @@ use crate::cc_builder::{asm_debug_prefix_map_flag, CcBuilder};
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    export_crate_compilers, get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate,
-    is_no_asm, is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target,
-    sanitizer, set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch,
-    target_env, target_is_msvc, target_os, test_clang_cl_command, test_nasm_command,
-    use_prebuilt_nasm, OutputLibType,
+    export_crate_compilers, get_crate_cflags, is_cross_compiling, is_crt_static, is_fips_build,
+    is_fips_crate, is_no_asm, is_no_pregenerated_src, is_small, optional_env,
+    optional_env_crate_target, optional_env_optional_crate_target, sanitizer, set_env,
+    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env,
+    target_is_msvc, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -77,6 +78,23 @@ fn find_cmake_command() -> Option<OsString> {
     } else {
         None
     }
+}
+
+fn cmake_toolchain_file() -> Option<String> {
+    let name = "CMAKE_TOOLCHAIN_FILE";
+    let target = target();
+    let kind = if is_cross_compiling() {
+        "TARGET"
+    } else {
+        "HOST"
+    };
+
+    // Keep crate-specific overrides first, then follow cmake-rs's lookup order.
+    optional_env_crate_target(name)
+        .or_else(|| optional_env(format!("{name}_{target}")))
+        .or_else(|| optional_env(format!("{name}_{}", target.replace('-', "_"))))
+        .or_else(|| optional_env(format!("{kind}_{name}")))
+        .or_else(|| optional_env(name))
 }
 
 impl CmakeBuilder {
@@ -149,6 +167,7 @@ impl CmakeBuilder {
         }
 
         let mut cmake_cfg = self.get_cmake_config();
+        let mut toolchain = cmake_toolchain_file();
         if let Some(generator) = optional_env_optional_crate_target("CMAKE_GENERATOR") {
             set_env("CMAKE_GENERATOR", generator);
         }
@@ -199,7 +218,7 @@ impl CmakeBuilder {
             }
 
             if target_env() == "ohos" {
-                Self::configure_open_harmony(&mut cmake_cfg);
+                toolchain = Self::configure_open_harmony(&mut cmake_cfg, toolchain);
             }
         }
 
@@ -280,9 +299,8 @@ impl CmakeBuilder {
         }
 
         // Allow environment to specify CMake toolchain.
-        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
-            set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
-
+        if let Some(toolchain) = toolchain {
+            cmake_cfg.define("CMAKE_TOOLCHAIN_FILE", toolchain);
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
@@ -617,26 +635,34 @@ impl CmakeBuilder {
         }
     }
 
-    fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
+    fn configure_open_harmony(
+        cmake_cfg: &mut cmake::Config,
+        toolchain: Option<String>,
+    ) -> Option<String> {
         let mut cflags = vec!["-Wno-unused-command-line-argument"];
         let mut asmflags = vec![];
 
-        // If a toolchain is not specified by the environment
-        if optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE").is_none() {
-            if let Ok(ndk) = env::var("OHOS_NDK_HOME") {
-                set_env_for_target(
-                    "CMAKE_TOOLCHAIN_FILE",
-                    format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
-                );
-            } else if let Ok(sdk) = env::var("OHOS_SDK_NATIVE") {
-                set_env_for_target(
-                    "CMAKE_TOOLCHAIN_FILE",
-                    format!("{sdk}/build/cmake/ohos.toolchain.cmake"),
-                );
-            } else {
+        let toolchain = toolchain
+            .or_else(|| {
+                optional_env("OHOS_NDK_HOME")
+                    .map(|ndk| format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"))
+            })
+            .or_else(|| {
+                optional_env("OHOS_SDK_NATIVE")
+                    .map(|sdk| format!("{sdk}/build/cmake/ohos.toolchain.cmake"))
+            });
+        if toolchain.is_none() {
+            if is_cross_compiling() {
                 emit_warning(
                     "Neither OHOS_NDK_HOME nor OHOS_SDK_NATIVE are set! No toolchain found.",
                 );
+            } else {
+                // Native HarmonyOS detection can yield an unknown processor and UNIX=false,
+                // omitting assembly that the C compiler still references (#1280). Use the
+                // Linux-compatible platform (OHOS is unavailable in older CMake), but let
+                // the compiler detect the pointer size. Cross-builds remain with cmake-rs.
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Linux");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", target_arch());
             }
         }
 
@@ -671,6 +697,7 @@ impl CmakeBuilder {
             .cflag(cflags.join(" ").as_str())
             .cxxflag(cflags.join(" ").as_str())
             .asmflag(asmflags.join(" ").as_str());
+        toolchain
     }
 
     fn build_library(&self) -> PathBuf {
@@ -763,7 +790,227 @@ impl crate::Builder for CmakeBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::{cmake_bool, cmake_nasm_small_flags, strip_lto_flags};
+    use super::{
+        cmake_bool, cmake_nasm_small_flags, cmake_toolchain_file, find_cmake_command,
+        strip_lto_flags, CmakeBuilder,
+    };
+    use crate::{EnvGuard, ENV_MUTEX};
+    use std::env;
+
+    fn ohos_test_env(target: &str, arch: &str, host: &str) -> Vec<EnvGuard> {
+        let mut guards = vec![
+            EnvGuard::new("TARGET", target),
+            EnvGuard::new("HOST", host),
+            EnvGuard::new("CARGO_PKG_NAME", "aws-lc-sys"),
+            EnvGuard::new("CARGO_CFG_TARGET_ARCH", arch),
+            EnvGuard::new("CARGO_CFG_TARGET_OS", "linux"),
+            EnvGuard::new("CARGO_CFG_TARGET_ENV", "ohos"),
+        ];
+        for name in [
+            "AWS_LC_SYS_CMAKE_TOOLCHAIN_FILE".to_string(),
+            format!(
+                "AWS_LC_SYS_CMAKE_TOOLCHAIN_FILE_{}",
+                target.replace('-', "_")
+            ),
+            "CMAKE_TOOLCHAIN_FILE".to_string(),
+            format!("CMAKE_TOOLCHAIN_FILE_{target}"),
+            format!("CMAKE_TOOLCHAIN_FILE_{}", target.replace('-', "_")),
+            "HOST_CMAKE_TOOLCHAIN_FILE".to_string(),
+            "TARGET_CMAKE_TOOLCHAIN_FILE".to_string(),
+            "OHOS_NDK_HOME".to_string(),
+            "OHOS_SDK_NATIVE".to_string(),
+        ] {
+            guards.push(EnvGuard::remove(&name));
+        }
+        guards
+    }
+
+    #[test]
+    fn test_cmake_toolchain_precedence() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let target = "aarch64-unknown-linux-ohos";
+        for host in [target, "x86_64-unknown-linux-gnu"] {
+            let _env = ohos_test_env(target, "aarch64", host);
+            let kind = if host == target { "HOST" } else { "TARGET" };
+            let other_kind = if host == target { "TARGET" } else { "HOST" };
+            let _other = EnvGuard::new(&format!("{other_kind}_CMAKE_TOOLCHAIN_FILE"), "ignored");
+            let _ndk = EnvGuard::new("OHOS_NDK_HOME", "/ndk");
+            let _sdk = EnvGuard::new("OHOS_SDK_NATIVE", "/sdk");
+            let names = [
+                "AWS_LC_SYS_CMAKE_TOOLCHAIN_FILE_aarch64_unknown_linux_ohos".to_string(),
+                "AWS_LC_SYS_CMAKE_TOOLCHAIN_FILE".to_string(),
+                "CMAKE_TOOLCHAIN_FILE_aarch64-unknown-linux-ohos".to_string(),
+                "CMAKE_TOOLCHAIN_FILE_aarch64_unknown_linux_ohos".to_string(),
+                format!("{kind}_CMAKE_TOOLCHAIN_FILE"),
+                "CMAKE_TOOLCHAIN_FILE".to_string(),
+            ];
+            for index in 0..names.len() {
+                let _values: Vec<_> = names[index..]
+                    .iter()
+                    .map(|name| EnvGuard::new(name, name))
+                    .collect();
+                let expected = Some(names[index].clone());
+                assert_eq!(cmake_toolchain_file(), expected);
+                let mut config = cmake::Config::new(".");
+                assert_eq!(
+                    CmakeBuilder::configure_open_harmony(&mut config, cmake_toolchain_file()),
+                    expected,
+                    "explicit toolchains must precede both SDK variables"
+                );
+            }
+            assert_eq!(cmake_toolchain_file(), None);
+        }
+    }
+
+    #[test]
+    fn test_open_harmony_sdk_toolchain_precedence() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let target = "aarch64-unknown-linux-ohos";
+        for host in [target, "x86_64-unknown-linux-gnu"] {
+            let _env = ohos_test_env(target, "aarch64", host);
+            let _sdk = EnvGuard::new("OHOS_SDK_NATIVE", "/sdk native");
+            let mut config = cmake::Config::new(".");
+            {
+                let _ndk = EnvGuard::new("OHOS_NDK_HOME", "/ndk home");
+                assert_eq!(
+                    CmakeBuilder::configure_open_harmony(&mut config, None),
+                    Some("/ndk home/native/build/cmake/ohos.toolchain.cmake".to_string())
+                );
+            }
+            assert_eq!(
+                CmakeBuilder::configure_open_harmony(&mut config, None),
+                Some("/sdk native/build/cmake/ohos.toolchain.cmake".to_string())
+            );
+        }
+    }
+
+    #[test]
+    fn test_open_harmony_cmake_platform() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        // Exercise the actual CMake definitions, including the native path that
+        // cmake-rs normally leaves to host detection. No OHOS compiler is needed.
+        let native_host = {
+            let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".to_string());
+            let output = std::process::Command::new(rustc)
+                .arg("-vV")
+                .output()
+                .unwrap();
+            assert!(output.status.success());
+            String::from_utf8(output.stdout)
+                .unwrap()
+                .lines()
+                .find_map(|line| line.strip_prefix("host: ").map(str::to_string))
+                .unwrap()
+        };
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join("CMakeLists.txt"),
+            r#"cmake_minimum_required(VERSION 3.16)
+project(ohos_platform NONE)
+file(WRITE "${CMAKE_BINARY_DIR}/platform.txt"
+  "${CMAKE_SYSTEM_NAME};${CMAKE_SYSTEM_PROCESSOR};${UNIX}")
+install(FILES "${CMAKE_BINARY_DIR}/platform.txt" DESTINATION .)
+"#,
+        )
+        .unwrap();
+        let toolchain_path = temp.path().join("toolchain.cmake");
+        std::fs::write(
+            &toolchain_path,
+            "set(CMAKE_SYSTEM_NAME Generic)\nset(CMAKE_SYSTEM_PROCESSOR provided)\n",
+        )
+        .unwrap();
+        let cases = [
+            (
+                "aarch64-unknown-linux-ohos",
+                "aarch64",
+                false,
+                false,
+                "Linux;aarch64;1",
+            ),
+            (
+                "armv7-unknown-linux-ohos",
+                "arm",
+                false,
+                false,
+                "Linux;arm;1",
+            ),
+            (
+                "x86_64-unknown-linux-ohos",
+                "x86_64",
+                false,
+                false,
+                "Linux;x86_64;1",
+            ),
+            (
+                "aarch64-unknown-linux-ohos",
+                "aarch64",
+                true,
+                false,
+                "Generic;provided;",
+            ),
+            (
+                "aarch64-unknown-linux-ohos",
+                "aarch64",
+                false,
+                true,
+                "Generic;provided;",
+            ),
+        ];
+        for (index, (target, arch, cross, explicit_toolchain, expected)) in
+            cases.into_iter().enumerate()
+        {
+            let host = if cross {
+                "x86_64-unknown-linux-gnu"
+            } else {
+                target
+            };
+            let _env = ohos_test_env(target, arch, host);
+            let Some(cmake) = find_cmake_command() else {
+                eprintln!("Skipping CMake platform probe: CMake is unavailable");
+                return;
+            };
+            let _cmake = EnvGuard::new("CMAKE", cmake);
+            let mut config = cmake::Config::new(temp.path());
+            if !explicit_toolchain {
+                config.define("CMAKE_SYSTEM_NAME", "Generic");
+                config.define("CMAKE_SYSTEM_PROCESSOR", "provided");
+            }
+            let requested =
+                explicit_toolchain.then(|| toolchain_path.to_str().unwrap().to_string());
+            let resolved = CmakeBuilder::configure_open_harmony(&mut config, requested.clone());
+            assert_eq!(resolved, requested);
+            if let Some(toolchain) = resolved {
+                config.define("CMAKE_TOOLCHAIN_FILE", toolchain);
+            }
+
+            // Only test CMake platform selection, not an unavailable cross compiler.
+            let _native_env = [
+                EnvGuard::new("HOST", &native_host),
+                EnvGuard::new("TARGET", &native_host),
+                EnvGuard::remove("CARGO_CFG_TARGET_ARCH"),
+                EnvGuard::remove("CARGO_CFG_TARGET_OS"),
+                EnvGuard::remove("CARGO_CFG_TARGET_ENV"),
+                EnvGuard::remove("CARGO_CFG_TARGET_VENDOR"),
+                EnvGuard::remove(&format!("CMAKE_TOOLCHAIN_FILE_{native_host}")),
+                EnvGuard::remove(&format!(
+                    "CMAKE_TOOLCHAIN_FILE_{}",
+                    native_host.replace('-', "_")
+                )),
+            ];
+            let out = config
+                .host(&native_host)
+                .target(&native_host)
+                .out_dir(temp.path().join(format!("out-{index}")))
+                .profile("Release")
+                .no_default_flags(true)
+                .build();
+            assert_eq!(
+                std::fs::read_to_string(out.join("platform.txt")).unwrap(),
+                expected,
+                "target={target}, cross={cross}, explicit_toolchain={explicit_toolchain}"
+            );
+        }
+    }
 
     #[test]
     fn test_cmake_bool() {
