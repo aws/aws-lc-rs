@@ -9,7 +9,7 @@ use crate::{
     is_no_asm, is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target,
     sanitizer, set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch,
     target_env, target_is_msvc, target_os, test_clang_cl_command, test_nasm_command,
-    use_prebuilt_nasm, OutputLibType,
+    use_prebuilt_nasm, yocto_sdk_ld_library_path, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -149,6 +149,9 @@ impl CmakeBuilder {
         }
 
         let mut cmake_cfg = self.get_cmake_config();
+        if let Some(ld_library_path) = yocto_sdk_ld_library_path() {
+            cmake_cfg.env("LD_LIBRARY_PATH", ld_library_path);
+        }
         if let Some(generator) = optional_env_optional_crate_target("CMAKE_GENERATOR") {
             set_env("CMAKE_GENERATOR", generator);
         }

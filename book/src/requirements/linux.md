@@ -99,4 +99,19 @@ cargo install --force --locked bindgen-cli
 
 See our [troubleshooting section](../resources.md#build-environment-variables).
 
+### Yocto SDK
+
+The Yocto SDK's `cargo` wrapper sets `LD_LIBRARY_PATH` to the SDK's library directories, which can cause host
+executables (e.g., `/bin/sh`) to fail with glibc symbol lookup errors. When `OECORE_NATIVE_SYSROOT` is set, the
+build script removes those entries from `LD_LIBRARY_PATH` for CMake and the other tools it runs (including an
+external `bindgen`).
+
+Targets without pre-generated bindings (e.g., `x86_64-poky-linux-gnu`) require bindgen. If libclang is not part of
+the SDK, point bindgen at a host installation and the target sysroot, for example:
+
+```shell
+export LIBCLANG_PATH=/usr/lib64
+export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$OECORE_TARGET_SYSROOT -isystem /usr/lib64/clang/<version>/include"
+```
+
 [The bindgen User Guide]: https://rust-lang.github.io/rust-bindgen/
