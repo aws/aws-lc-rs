@@ -6,9 +6,11 @@
 use crate::digest;
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 use crate::rand::SystemRandom;
+use crate::rsa::KeySize;
 use crate::signature::{
     EcdsaCurve, EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
     EcdsaVerificationAlgorithm, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair,
+    RsaParameters, RsaPssSaltLength, RsaSignatureEncoding, RsaSignaturePadding,
     VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING,
     ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P256_SHA384_ASN1,
     ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_ASN1_SIGNING,
@@ -526,6 +528,87 @@ rsa_sign_verify!(
     FipsServiceStatus::Approved,
     FipsServiceStatus::Approved
 );
+
+// These tests check the AWS-LC service indicator for combinations without named constants.
+macro_rules! rsa_lookup_sign_verify {
+    ($($name:ident = ($padding:ident, $digest:ident);)+) => {
+        $(
+            rsa_sign_verify!(
+                $name,
+                &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
+                RsaSignatureEncoding::get(RsaSignaturePadding::$padding, &digest::$digest)
+                    .unwrap(),
+                RsaParameters::get(
+                    RsaSignaturePadding::$padding,
+                    &digest::$digest,
+                    KeySize::Rsa2048,
+                )
+                .unwrap(),
+                FipsServiceStatus::Approved,
+                FipsServiceStatus::Approved
+            );
+        )+
+    };
+}
+rsa_lookup_sign_verify! {
+    rsa_pkcs1_2048_sha224_lookup = (PKCS1, SHA224);
+    rsa_pkcs1_2048_sha512_256_lookup = (PKCS1, SHA512_256);
+    rsa_pkcs1_2048_sha3_256_lookup = (PKCS1, SHA3_256);
+    rsa_pkcs1_2048_sha3_384_lookup = (PKCS1, SHA3_384);
+    rsa_pkcs1_2048_sha3_512_lookup = (PKCS1, SHA3_512);
+    rsa_pss_2048_sha224_lookup = (PSS, SHA224);
+    rsa_pss_2048_sha512_256_lookup = (PSS, SHA512_256);
+    rsa_pss_2048_sha3_256_lookup = (PSS, SHA3_256);
+    rsa_pss_2048_sha3_384_lookup = (PSS, SHA3_384);
+    rsa_pss_2048_sha3_512_lookup = (PSS, SHA3_512);
+}
+
+/// A PSS salt length chosen at runtime is approved only when it equals the digest length.
+#[test]
+fn rsa_pss_runtime_salt_length() {
+    let rng = SystemRandom::new();
+    let private_key = RsaKeyPair::from_pkcs8(&TEST_RSA_2048_PRIVATE_PKCS8_DER[..]).unwrap();
+    let public_key = private_key.public_key();
+    let mut signature = vec![0u8; private_key.public_modulus_len()];
+
+    for (salt_len, is_approved) in [(20, false), (32, true), (33, false)] {
+        let salt_length = RsaPssSaltLength::Custom(salt_len);
+        let signing = RsaSignatureEncoding::get(RsaSignaturePadding::PSS, &digest::SHA3_256)
+            .unwrap()
+            .copy_with_pss_salt_length(salt_length);
+        let verifying = RsaParameters::get(
+            RsaSignaturePadding::PSS,
+            &digest::SHA3_256,
+            KeySize::Rsa2048,
+        )
+        .unwrap()
+        .copy_with_pss_salt_length(salt_length);
+
+        if is_approved {
+            assert_fips_status_indicator!(
+                private_key.sign(&signing, &rng, TEST_MESSAGE.as_bytes(), &mut signature),
+                FipsServiceStatus::Approved
+            )
+            .unwrap();
+            assert_fips_status_indicator!(
+                verifying.verify_sig(public_key.as_ref(), TEST_MESSAGE.as_bytes(), &signature),
+                FipsServiceStatus::Approved
+            )
+            .unwrap();
+        } else {
+            assert_fips_status_indicator!(
+                private_key.sign(&signing, &rng, TEST_MESSAGE.as_bytes(), &mut signature),
+                FipsServiceStatus::NonApproved
+            )
+            .unwrap();
+            assert_fips_status_indicator!(
+                verifying.verify_sig(public_key.as_ref(), TEST_MESSAGE.as_bytes(), &signature),
+                FipsServiceStatus::NonApproved
+            )
+            .unwrap();
+        }
+    }
+}
 
 macro_rules! rsa_verify {
     ($name:ident, $key:expr, $verify_alg:expr, $signature:expr, $verify_expect:path) => {

@@ -6,14 +6,15 @@ use std::fmt::{self, Debug, Formatter};
 use std::ops::RangeInclusive;
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_CTX_set_signature_md,
-    RSA_bits, EVP_PKEY, EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
+    EVP_PKEY_CTX_set_rsa_mgf1_md, EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen,
+    EVP_PKEY_CTX_set_signature_md, RSA_bits, EVP_PKEY, EVP_PKEY_CTX, RSA_PKCS1_PADDING,
+    RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 
 use crate::digest::{self, match_digest_type, Digest};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
-use crate::rsa::key::parse_rsa_public_key;
+use crate::rsa::key::{parse_rsa_public_key, KeySize};
 use crate::sealed::Sealed;
 use crate::signature::{ParsedPublicKey, ParsedVerificationAlgorithm, VerificationAlgorithm};
 
@@ -21,12 +22,26 @@ use super::encoding;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-#[allow(non_camel_case_types)]
+/// The largest modulus, in bits, accepted by [`RsaParameters::get`]. It matches the upper bound
+/// of the predefined verification algorithms.
+const MAX_MODULUS_BITS: u32 = 8192;
+
+/// An RSA signature padding scheme.
+///
+/// Used to select an algorithm with [`RsaSignatureEncoding::get`] or [`RsaParameters::get`].
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Eq, PartialEq)]
-pub enum RsaPadding {
-    RSA_PKCS1_PADDING,
-    RSA_PKCS1_PSS_PADDING,
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[non_exhaustive]
+pub enum RsaSignaturePadding {
+    /// RSASSA-PKCS1-v1_5, as described in [RFC 8017 Section 8.2].
+    ///
+    /// [RFC 8017 Section 8.2]: https://www.rfc-editor.org/rfc/rfc8017#section-8.2
+    PKCS1,
+    /// RSASSA-PSS, as described in [RFC 8017 Section 8.1]. The message digest is also used
+    /// as the MGF1 digest.
+    ///
+    /// [RFC 8017 Section 8.1]: https://www.rfc-editor.org/rfc/rfc8017#section-8.1
+    PSS,
 }
 
 /// An RSA-PSS padding salt length.
@@ -91,38 +106,131 @@ impl RsaPssSaltLength {
 
 /// Parameters for RSA verification.
 ///
+/// Prefer the recommended constants in [`crate::signature`] (e.g.
+/// `RSA_PKCS1_2048_8192_SHA256`). Use [`RsaParameters::get`] for a combination that has no
+/// constant.
+///
 /// Two values are equal when they denote the same verification algorithm, e.g.
 /// `RSA_PKCS1_2048_8192_SHA256`. Algorithms differing in digest algorithm,
 /// padding scheme, RSA PSS salt length, or modulus size range compare unequal.
 /// In short, it is equality of configuration, not equality of effective behavior.
+// Deliberately neither `Clone` nor `Copy`, although every field is `Copy`. Either impl would
+// change how existing callers compile: `.clone()` on a `&RsaParameters` would return a value
+// instead of the reference, and a closure that returns a captured value would borrow it instead
+// of moving it. `copy_with_pss_salt_length` covers deriving a value from a borrowed one. The
+// `rsa_algorithm_ownership_compatibility` test guards both cases.
 #[derive(Eq, PartialEq)]
 pub struct RsaParameters {
     digest_alg: &'static digest::Algorithm,
-    padding: &'static RsaPadding,
+    padding: RsaSignaturePadding,
     pss_salt_length: RsaPssSaltLength,
-    range: RangeInclusive<u32>,
-    verification_alg: &'static RsaVerificationAlgorithmId,
+    min_modulus_bits: u32,
+    max_modulus_bits: u32,
 }
 
 impl RsaParameters {
+    /// Returns verification parameters for the given padding scheme, digest, and minimum key
+    /// size.
+    ///
+    /// Prefer the recommended constants in [`crate::signature`]. This lookup supports
+    /// interoperability with peers or formats that require other combinations, such as an
+    /// X.509 structure whose signature algorithm is chosen by a third party.
+    ///
+    /// The returned parameters accept keys of `min_key_size` to 8192 bits. For
+    /// [`RsaSignaturePadding::PSS`], the salt length is the digest length. For another length,
+    /// call [`Self::copy_with_pss_salt_length`] on the result.
+    ///
+    /// The lookup can be used in a `const` or at runtime without allocating. It returns
+    /// `None` for unsupported digests, including SHA-1. To verify a legacy SHA-1 signature, or
+    /// one made with a 1024-bit key, explicitly select one of the predefined
+    /// `*_FOR_LEGACY_USE_ONLY` constants. Compare parameters with `==`, not by address.
+    ///
+    /// ```
+    /// use aws_lc_rs::digest::SHA3_256;
+    /// use aws_lc_rs::error::Unspecified;
+    /// use aws_lc_rs::rsa::KeySize;
+    /// use aws_lc_rs::signature::{RsaParameters, RsaSignaturePadding, UnparsedPublicKey};
+    ///
+    /// let algorithm = RsaParameters::get(RsaSignaturePadding::PSS, &SHA3_256, KeySize::Rsa3072)
+    ///     .ok_or(Unspecified)?;
+    /// # let public_key: &[u8] = &[];
+    /// let public_key = UnparsedPublicKey::new(algorithm, public_key);
+    /// # Ok::<(), aws_lc_rs::error::Unspecified>(())
+    /// ```
+    ///
+    /// # Security strength
+    /// The strength of an RSA signature is bounded by the weaker of the key and the digest.
+    /// `Some` means the library supports the combination. This lookup does not compare the
+    /// security strengths of the key size and digest, and it does not check the combination
+    /// against the policy of any protocol.
+    #[must_use]
     #[inline]
-    pub(crate) fn digest_algorithm(&self) -> &'static digest::Algorithm {
+    pub const fn get(
+        padding: RsaSignaturePadding,
+        digest: &digest::Algorithm,
+        min_key_size: KeySize,
+    ) -> Option<&'static Self> {
+        use RsaSignaturePadding::{PKCS1, PSS};
+
+        // Each match arm borrows a constant expression, so even runtime choices yield a
+        // 'static reference without allocating or reading a static in a const fn on Rust 1.71.
+        macro_rules! by_digest {
+            ($padding:ident, $min_bits:literal; $($hash:ident),+) => {
+                match digest.id {
+                    $(digest::AlgorithmID::$hash => Some(&Self {
+                        digest_alg: &digest::$hash,
+                        padding: RsaSignaturePadding::$padding,
+                        pss_salt_length: RsaPssSaltLength::Digest,
+                        min_modulus_bits: $min_bits,
+                        max_modulus_bits: MAX_MODULUS_BITS,
+                    }),)+
+                    digest::AlgorithmID::SHA1 => None,
+                    #[cfg(all(not(feature = "fips"), feature = "unstable"))]
+                    digest::AlgorithmID::KECCAK256 => None,
+                }
+            };
+            ($padding:ident, $min_bits:literal) => {
+                by_digest!($padding, $min_bits; SHA224, SHA256, SHA384, SHA512, SHA512_256,
+                    SHA3_256, SHA3_384, SHA3_512)
+            };
+        }
+
+        match (padding, min_key_size) {
+            (PKCS1, KeySize::Rsa2048) => by_digest!(PKCS1, 2048),
+            (PKCS1, KeySize::Rsa3072) => by_digest!(PKCS1, 3072),
+            (PKCS1, KeySize::Rsa4096) => by_digest!(PKCS1, 4096),
+            (PKCS1, KeySize::Rsa8192) => by_digest!(PKCS1, 8192),
+            (PSS, KeySize::Rsa2048) => by_digest!(PSS, 2048),
+            (PSS, KeySize::Rsa3072) => by_digest!(PSS, 3072),
+            (PSS, KeySize::Rsa4096) => by_digest!(PSS, 4096),
+            (PSS, KeySize::Rsa8192) => by_digest!(PSS, 8192),
+        }
+    }
+
+    /// The digest algorithm used to hash the message.
+    #[must_use]
+    #[inline]
+    pub const fn digest_algorithm(&self) -> &'static digest::Algorithm {
         self.digest_alg
     }
 
+    /// The padding scheme.
+    #[must_use]
     #[inline]
-    pub(crate) fn padding(&self) -> &'static RsaPadding {
+    pub const fn padding(&self) -> RsaSignaturePadding {
         self.padding
     }
 
+    /// The RSA-PSS salt length. This is ignored for [`RsaSignaturePadding::PKCS1`].
+    #[must_use]
     #[inline]
-    pub(crate) fn pss_salt_length(&self) -> RsaPssSaltLength {
+    pub const fn pss_salt_length(&self) -> RsaPssSaltLength {
         self.pss_salt_length
     }
 
     #[inline]
-    pub(crate) fn bit_size_range(&self) -> &RangeInclusive<u32> {
-        &self.range
+    pub(crate) fn bit_size_range(&self) -> RangeInclusive<u32> {
+        self.min_modulus_bits..=self.max_modulus_bits
     }
 }
 
@@ -141,7 +249,7 @@ impl ParsedVerificationAlgorithm for RsaParameters {
             evp_pkey,
             msg,
             signature,
-            self.bit_size_range(),
+            &self.bit_size_range(),
         )
     }
 
@@ -159,7 +267,7 @@ impl ParsedVerificationAlgorithm for RsaParameters {
             evp_pkey,
             digest,
             signature,
-            self.bit_size_range(),
+            &self.bit_size_range(),
         )
     }
 }
@@ -193,7 +301,7 @@ impl VerificationAlgorithm for RsaParameters {
             &evp_pkey,
             msg,
             signature,
-            self.bit_size_range(),
+            &self.bit_size_range(),
         )
     }
 
@@ -211,7 +319,7 @@ impl VerificationAlgorithm for RsaParameters {
             &evp_pkey,
             digest,
             signature,
-            self.bit_size_range(),
+            &self.bit_size_range(),
         )
     }
 }
@@ -220,7 +328,17 @@ impl Sealed for RsaParameters {}
 
 impl Debug for RsaParameters {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ {:?}", self.verification_alg)?;
+        // Reproduces the name of the predefined constant for every combination that has one,
+        // e.g. `RSA_PKCS1_2048_8192_SHA256`.
+        write!(
+            f,
+            "{{ RSA_{:?}_{}_{}_{:?}",
+            self.padding, self.min_modulus_bits, self.max_modulus_bits, self.digest_alg
+        )?;
+
+        if self.min_modulus_bits < 2048 || is_sha1(self.digest_alg) {
+            write!(f, "_FOR_LEGACY_USE_ONLY")?;
+        }
 
         if self.pss_salt_length != RsaPssSaltLength::Digest {
             write!(f, ", RSA-PSS salt length: {:?}", self.pss_salt_length)?;
@@ -234,40 +352,83 @@ impl Debug for RsaParameters {
 impl RsaParameters {
     pub(crate) const fn new(
         digest_alg: &'static digest::Algorithm,
-        padding: &'static RsaPadding,
+        padding: RsaSignaturePadding,
         range: RangeInclusive<u32>,
-        verification_alg: &'static RsaVerificationAlgorithmId,
     ) -> Self {
         Self {
             digest_alg,
             padding,
-            range,
-            verification_alg,
             pss_salt_length: RsaPssSaltLength::Digest,
+            min_modulus_bits: *range.start(),
+            max_modulus_bits: *range.end(),
         }
     }
 
     /// Sets the RSA-PSS salt length to the given value.
     ///
-    /// This is ignored for PKCS#1 v1.5 parameters.
-    ///
-    /// Due to the requirement of `'static` references to the current type in
-    /// verification APIs, it is not possible to directly give the result of
-    /// this method to them, nor simply re-borrow it. Instead either the
-    /// inline `&const { rsa_param.with_pss_salt_length(...) }` expression
-    /// syntax should be used, or the following if Rust below 1.79 is used:
-    ///
-    /// ```
-    /// use aws_lc_rs::signature::{self, RsaPssSaltLength};
-    ///
-    /// const VERIFY_ALG: signature::RsaParameters =
-    ///     signature::RSA_PSS_2048_8192_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
-    /// // Now use `VERIFY_ALG` instead of `RSA_PSS_2048_8192_SHA256`.
-    /// ```
+    /// This is ignored for PKCS#1 v1.5 parameters. For a borrowed value from [`Self::get`],
+    /// use [`Self::copy_with_pss_salt_length`].
     #[must_use]
     pub const fn with_pss_salt_length(mut self, saltlen: RsaPssSaltLength) -> Self {
         self.pss_salt_length = saltlen;
         self
+    }
+
+    /// Returns new parameters with the given PSS salt length, leaving `self` unchanged.
+    /// The salt length is ignored for PKCS#1 v1.5.
+    ///
+    /// This does the same as [`Self::with_pss_salt_length`], but borrows `self` instead of
+    /// consuming it. `RsaParameters` is not `Clone`, so this is how to derive parameters from
+    /// a borrowed value, such as the `&'static` reference returned by [`Self::get`].
+    ///
+    /// [`UnparsedPublicKey`] and [`ParsedPublicKey`] take a `'static` reference to the
+    /// verification algorithm. If the salt length is known at compile time, define a constant
+    /// and pass it by reference:
+    ///
+    /// ```
+    /// use aws_lc_rs::digest::SHA3_256;
+    /// use aws_lc_rs::rsa::KeySize;
+    /// use aws_lc_rs::signature::{RsaParameters, RsaPssSaltLength, RsaSignaturePadding};
+    ///
+    /// const VERIFY_ALG: RsaParameters =
+    ///     match RsaParameters::get(RsaSignaturePadding::PSS, &SHA3_256, KeySize::Rsa2048) {
+    ///         Some(params) => params.copy_with_pss_salt_length(RsaPssSaltLength::Custom(20)),
+    ///         None => panic!("unsupported RSA parameters"),
+    ///     };
+    /// ```
+    ///
+    /// If the salt length is only known at runtime, use [`VerificationAlgorithm::verify_sig`]
+    /// on the parameters directly:
+    ///
+    /// ```
+    /// use aws_lc_rs::digest;
+    /// use aws_lc_rs::error::Unspecified;
+    /// use aws_lc_rs::rsa::KeySize;
+    /// use aws_lc_rs::signature::{
+    ///     RsaParameters, RsaPssSaltLength, RsaSignaturePadding, VerificationAlgorithm,
+    /// };
+    ///
+    /// # fn verify(
+    /// #     digest_alg: &digest::Algorithm,
+    /// #     salt_len: u16,
+    /// #     public_key: &[u8],
+    /// #     msg: &[u8],
+    /// #     sig: &[u8],
+    /// # ) -> Result<(), Unspecified> {
+    /// let algorithm = RsaParameters::get(RsaSignaturePadding::PSS, digest_alg, KeySize::Rsa2048)
+    ///     .ok_or(Unspecified)?
+    ///     .copy_with_pss_salt_length(RsaPssSaltLength::Custom(salt_len));
+    /// algorithm.verify_sig(public_key, msg, sig)
+    /// # }
+    /// ```
+    ///
+    /// [`UnparsedPublicKey`]: crate::signature::UnparsedPublicKey
+    #[must_use]
+    pub const fn copy_with_pss_salt_length(&self, saltlen: RsaPssSaltLength) -> Self {
+        Self {
+            pss_salt_length: saltlen,
+            ..*self
+        }
     }
 
     /// Parses a DER-encoded `RSAPublicKey` structure (RFC 8017) to determine its size in bits.
@@ -281,103 +442,213 @@ impl RsaParameters {
 
     #[must_use]
     /// Minimum modulus length in bits.
-    pub fn min_modulus_len(&self) -> u32 {
-        *self.range.start()
+    pub const fn min_modulus_len(&self) -> u32 {
+        self.min_modulus_bits
     }
 
     #[must_use]
     /// Maximum modulus length in bits.
-    pub fn max_modulus_len(&self) -> u32 {
-        *self.range.end()
+    pub const fn max_modulus_len(&self) -> u32 {
+        self.max_modulus_bits
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-#[allow(non_camel_case_types)]
-pub(crate) enum RsaVerificationAlgorithmId {
-    RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
-    RSA_PKCS1_2048_8192_SHA256,
-    RSA_PKCS1_2048_8192_SHA384,
-    RSA_PKCS1_2048_8192_SHA512,
-    RSA_PKCS1_3072_8192_SHA384,
-    RSA_PSS_2048_8192_SHA256,
-    RSA_PSS_2048_8192_SHA384,
-    RSA_PSS_2048_8192_SHA512,
+#[inline]
+fn is_sha1(algorithm: &digest::Algorithm) -> bool {
+    matches!(algorithm.id, digest::AlgorithmID::SHA1)
 }
 
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-pub(crate) enum RsaSigningAlgorithmId {
-    RSA_PSS_SHA256,
-    RSA_PSS_SHA384,
-    RSA_PSS_SHA512,
-    RSA_PKCS1_SHA256,
-    RSA_PKCS1_SHA384,
-    RSA_PKCS1_SHA512,
-}
-
-#[allow(clippy::module_name_repetitions)]
 /// Encoding type for an RSA signature
+///
+/// Prefer the recommended constants in [`crate::signature`] (e.g. `RSA_PSS_SHA256`). Use
+/// [`RsaSignatureEncoding::get`] for a combination that has no constant.
+///
+/// Two values are equal when they have the same digest algorithm, padding scheme, and RSA
+/// PSS salt length.
+// Deliberately neither `Clone` nor `Copy`; see the note on `RsaParameters`.
+#[allow(clippy::module_name_repetitions)]
+#[derive(Eq, PartialEq)]
 pub struct RsaSignatureEncoding {
     digest_alg: &'static digest::Algorithm,
-    padding: &'static RsaPadding,
+    padding: RsaSignaturePadding,
     pss_salt_length: RsaPssSaltLength,
-    sig_alg: &'static RsaSigningAlgorithmId,
 }
 
 impl RsaSignatureEncoding {
     pub(crate) const fn new(
         digest_alg: &'static digest::Algorithm,
-        padding: &'static RsaPadding,
-        sig_alg: &'static RsaSigningAlgorithmId,
+        padding: RsaSignaturePadding,
     ) -> Self {
         Self {
             digest_alg,
             padding,
-            sig_alg,
             pss_salt_length: RsaPssSaltLength::Digest,
         }
     }
 
+    /// Returns a signature encoding for the given padding scheme and digest.
+    ///
+    /// Prefer the recommended constants in [`crate::signature`]. This lookup supports
+    /// interoperability with peers or formats that require other combinations, such as a
+    /// PKCS#10 request whose signature algorithm is chosen by a third party.
+    ///
+    /// For [`RsaSignaturePadding::PSS`], the salt length is the digest length. For another
+    /// length, call [`Self::copy_with_pss_salt_length`] on the result.
+    ///
+    /// The lookup can be used in a `const` or at runtime without allocating. It returns
+    /// `None` for unsupported digests, including SHA-1. Compare encodings with `==`, not by
+    /// address.
+    ///
+    /// ```
+    /// use aws_lc_rs::digest::SHA3_256;
+    /// use aws_lc_rs::rand::SystemRandom;
+    /// use aws_lc_rs::rsa::KeySize;
+    /// use aws_lc_rs::signature::{
+    ///     KeyPair, RsaKeyPair, RsaParameters, RsaSignatureEncoding, RsaSignaturePadding,
+    ///     UnparsedPublicKey,
+    /// };
+    ///
+    /// const SIGNING: &RsaSignatureEncoding =
+    ///     match RsaSignatureEncoding::get(RsaSignaturePadding::PSS, &SHA3_256) {
+    ///         Some(encoding) => encoding,
+    ///         None => panic!("unsupported RSA parameters"),
+    ///     };
+    /// const VERIFYING: &RsaParameters =
+    ///     match RsaParameters::get(RsaSignaturePadding::PSS, &SHA3_256, KeySize::Rsa2048) {
+    ///         Some(parameters) => parameters,
+    ///         None => panic!("unsupported RSA parameters"),
+    ///     };
+    ///
+    /// let key_pair = RsaKeyPair::generate(KeySize::Rsa2048)?;
+    /// let mut signature = vec![0; key_pair.public_modulus_len()];
+    /// key_pair.sign(SIGNING, &SystemRandom::new(), b"message", &mut signature)?;
+    ///
+    /// let public_key = UnparsedPublicKey::new(VERIFYING, key_pair.public_key().as_ref());
+    /// public_key.verify(b"message", &signature)?;
+    /// # Ok::<(), aws_lc_rs::error::Unspecified>(())
+    /// ```
+    ///
+    /// # Security strength
+    /// The strength of an RSA signature is bounded by the weaker of the key and the digest.
+    /// `Some` means the library supports the combination. This lookup does not compare the
+    /// security strengths of the key size and digest, and it does not check the combination
+    /// against the policy of any protocol.
+    #[must_use]
     #[inline]
-    pub(super) fn digest_algorithm(&self) -> &'static digest::Algorithm {
+    pub const fn get(
+        padding: RsaSignaturePadding,
+        digest: &digest::Algorithm,
+    ) -> Option<&'static Self> {
+        // Each match arm borrows a constant expression, so even runtime choices yield a
+        // 'static reference without allocating or reading a static in a const fn on Rust 1.71.
+        macro_rules! by_digest {
+            ($padding:ident; $($hash:ident),+) => {
+                match digest.id {
+                    $(digest::AlgorithmID::$hash => Some(&Self {
+                        digest_alg: &digest::$hash,
+                        padding: RsaSignaturePadding::$padding,
+                        pss_salt_length: RsaPssSaltLength::Digest,
+                    }),)+
+                    digest::AlgorithmID::SHA1 => None,
+                    #[cfg(all(not(feature = "fips"), feature = "unstable"))]
+                    digest::AlgorithmID::KECCAK256 => None,
+                }
+            };
+            ($padding:ident) => {
+                by_digest!($padding; SHA224, SHA256, SHA384, SHA512, SHA512_256,
+                    SHA3_256, SHA3_384, SHA3_512)
+            };
+        }
+
+        match padding {
+            RsaSignaturePadding::PKCS1 => by_digest!(PKCS1),
+            RsaSignaturePadding::PSS => by_digest!(PSS),
+        }
+    }
+
+    /// The digest algorithm used to hash the message.
+    #[must_use]
+    #[inline]
+    pub const fn digest_algorithm(&self) -> &'static digest::Algorithm {
         self.digest_alg
     }
 
+    /// The padding scheme.
+    #[must_use]
     #[inline]
-    pub(super) fn padding(&self) -> &'static RsaPadding {
+    pub const fn padding(&self) -> RsaSignaturePadding {
         self.padding
     }
 
+    /// The RSA-PSS salt length. This is ignored for [`RsaSignaturePadding::PKCS1`].
+    #[must_use]
     #[inline]
-    pub(super) fn pss_salt_length(&self) -> RsaPssSaltLength {
+    pub const fn pss_salt_length(&self) -> RsaPssSaltLength {
         self.pss_salt_length
     }
 
     /// Sets the PSS salt length to the given value.
     ///
-    /// This is ignored for PKCS#1 v1.5 parameters.
+    /// This is ignored for PKCS#1 v1.5 parameters. For a borrowed value from [`Self::get`],
+    /// use [`Self::copy_with_pss_salt_length`].
     ///
-    /// Due to the requirement of `'static` references to the current type in
-    /// signature APIs, it is not possible to directly give the result of this
-    /// method to them, nor simply re-borrow it. Instead either the inline
-    /// `&const { rsa_param.with_pss_salt_length(...) }` expression syntax
-    /// should be used, or the following if Rust below 1.79 is used:
+    /// The result can be passed directly to [`RsaKeyPair::sign`], including when the salt
+    /// length is only known at runtime:
     ///
     /// ```
-    /// use aws_lc_rs::signature::{self, RsaPssSaltLength};
+    /// use aws_lc_rs::rand::SystemRandom;
+    /// use aws_lc_rs::signature::{self, RsaKeyPair, RsaPssSaltLength};
     ///
-    /// const SIGNING_ALG: signature::RsaSignatureEncoding =
-    ///     signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(123));
-    /// // Now use `SIGNING_ALG` instead of `RSA_PSS_SHA256`.
+    /// # fn sign(key_pair: &RsaKeyPair, salt_len: u16, msg: &[u8], sig: &mut [u8])
+    /// # -> Result<(), aws_lc_rs::error::Unspecified> {
+    /// let encoding =
+    ///     signature::RSA_PSS_SHA256.with_pss_salt_length(RsaPssSaltLength::Custom(salt_len));
+    /// key_pair.sign(&encoding, &SystemRandom::new(), msg, sig)
+    /// # }
     /// ```
+    ///
+    /// [`RsaKeyPair::sign`]: crate::signature::RsaKeyPair::sign
     #[must_use]
     pub const fn with_pss_salt_length(mut self, saltlen: RsaPssSaltLength) -> Self {
         self.pss_salt_length = saltlen;
         self
+    }
+
+    /// Returns a new encoding with the given PSS salt length, leaving `self` unchanged.
+    /// The salt length is ignored for PKCS#1 v1.5.
+    ///
+    /// This does the same as [`Self::with_pss_salt_length`], but borrows `self` instead of
+    /// consuming it. `RsaSignatureEncoding` is not `Clone`, so this is how to derive an
+    /// encoding from a borrowed value, such as the `&'static` reference returned by
+    /// [`Self::get`]:
+    ///
+    /// ```
+    /// use aws_lc_rs::digest;
+    /// use aws_lc_rs::error::Unspecified;
+    /// use aws_lc_rs::rand::SystemRandom;
+    /// use aws_lc_rs::signature::{
+    ///     RsaKeyPair, RsaPssSaltLength, RsaSignatureEncoding, RsaSignaturePadding,
+    /// };
+    ///
+    /// # fn sign(
+    /// #     key_pair: &RsaKeyPair,
+    /// #     digest_alg: &digest::Algorithm,
+    /// #     salt_len: u16,
+    /// #     msg: &[u8],
+    /// #     sig: &mut [u8],
+    /// # ) -> Result<(), Unspecified> {
+    /// let encoding = RsaSignatureEncoding::get(RsaSignaturePadding::PSS, digest_alg)
+    ///     .ok_or(Unspecified)?
+    ///     .copy_with_pss_salt_length(RsaPssSaltLength::Custom(salt_len));
+    /// key_pair.sign(&encoding, &SystemRandom::new(), msg, sig)
+    /// # }
+    /// ```
+    #[must_use]
+    pub const fn copy_with_pss_salt_length(&self, saltlen: RsaPssSaltLength) -> Self {
+        Self {
+            pss_salt_length: saltlen,
+            ..*self
+        }
     }
 }
 
@@ -389,18 +660,20 @@ impl Sealed for RsaSignatureEncoding {}
 #[allow(clippy::module_name_repetitions)]
 pub trait RsaEncoding: 'static + Sync + Sealed + Debug {
     /// The signature encoding.
-    fn encoding(&'static self) -> &'static RsaSignatureEncoding;
+    fn encoding(&self) -> &RsaSignatureEncoding;
 }
 
 impl RsaEncoding for RsaSignatureEncoding {
-    fn encoding(&'static self) -> &'static RsaSignatureEncoding {
+    fn encoding(&self) -> &RsaSignatureEncoding {
         self
     }
 }
 
 impl Debug for RsaSignatureEncoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "{{ {:?}", self.sig_alg)?;
+        // Reproduces the name of the predefined constant for every combination that has one,
+        // e.g. `RSA_PSS_SHA256`.
+        write!(f, "{{ RSA_{:?}_{:?}", self.padding, self.digest_alg)?;
 
         if self.pss_salt_length != RsaPssSaltLength::Digest {
             write!(f, ", RSA-PSS salt length: {:?}", self.pss_salt_length)?;
@@ -412,29 +685,39 @@ impl Debug for RsaSignatureEncoding {
 }
 
 #[inline]
-pub(crate) fn configure_rsa_pkcs1_pss_padding(
+pub(super) fn configure_signature_padding(
     pctx: *mut EVP_PKEY_CTX,
+    padding: RsaSignaturePadding,
     saltlen: RsaPssSaltLength,
     algorithm: &'static digest::Algorithm,
     pkey: &LcPtr<EVP_PKEY>,
 ) -> Result<(), ()> {
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
+    // An RSA-PSS key can supply its own defaults. The selected algorithm must agree
+    // with the key's restrictions, not silently inherit its padding or MGF1 digest.
+    let mode = match padding {
+        RsaSignaturePadding::PKCS1 => RSA_PKCS1_PADDING,
+        RsaSignaturePadding::PSS => RSA_PKCS1_PSS_PADDING,
+    };
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, mode) } {
         return Err(());
     }
-
-    let saltlen = saltlen.into_value(algorithm, pkey)?;
-
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, saltlen) } {
-        return Err(());
+    if padding == RsaSignaturePadding::PSS {
+        let md = match_digest_type(&algorithm.id);
+        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_mgf1_md(pctx, md.as_const_ptr()) } {
+            return Err(());
+        }
+        let saltlen = saltlen.into_value(algorithm, pkey)?;
+        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, saltlen) } {
+            return Err(());
+        }
     }
-
     Ok(())
 }
 
 #[inline]
 pub(crate) fn verify_rsa_signature(
     algorithm: &'static digest::Algorithm,
-    padding: &'static RsaPadding,
+    padding: RsaSignaturePadding,
     pss_salt_length: RsaPssSaltLength,
     public_key: &LcPtr<EVP_PKEY>,
     msg: &[u8],
@@ -445,21 +728,15 @@ pub(crate) fn verify_rsa_signature(
         return Err(Unspecified);
     }
 
-    let padding_fn = if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
-        Some(|pctx: *mut EVP_PKEY_CTX| {
-            configure_rsa_pkcs1_pss_padding(pctx, pss_salt_length, algorithm, public_key)
-        })
-    } else {
-        None
-    };
-
-    public_key.verify(msg, Some(algorithm), padding_fn, signature)
+    let padding_fn =
+        |pctx| configure_signature_padding(pctx, padding, pss_salt_length, algorithm, public_key);
+    public_key.verify(msg, Some(algorithm), Some(padding_fn), signature)
 }
 
 #[inline]
 pub(crate) fn verify_rsa_digest_signature(
     algorithm: &'static digest::Algorithm,
-    padding: &'static RsaPadding,
+    padding: RsaSignaturePadding,
     pss_salt_length: RsaPssSaltLength,
     public_key: &LcPtr<EVP_PKEY>,
     digest: &Digest,
@@ -481,11 +758,7 @@ pub(crate) fn verify_rsa_digest_signature(
             if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
                 return Err(());
             }
-            if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
-                configure_rsa_pkcs1_pss_padding(pctx, pss_salt_length, algorithm, public_key)
-            } else {
-                Ok(())
-            }
+            configure_signature_padding(pctx, padding, pss_salt_length, algorithm, public_key)
         }
     });
 
