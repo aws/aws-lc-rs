@@ -612,4 +612,37 @@ mod tests {
 
         assert!(x25519_key.agree(&mut ed25519_key).is_err());
     }
+
+    // `build.rs` sets `aws_lc_has` from the bindings the sys crate compiles. Every AWS-LC release
+    // since 5.0.0 declares `EVP_PKEY_get_private_seed` (the FIPS 4.x line does not), so if the
+    // `cfg` is unset with such a release, the detection is broken rather than the function missing.
+    #[cfg(not(aws_lc_has = "EVP_PKEY_get_private_seed"))]
+    #[test]
+    fn undetected_evp_pkey_get_private_seed_means_pre_5_aws_lc() {
+        let version = crate::awslc_version();
+        let major: u32 = version
+            .split('.')
+            .next()
+            .and_then(|major| major.parse().ok())
+            .expect("numeric AWS-LC major version");
+        assert!(
+            major < 5,
+            "AWS-LC {version} declares EVP_PKEY_get_private_seed, but build.rs did not detect it"
+        );
+    }
+
+    // Calls the function wherever it is detected, so the gated path is compiled, linked and run.
+    #[cfg(aws_lc_has = "EVP_PKEY_get_private_seed")]
+    #[test]
+    fn detected_evp_pkey_get_private_seed_is_callable() {
+        use crate::aws_lc::EVP_PKEY_get_private_seed;
+        use crate::pqdsa::key_pair::evp_key_pqdsa_generate;
+
+        let key = evp_key_pqdsa_generate(NID_MLDSA44).expect("ML-DSA-44 keygen");
+        let mut seed_len = 0;
+        assert_eq!(1, unsafe {
+            EVP_PKEY_get_private_seed(key.as_const_ptr(), null_mut(), &mut seed_len)
+        });
+        assert_eq!(seed_len, 32);
+    }
 }

@@ -12,9 +12,9 @@
 
 use crate::fips_probe::verify_fips_install;
 use crate::{
-    copy_writable, crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_fips_crate,
+    copy_writable, crate_env_var_name, emit_warning, is_fips_build, is_fips_crate,
     is_static_library, is_unstable, link_fips_runtime_check, out_dir, target_env, target_os,
-    Builder, OutputLibType,
+    use_out_dir_bindings, Builder, OutputLibType,
 };
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -365,7 +365,7 @@ impl SystemLib {
             "Using pre-generated bindings from: {}",
             bindings.display()
         ));
-        emit_rustc_cfg("use_bindgen_pregenerated");
+        use_out_dir_bindings();
 
         emit_warning(format!(
             "Using system-installed AWS-LC from: {}",
