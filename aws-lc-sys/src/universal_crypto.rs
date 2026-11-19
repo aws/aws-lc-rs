@@ -3353,6 +3353,12 @@ pub const RSA_R_BLOCK_TYPE_IS_NOT_02: i32 = 148;
 pub const RSA_R_MISMATCHED_SIGNATURE: i32 = 248;
 pub const RSA_F_RSA_OSSL_PRIVATE_ENCRYPT: i32 = 0;
 pub const RAND_PRED_RESISTANCE_LEN: i32 = 32;
+pub const EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV: i32 = 65;
+pub const EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI: i32 = 66;
+pub const EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_CLI_TO_SRV: i32 = 67;
+pub const EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_SRV_TO_CLI: i32 = 68;
+pub const EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV: i32 = 69;
+pub const EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI: i32 = 70;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct static_assertion_at_line_224_error_is_pointer_size_must_be_8_bytes_for_64_bit {
@@ -14613,6 +14619,21 @@ impl Default for RIPEMD160state_st {
             s.assume_init()
         }
     }
+}
+extern "C" {
+    #[link_name = "aws_lc_0_47_0_SSHKDF"]
+    pub fn SSHKDF(
+        evp_md: *const EVP_MD,
+        key: *const u8,
+        key_len: usize,
+        xcghash: *const u8,
+        xcghash_len: usize,
+        session_id: *const u8,
+        session_id_len: usize,
+        type_: ::std::os::raw::c_char,
+        out: *mut u8,
+        out_len: usize,
+    ) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -4412,6 +4412,12 @@ pub const RAND_PRED_RESISTANCE_LEN: i32 = 32;
 pub const RIPEMD160_CBLOCK: i32 = 64;
 pub const RIPEMD160_LBLOCK: i32 = 16;
 pub const RIPEMD160_DIGEST_LENGTH: i32 = 20;
+pub const EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV: i32 = 65;
+pub const EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI: i32 = 66;
+pub const EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_CLI_TO_SRV: i32 = 67;
+pub const EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_SRV_TO_CLI: i32 = 68;
+pub const EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV: i32 = 69;
+pub const EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI: i32 = 70;
 pub const TRUST_TOKEN_MAX_PRIVATE_KEY_SIZE: i32 = 512;
 pub const TRUST_TOKEN_MAX_PUBLIC_KEY_SIZE: i32 = 512;
 pub const TRUST_TOKEN_R_KEYGEN_FAILURE: i32 = 100;
@@ -27563,6 +27569,21 @@ extern "C" {
 extern "C" {
     #[link_name = "aws_lc_0_47_0_SIPHASH_24"]
     pub fn SIPHASH_24(key: *const u64, input: *const u8, input_len: usize) -> u64;
+}
+extern "C" {
+    #[link_name = "aws_lc_0_47_0_SSHKDF"]
+    pub fn SSHKDF(
+        evp_md: *const EVP_MD,
+        key: *const u8,
+        key_len: usize,
+        xcghash: *const u8,
+        xcghash_len: usize,
+        session_id: *const u8,
+        session_id_len: usize,
+        type_: ::std::os::raw::c_char,
+        out: *mut u8,
+        out_len: usize,
+    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "aws_lc_0_47_0_TRUST_TOKEN_experiment_v1"]

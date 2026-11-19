@@ -4,9 +4,11 @@
 use std::error::Error;
 
 use aws_lc_rs::kdf::{
-    get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
-    kbkdf_ctr_hmac, sskdf_digest, sskdf_hmac, KbkdfCtrHmacAlgorithm, KbkdfCtrHmacAlgorithmId,
-    SskdfDigestAlgorithm, SskdfDigestAlgorithmId, SskdfHmacAlgorithm, SskdfHmacAlgorithmId,
+    get_kbkdf_ctr_hmac_algorithm, get_sshkdf_algorithm, get_sskdf_digest_algorithm,
+    get_sskdf_hmac_algorithm, kbkdf_ctr_hmac, sshkdf, sskdf_digest, sskdf_hmac,
+    KbkdfCtrHmacAlgorithm, KbkdfCtrHmacAlgorithmId, SshkdfAlgorithm, SshkdfAlgorithmId,
+    SshkdfKeyType, SskdfDigestAlgorithm, SskdfDigestAlgorithmId, SskdfHmacAlgorithm,
+    SskdfHmacAlgorithmId,
 };
 use aws_lc_rs::{test, test_file};
 
@@ -156,6 +158,70 @@ fn hkdf_ctr_hmac() {
         let mut output = vec![0u8; expect.len()];
         kbkdf_ctr_hmac(hash.into(), &secret, &info, output.as_mut_slice()).unwrap();
         assert_eq!(expect, output.as_slice());
+
+        Ok(())
+    });
+}
+
+fn sshkdf_algorithm(hash: &str) -> &'static SshkdfAlgorithm {
+    get_sshkdf_algorithm(match hash {
+        "SHA-1" => SshkdfAlgorithmId::Sha1,
+        "SHA-224" => SshkdfAlgorithmId::Sha224,
+        "SHA-256" => SshkdfAlgorithmId::Sha256,
+        "SHA-384" => SshkdfAlgorithmId::Sha384,
+        "SHA-512" => SshkdfAlgorithmId::Sha512,
+        _ => panic!("unsupported hash: {hash:?}"),
+    })
+    .expect("hash supported")
+}
+
+#[test]
+fn sshkdf_cavp() {
+    test::run(test_file!("data/sshkdf.txt"), |_section, tc| {
+        let algorithm = sshkdf_algorithm(&tc.consume_string("HASH"));
+        let shared_secret = tc.consume_bytes("K");
+        let exchange_hash = tc.consume_bytes("H");
+        let session_id = tc.consume_bytes("SESSION_ID");
+
+        for (key_type, name) in [
+            (
+                SshkdfKeyType::InitialIvClientToServer,
+                "INITIAL_IV_CLIENT_TO_SERVER",
+            ),
+            (
+                SshkdfKeyType::InitialIvServerToClient,
+                "INITIAL_IV_SERVER_TO_CLIENT",
+            ),
+            (
+                SshkdfKeyType::EncryptionKeyClientToServer,
+                "ENCRYPTION_KEY_CLIENT_TO_SERVER",
+            ),
+            (
+                SshkdfKeyType::EncryptionKeyServerToClient,
+                "ENCRYPTION_KEY_SERVER_TO_CLIENT",
+            ),
+            (
+                SshkdfKeyType::IntegrityKeyClientToServer,
+                "INTEGRITY_KEY_CLIENT_TO_SERVER",
+            ),
+            (
+                SshkdfKeyType::IntegrityKeyServerToClient,
+                "INTEGRITY_KEY_SERVER_TO_CLIENT",
+            ),
+        ] {
+            let expect = tc.consume_bytes(name);
+            let mut output = vec![0u8; expect.len()];
+            sshkdf(
+                algorithm,
+                &shared_secret,
+                &exchange_hash,
+                &session_id,
+                key_type,
+                output.as_mut_slice(),
+            )
+            .unwrap();
+            assert_eq!(expect, output, "{name} with {algorithm:?}");
+        }
 
         Ok(())
     });
