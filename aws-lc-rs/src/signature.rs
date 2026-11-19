@@ -31,6 +31,15 @@
 //! An [`EcdsaKeyPair`] is bound to one algorithm; to sign with the same key
 //! under another algorithm for its curve, use [`EcdsaKeyPair::with_algorithm`].
 //!
+//! Likewise, prefer the recommended RSA constants. For other combinations, use
+//! [`RsaSignatureEncoding::get`], which takes a padding scheme and digest, or
+//! [`RsaParameters::get`], which also takes the minimum key size to accept.
+//! These are `const fn` lookups with the same properties as the ECDSA ones.
+//! Legacy SHA-1 and 1024-bit verification are available only via existing
+//! named constants such as [`RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY`],
+//! not through either lookup. An [`RsaKeyPair`] is not bound to an algorithm:
+//! pass the encoding to each [`RsaKeyPair::sign`] call.
+//!
 //! For most use cases, prefer passing the full message to the signing and
 //! verification APIs, which hash it as part of the operation. Signing and
 //! verifying a separately-computed digest is also supported for ECDSA and RSA:
@@ -107,16 +116,17 @@
 //! name of the algorithm. The public exponent must be an odd integer of 2-33
 //! bits, inclusive.
 //!
-//! During verification, signatures will only be accepted if the MGF1 digest
-//! algorithm is the same as the message digest algorithm and if the salt
-//! length is the same length as the message digest. This matches the
-//! requirements in TLS 1.3 and other recent specifications.
+//! Signing and verification use the message digest algorithm for MGF1. The salt length
+//! defaults to the digest length, as required by TLS 1.3. For a different salt length,
+//! use [`RsaSignatureEncoding::copy_with_pss_salt_length`] when signing and the matching
+//! [`RsaParameters::copy_with_pss_salt_length`] when verifying. AWS-LC generates the salt
+//! separately for each signature.
 //!
-//! During signing, the message digest algorithm will be used as the MGF1
-//! digest algorithm. The salt will be the same length as the message digest.
-//! This matches the requirements in TLS 1.3 and other recent specifications.
-//! Additionally, the entire salt is randomly generated separately for each
-//! signature using the secure random number generator passed to `sign()`.
+//! A public key given as a `SubjectPublicKeyInfo` whose algorithm is `id-RSASSA-PSS`
+//! ([RFC 4055 Section 3.3]) can only verify RSA PSS signatures. RSA PKCS#1 1.5 verification
+//! rejects it. If the key carries `RSASSA-PSS-params`, verification also fails unless the
+//! key's hash algorithm and MGF1 hash algorithm are both the digest of the selected
+//! algorithm, and the algorithm's salt length is at least the key's `saltLength`.
 //!
 //!
 //! ## `ML_DSA_*` Details: ML-DSA (FIPS 204) Signatures
@@ -146,6 +156,8 @@
 //!     https://tools.ietf.org/html/rfc3447#section-8.1
 //! [RFC 3447 Appendix-A.1.1]:
 //!     https://tools.ietf.org/html/rfc3447#appendix-A.1.1
+//! [RFC 4055 Section 3.3]:
+//!     https://www.rfc-editor.org/rfc/rfc4055#section-3.3
 //! [FIPS 204]:
 //!     https://csrc.nist.gov/pubs/fips/204/final
 //!
@@ -328,7 +340,9 @@
 //! }
 //! ```
 use crate::aws_lc::EVP_PKEY;
-pub use crate::rsa::signature::{RsaEncoding, RsaPssSaltLength, RsaSignatureEncoding};
+pub use crate::rsa::signature::{
+    RsaEncoding, RsaPssSaltLength, RsaSignatureEncoding, RsaSignaturePadding,
+};
 pub use crate::rsa::{
     KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
     PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
@@ -337,9 +351,6 @@ use core::fmt::{Debug, Formatter};
 use std::any::{Any, TypeId};
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
-
-use crate::rsa::signature::RsaSigningAlgorithmId;
-use crate::rsa::RsaVerificationAlgorithmId;
 
 pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 pub use crate::ec::signature::{
@@ -363,7 +374,7 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::pqdsa::{parse_pqdsa_public_key, AlgorithmID as PqdsaAlgorithmID};
 use crate::ptr::LcPtr;
 use crate::rsa::key::parse_rsa_public_key;
-use crate::{digest, ec, error, hex, rsa, sealed};
+use crate::{digest, ec, error, hex, sealed};
 
 /// The longest signature is for ML-DSA-87
 pub(crate) const MAX_LEN: usize = 4627;
@@ -793,132 +804,76 @@ pub(crate) fn parse_public_key(
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
 pub const RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+    RsaSignaturePadding::PKCS1,
     1024..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub const RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-    &digest::SHA256,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    1024..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
-);
+pub const RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters =
+    RsaParameters::new(&digest::SHA256, RsaSignaturePadding::PKCS1, 1024..=8192);
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub const RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-    &digest::SHA512,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    1024..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
-);
+pub const RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters =
+    RsaParameters::new(&digest::SHA512, RsaSignaturePadding::PKCS1, 1024..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
 pub const RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+    RsaSignaturePadding::PKCS1,
     2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub const RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
-    &digest::SHA256,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
-);
+pub const RSA_PKCS1_2048_8192_SHA256: RsaParameters =
+    RsaParameters::new(&digest::SHA256, RsaSignaturePadding::PKCS1, 2048..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub const RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
-    &digest::SHA384,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
-);
+pub const RSA_PKCS1_2048_8192_SHA384: RsaParameters =
+    RsaParameters::new(&digest::SHA384, RsaSignaturePadding::PKCS1, 2048..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub const RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
-    &digest::SHA512,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
-);
+pub const RSA_PKCS1_2048_8192_SHA512: RsaParameters =
+    RsaParameters::new(&digest::SHA512, RsaSignaturePadding::PKCS1, 2048..=8192);
 
 /// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub const RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
-    &digest::SHA384,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    3072..=8192,
-    &RsaVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
-);
+pub const RSA_PKCS1_3072_8192_SHA384: RsaParameters =
+    RsaParameters::new(&digest::SHA384, RsaSignaturePadding::PKCS1, 3072..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
-pub const RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
-    &digest::SHA256,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
-);
+pub const RSA_PSS_2048_8192_SHA256: RsaParameters =
+    RsaParameters::new(&digest::SHA256, RsaSignaturePadding::PSS, 2048..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
-pub const RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
-    &digest::SHA384,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
-);
+pub const RSA_PSS_2048_8192_SHA384: RsaParameters =
+    RsaParameters::new(&digest::SHA384, RsaSignaturePadding::PSS, 2048..=8192);
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
-pub const RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
-    &digest::SHA512,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    2048..=8192,
-    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
-);
+pub const RSA_PSS_2048_8192_SHA512: RsaParameters =
+    RsaParameters::new(&digest::SHA512, RsaSignaturePadding::PSS, 2048..=8192);
 
 /// RSA PSS padding using SHA-256 for RSA signatures.
-pub const RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA256,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RsaSigningAlgorithmId::RSA_PSS_SHA256,
-);
+pub const RSA_PSS_SHA256: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA256, RsaSignaturePadding::PSS);
 
 /// RSA PSS padding using SHA-384 for RSA signatures.
-pub const RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA384,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RsaSigningAlgorithmId::RSA_PSS_SHA384,
-);
+pub const RSA_PSS_SHA384: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA384, RsaSignaturePadding::PSS);
 
 /// RSA PSS padding using SHA-512 for RSA signatures.
-pub const RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA512,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RsaSigningAlgorithmId::RSA_PSS_SHA512,
-);
+pub const RSA_PSS_SHA512: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA512, RsaSignaturePadding::PSS);
 
 /// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
-pub const RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA256,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    &RsaSigningAlgorithmId::RSA_PKCS1_SHA256,
-);
+pub const RSA_PKCS1_SHA256: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA256, RsaSignaturePadding::PKCS1);
 
 /// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
-pub const RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA384,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    &RsaSigningAlgorithmId::RSA_PKCS1_SHA384,
-);
+pub const RSA_PKCS1_SHA384: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA384, RsaSignaturePadding::PKCS1);
 
 /// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
-pub const RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
-    &digest::SHA512,
-    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-    &RsaSigningAlgorithmId::RSA_PKCS1_SHA512,
-);
+pub const RSA_PKCS1_SHA512: RsaSignatureEncoding =
+    RsaSignatureEncoding::new(&digest::SHA512, RsaSignaturePadding::PKCS1);
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
