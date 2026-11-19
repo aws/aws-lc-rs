@@ -2,21 +2,26 @@
 
 ## Build Requirements
 
-For non-FIPS builds on Windows, the following requirements apply:
+The following requirements apply when building the vendored AWS-LC sources on Windows:
 
 | Platform                  | *default*                      | **fips**                                     |
 |---------------------------|--------------------------------|----------------------------------------------|
 | `x86_64-pc-windows-msvc`  | C/C++ Compiler & \*NASM        | C/C++ Compiler, CMake, NASM, Go & Ninja      |
 | `x86_64-pc-windows-gnu`   | C/C++ Compiler & \*NASM        | **Not Supported**                            |
 | `i686-pc-windows-msvc`    | C/C++ Compiler & NASM          | **Not Supported**                            |
-| `aarch64-pc-windows-msvc` | C/C++ Compiler (clang-cl)      | C/C++ Compiler (clang-cl), CMake, Go & Ninja |
+| `aarch64-pc-windows-msvc` | C/C++ Compiler (clang-cl)      | **Not Supported**                            |
 
 \* NASM is recommended on x86-64 but can be avoided using prebuilt NASM objects. See the
 [Prebuilt NASM objects](#prebuilt-nasm-objects) section below.
 
-> **Note:** FIPS builds on Windows also require `bindgen`, as there are no pre-generated FIPS
+> **Note:** Vendored FIPS builds on Windows also require `bindgen`, as there are no pre-generated FIPS
 > bindings for Windows platforms.
 > See [Platform Support](../platform_support.md) for more details.
+
+> **Note:** `aws-lc-fips-sys` rejects builds from its currently vendored sources for `aarch64-pc-windows-msvc`.
+> The module fails its runtime integrity check even on native Windows ARM64. Cross-compiling from x64
+> also requires running an ARM64 executable to capture the module's integrity hash.
+> This source check does not run when linking an existing system installation.
 
 ## C/C++ Compiler
 
@@ -65,7 +70,9 @@ compiler you select.
 
 ## CMake
 
-CMake is only required for FIPS builds on Windows.
+Non-FIPS builds do not require CMake by default. If you select the CMake builder for
+`aarch64-pc-windows-msvc`, use a Visual Studio generator (the default), `Ninja`,
+`Ninja Multi-Config`, `NMake Makefiles`, or `NMake Makefiles JOM`.
 
 1. [Download](https://cmake.org/download/) Windows CMake Installer
 2. Execute the installer

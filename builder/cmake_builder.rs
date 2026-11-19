@@ -4,12 +4,13 @@
 use crate::cc_builder::{asm_debug_prefix_map_flag, CcBuilder};
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    export_crate_compilers, get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate,
-    is_no_asm, is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target,
-    sanitizer, set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch,
-    target_env, target_is_msvc, target_os, test_clang_cl_command, test_nasm_command,
-    use_prebuilt_nasm, OutputLibType,
+    allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, env_name_for_target,
+    execute_command, export_crate_compilers, find_clang_cl, get_crate_cc, get_crate_cflags,
+    get_crate_cxx, is_cross_compiling, is_crt_static, is_fips_build, is_fips_crate, is_no_asm,
+    is_no_pregenerated_src, is_small, optional_env, optional_env_crate_target,
+    optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
+    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
+    test_clang_cl_command, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -48,6 +49,73 @@ const fn cmake_nasm_small_flags(value: bool) -> &'static str {
     } else {
         ""
     }
+}
+
+/// `CMake` copies a compiler path from `-D` into files it later parses, where a
+/// backslash starts an escape sequence, so spell the path with forward slashes.
+fn cmake_path(path: &Path) -> String {
+    path.display().to_string().replace('\\', "/")
+}
+
+/// The generator for Windows FIPS builds, matching how AWS-LC builds them.
+const WINDOWS_FIPS_GENERATOR: &str = "Ninja";
+
+/// Prefer crate-specific overrides, then use the same precedence as cmake-rs's
+/// `getenv_target_os` so generator-specific settings agree with `-G`.
+fn requested_cmake_generator() -> Option<String> {
+    const NAME: &str = "CMAKE_GENERATOR";
+    optional_env_crate_target(NAME)
+        .or_else(|| optional_env(format!("{NAME}_{}", target())))
+        .or_else(|| optional_env(env_name_for_target(NAME)))
+        .or_else(|| {
+            optional_env(if is_cross_compiling() {
+                "TARGET_CMAKE_GENERATOR"
+            } else {
+                "HOST_CMAKE_GENERATOR"
+            })
+        })
+        .or_else(|| optional_env(NAME))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WindowsArm64Generator {
+    VisualStudio,
+    Ninja,
+    NMake,
+}
+
+impl WindowsArm64Generator {
+    fn from_name(name: Option<&str>) -> Self {
+        // cmake-rs defaults to Visual Studio for MSVC and adds `-A` and `-T`
+        // unless it recognizes a Ninja or NMake generator.
+        match name {
+            None => Self::VisualStudio,
+            Some(name) if name.starts_with("Visual Studio ") => Self::VisualStudio,
+            Some("Ninja" | "Ninja Multi-Config") => Self::Ninja,
+            Some("NMake Makefiles" | "NMake Makefiles JOM") => Self::NMake,
+            Some(name) => panic!(
+                "Unsupported CMake generator '{name}' for aarch64-pc-windows-msvc; \
+                 use a Visual Studio, Ninja, or NMake generator."
+            ),
+        }
+    }
+}
+
+/// Select both `CMAKE_BUILD_TYPE` and the `--config` used by multi-config
+/// generators. AWS-LC rejects Debug FIPS builds on Windows and also rejects
+/// `RelWithDebInfo` on Windows ARM64.
+fn configure_windows_fips_profile(cfg: &mut cmake::Config, opt_level: &str, arch: &str) {
+    let profile = match (opt_level, arch) {
+        ("0" | "1" | "2", "aarch64") => {
+            emit_warning(format!(
+                "AWS-LC only supports Release for Windows/{arch} FIPS builds; ignoring OPT_LEVEL={opt_level}."
+            ));
+            "Release"
+        }
+        ("0" | "1" | "2", _) => "RelWithDebInfo",
+        _ => "Release",
+    };
+    cfg.profile(profile);
 }
 
 pub(crate) struct CmakeBuilder {
@@ -94,8 +162,15 @@ impl CmakeBuilder {
         }
     }
 
-    fn artifact_output_dir(&self) -> PathBuf {
-        self.out_dir.join("build").join("artifacts")
+    fn artifact_output_dir() -> PathBuf {
+        // CMake uses Cargo's original OUT_DIR, while the builder's out_dir may
+        // be an 8.3 Windows path. Cargo drops library paths outside its target
+        // directory from the runtime DLL search path using a lexical prefix
+        // check, so keep the original spelling for both rustc-link-search and
+        // library metadata.
+        PathBuf::from(cargo_env("OUT_DIR"))
+            .join("build")
+            .join("artifacts")
     }
 
     fn get_cmake_config(&self) -> cmake::Config {
@@ -113,7 +188,6 @@ impl CmakeBuilder {
             self.build_prefix.clone(),
             self.output_lib_type,
         );
-        export_crate_compilers();
         let cc_build = cc::Build::new();
         let (is_cl_like, build_options) =
             cc_builder.collect_universal_build_options(&cc_build, true);
@@ -149,9 +223,6 @@ impl CmakeBuilder {
         }
 
         let mut cmake_cfg = self.get_cmake_config();
-        if let Some(generator) = optional_env_optional_crate_target("CMAKE_GENERATOR") {
-            set_env("CMAKE_GENERATOR", generator);
-        }
 
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
@@ -254,13 +325,11 @@ impl CmakeBuilder {
 
         if target_os() == "windows" {
             if is_fips_build() {
-                let opt_level = cargo_env("OPT_LEVEL");
-                let build_type = if opt_level.eq("0") || opt_level.eq("1") || opt_level.eq("2") {
-                    "RELWITHDEBINFO"
-                } else {
-                    "RELEASE"
-                };
-                cmake_cfg.define("CMAKE_BUILD_TYPE", build_type);
+                configure_windows_fips_profile(
+                    &mut cmake_cfg,
+                    &cargo_env("OPT_LEVEL"),
+                    &target_arch(),
+                );
             } else if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
@@ -279,19 +348,34 @@ impl CmakeBuilder {
             }
         }
 
-        // Allow environment to specify CMake toolchain.
-        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
+        let toolchain = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE");
+        let generator = if target_os() == "windows" && is_fips_build() && toolchain.is_none() {
+            Some(WINDOWS_FIPS_GENERATOR.to_owned())
+        } else {
+            requested_cmake_generator()
+        };
+        if let Some(name) = &generator {
+            cmake_cfg.generator(name);
+        }
+        let arm64_generator =
+            (target_os() == "windows" && target_is_msvc() && target_arch() == "aarch64")
+                .then(|| WindowsArm64Generator::from_name(generator.as_deref()));
+
+        if let Some(toolchain) = toolchain {
             set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
 
             return cmake_cfg;
         }
+        export_crate_compilers();
+        // See issue: https://github.com/aws/aws-lc-rs/issues/453
+        // This precedes the universal build options because it can select the C
+        // compiler that they probe.
+        if target_os() == "windows" {
+            self.configure_windows(&mut cmake_cfg, arm64_generator);
+        }
+
         // We only consider compiler CFLAGS when no cmake toolchain is set
         self.apply_universal_build_options(&mut cmake_cfg);
-
-        // See issue: https://github.com/aws/aws-lc-rs/issues/453
-        if target_os() == "windows" {
-            self.configure_windows(&mut cmake_cfg);
-        }
 
         // If the build environment vendor is Apple
         #[cfg(target_vendor = "apple")]
@@ -406,10 +490,12 @@ impl CmakeBuilder {
         }
     }
 
-    #[allow(clippy::unused_self)]
-    fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
+    fn configure_windows(
+        &self,
+        cmake_cfg: &mut cmake::Config,
+        arm64_generator: Option<WindowsArm64Generator>,
+    ) {
         if is_fips_build() {
-            cmake_cfg.generator("Ninja");
             let env_map = self
                 .collect_vcvarsall_bat()
                 .map_err(|x| panic!("{}", x))
@@ -419,12 +505,9 @@ impl CmakeBuilder {
             }
         }
 
-        match (target_env().as_str(), target_arch().as_str()) {
-            ("msvc", "aarch64") => {
-                // If CMAKE_GENERATOR is either not set or not set to "Ninja"
-                let cmake_generator = optional_env("CMAKE_GENERATOR");
-                if cmake_generator.is_none() || cmake_generator.unwrap().to_lowercase() != "ninja" {
-                    // The following is not supported by the Ninja generator
+        if let Some(generator) = arm64_generator {
+            match generator {
+                WindowsArm64Generator::VisualStudio => {
                     cmake_cfg.generator_toolset(format!(
                         "ClangCL{}",
                         if cfg!(target_arch = "x86_64") {
@@ -435,16 +518,15 @@ impl CmakeBuilder {
                     ));
                     cmake_cfg.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                 }
-                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
+                WindowsArm64Generator::Ninja | WindowsArm64Generator::NMake => {
+                    Self::configure_msvc_aarch64_clang_cl(cmake_cfg, generator);
+                }
             }
-            ("msvc", _) => {
-                // No-op
-            }
-            (_, arch) => {
-                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
-            }
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
+            cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
+        } else if !target_is_msvc() {
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
+            cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", target_arch());
         }
 
         // Workaround for win7-windows-gnu targets: the upstream C source gates the
@@ -453,6 +535,97 @@ impl CmakeBuilder {
         // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
         if target().contains("-win7-windows-gnu") {
             cmake_cfg.cflag("-DAWSLC_WINDOWS_7_COMPAT");
+        }
+    }
+
+    /// Sources predating aws/aws-lc#3013 link the ARM64 module twice; the links
+    /// differ, so even a native build fails its runtime integrity check. Later
+    /// sources still need to run the module until aws/aws-lc#3133 replaces
+    /// `capture_hash` with the Windows linker-map mode of `inject_hash`.
+    fn check_windows_arm64_fips_sources(&self) -> Result<(), String> {
+        if !(is_fips_build()
+            && target_os() == "windows"
+            && target_arch() == "aarch64"
+            && target_is_msvc())
+        {
+            return Ok(());
+        }
+        let aws_lc = self.manifest_dir.join("aws-lc");
+        let tools = aws_lc.join("util/fipstools");
+        let capture_hash = tools.join("capture_hash/capture_hash.go");
+        match std::fs::read_to_string(&capture_hash) {
+            Ok(source) if !source.contains("patch-dll") => {
+                Err("FIPS builds for Windows ARM64 are not supported with this AWS-LC FIPS branch".into())
+            }
+            Ok(_) if is_cross_compiling() => Err(
+                "FIPS builds for Windows ARM64 cannot be cross-compiled with this AWS-LC FIPS branch; \
+                 build on a Windows ARM64 host".into(),
+            ),
+            Ok(_) => Ok(()),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                // Older trees also have an inject_hash.go, but only for ELF and Mach-O.
+                let inject_hash = tools.join("inject_hash/inject_hash.go");
+                let source = std::fs::read_to_string(&inject_hash)
+                    .map_err(|err| format!("Cannot read {}: {err}", inject_hash.display()))?;
+                if !source.contains(r#"flag.Bool("windows","#)
+                    || !source.contains(r#"flag.String("map","#)
+                {
+                    return Err(format!("{} lacks Windows linker map support", inject_hash.display()));
+                }
+                let go_mod = aws_lc.join("go.mod");
+                std::fs::read_to_string(&go_mod)
+                    .map_err(|err| format!("Cannot read {}: {err}", go_mod.display()))?;
+                Ok(())
+            }
+            Err(err) => Err(format!("Cannot read {}: {err}", capture_hash.display())),
+        }
+    }
+
+    /// AWS-LC's Windows ARM64 assembly is GNU-syntax `.S` that only clang can
+    /// assemble. Visual Studio generators get clang from the `ClangCL` toolset.
+    /// Ninja and NMake assemble with the C compiler, and `CMake`
+    /// cannot pair `cl.exe` with a clang assembler, so use clang-cl throughout,
+    /// as AWS-LC's Windows ARM64 CI does.
+    fn configure_msvc_aarch64_clang_cl(
+        cmake_cfg: &mut cmake::Config,
+        generator: WindowsArm64Generator,
+    ) {
+        const CLANG_TARGET: &str = "arm64-pc-windows-msvc";
+        let clang_cl =
+            find_clang_cl().expect("check_dependencies requires clang-cl on Windows ARM64");
+        if get_crate_cc().is_none() {
+            set_env_for_target("CC", &clang_cl);
+        }
+        if get_crate_cxx().is_none() {
+            set_env_for_target("CXX", &clang_cl);
+        }
+        // cmake-rs forwards these compiler paths to Ninja, but not to NMake.
+        // Without them NMake chooses cl.exe for both C and assembly.
+        if generator == WindowsArm64Generator::NMake {
+            let cc = cc::Build::new().get_compiler();
+            let cxx = cc::Build::new().cpp(true).get_compiler();
+            cmake_cfg.define("CMAKE_C_COMPILER", cmake_path(cc.path()));
+            cmake_cfg.define("CMAKE_ASM_COMPILER", cmake_path(cc.path()));
+            cmake_cfg.define("CMAKE_CXX_COMPILER", cmake_path(cxx.path()));
+        }
+        // cc passes `--target` only with its default flags, which FIPS builds
+        // disable, and an x64 clang-cl would otherwise build x64 objects.
+        for lang in ["C", "CXX", "ASM"] {
+            cmake_cfg.define(format!("CMAKE_{lang}_COMPILER_TARGET"), CLANG_TARGET);
+        }
+        if is_fips_build() {
+            // AWS-LC compiles the FIPS marker objects with clang-cl directly.
+            // Those commands forward CMAKE_C_FLAGS, not CMAKE_C_COMPILER_TARGET.
+            cmake_cfg.cflag(format!("--target={CLANG_TARGET}"));
+        }
+        // CMake defines MSVC debug-format flags only for C/C++, so Debug and
+        // RelWithDebInfo builds fail on the assembler without these. AWS-LC adds
+        // `-g` for its ARM64 assembly in those builds.
+        for format in ["Embedded", "ProgramDatabase", "EditAndContinue"] {
+            cmake_cfg.define(
+                format!("CMAKE_ASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_{format}"),
+                "",
+            );
         }
     }
 
@@ -682,6 +855,11 @@ impl CmakeBuilder {
 
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
+        // Fail here rather than warn: Cargo hides warnings from registry
+        // dependencies, and a native build would otherwise succeed silently.
+        self.check_windows_arm64_fips_sources().map_err(|reason| {
+            format!("{reason}. See: https://aws.github.io/aws-lc-rs/requirements/windows.html")
+        })?;
         let mut missing_dependency = false;
         if target_os() == "windows" && target_arch() == "x86_64" {
             if is_no_asm() && Some(true) == allow_prebuilt_nasm() {
@@ -727,14 +905,14 @@ impl crate::Builder for CmakeBuilder {
         self.build_library();
 
         crate::emit_source_library_metadata(
-            &self.artifact_output_dir(),
+            &Self::artifact_output_dir(),
             self.output_lib_type,
             &self.build_prefix,
         );
 
         println!(
             "cargo:rustc-link-search=native={}",
-            self.artifact_output_dir().display()
+            Self::artifact_output_dir().display()
         );
 
         println!(
@@ -763,7 +941,38 @@ impl crate::Builder for CmakeBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::{cmake_bool, cmake_nasm_small_flags, strip_lto_flags};
+    use super::{
+        cmake_bool, cmake_nasm_small_flags, cmake_path, configure_windows_fips_profile,
+        requested_cmake_generator, strip_lto_flags, CmakeBuilder, WindowsArm64Generator,
+    };
+    use crate::{Builder, EnvGuard, OutputLibType, ENV_MUTEX};
+    use std::path::{Path, PathBuf};
+
+    #[test]
+    fn test_artifact_output_dir_preserves_cargo_out_dir() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        for cargo_out in [
+            PathBuf::from("C:/a/aws-lc-rs/target/debug/build/aws-lc-fips-sys-123/out"),
+            // Cargo's own spelling can be an 8.3 alias, which must be kept too.
+            PathBuf::from("C:/a/AWS-LC~1/target/debug/build/SYS~1/out"),
+        ] {
+            let _out_dir = EnvGuard::new("OUT_DIR", &cargo_out);
+            let artifacts = CmakeBuilder::artifact_output_dir();
+            assert_eq!(artifacts, cargo_out.join("build").join("artifacts"));
+            // Cargo uses a lexical prefix check for its runtime DLL search path.
+            assert!(artifacts.starts_with(&cargo_out));
+        }
+    }
+
+    #[test]
+    fn test_cmake_path() {
+        // A full path, as for a clang-cl found in a Visual Studio installation.
+        assert_eq!(
+            cmake_path(Path::new(r"C:\Program Files\LLVM\bin\clang-cl.exe")),
+            "C:/Program Files/LLVM/bin/clang-cl.exe"
+        );
+        assert_eq!(cmake_path(Path::new("clang-cl")), "clang-cl");
+    }
 
     #[test]
     fn test_cmake_bool() {
@@ -802,5 +1011,153 @@ mod tests {
 
         // Empty input
         assert_eq!(strip_lto_flags(""), "");
+    }
+
+    #[test]
+    fn test_requested_cmake_generator_precedence() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let _name = EnvGuard::new("CARGO_PKG_NAME", "aws-lc-sys");
+        let _host = EnvGuard::new("HOST", "x86_64-pc-windows-msvc");
+        let _target = EnvGuard::new("TARGET", "aarch64-pc-windows-msvc");
+        let keys = [
+            "CMAKE_GENERATOR",
+            "TARGET_CMAKE_GENERATOR",
+            "CMAKE_GENERATOR_aarch64_pc_windows_msvc",
+            "CMAKE_GENERATOR_aarch64-pc-windows-msvc",
+            "AWS_LC_SYS_CMAKE_GENERATOR",
+            "AWS_LC_SYS_CMAKE_GENERATOR_aarch64_pc_windows_msvc",
+        ];
+        let _clean: Vec<_> = keys.iter().map(|key| EnvGuard::remove(key)).collect();
+        let _native = EnvGuard::new("HOST_CMAKE_GENERATOR", "native");
+        assert_eq!(requested_cmake_generator(), None);
+        {
+            let _host = EnvGuard::new("HOST", "aarch64-pc-windows-msvc");
+            assert_eq!(requested_cmake_generator().as_deref(), Some("native"));
+        }
+        let mut guards = Vec::new();
+        for key in keys {
+            guards.push(EnvGuard::new(key, key));
+            assert_eq!(requested_cmake_generator().as_deref(), Some(key));
+        }
+    }
+
+    #[test]
+    fn test_windows_arm64_generators() {
+        use WindowsArm64Generator::{NMake, Ninja, VisualStudio};
+        for (name, expected) in [
+            (None, VisualStudio),
+            (Some("Visual Studio 17 2022"), VisualStudio),
+            (Some("Ninja"), Ninja),
+            (Some("Ninja Multi-Config"), Ninja),
+            (Some("NMake Makefiles"), NMake),
+            (Some("NMake Makefiles JOM"), NMake),
+        ] {
+            assert_eq!(WindowsArm64Generator::from_name(name), expected);
+        }
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Unsupported CMake generator 'Unix Makefiles' for aarch64-pc-windows-msvc"
+    )]
+    fn test_windows_arm64_rejects_unsupported_generator() {
+        WindowsArm64Generator::from_name(Some("Unix Makefiles"));
+    }
+
+    #[test]
+    fn test_check_dependencies_rejects_unsupported_windows_arm64_fips() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let manifest_dir = tempfile::tempdir().unwrap();
+        let _target = [
+            EnvGuard::new("CARGO_PKG_NAME", "aws-lc-fips-sys"),
+            EnvGuard::new("CARGO_CFG_TARGET_OS", "windows"),
+            EnvGuard::new("CARGO_CFG_TARGET_ARCH", "aarch64"),
+            EnvGuard::new("CARGO_CFG_TARGET_ENV", "msvc"),
+            EnvGuard::new("TARGET", "aarch64-pc-windows-msvc"),
+        ];
+        let builder = CmakeBuilder::new(
+            manifest_dir.path().to_path_buf(),
+            PathBuf::new(),
+            None,
+            OutputLibType::Dynamic,
+        );
+        let native = "aarch64-pc-windows-msvc";
+        let cross = "x86_64-pc-windows-msvc";
+        let rejection = |host: &str| {
+            let _host = EnvGuard::new("HOST", host);
+            builder.check_windows_arm64_fips_sources().err()
+        };
+
+        // Some source packages omit the Go tools entirely. Older branches also
+        // ship an inject_hash.go that only supports Linux and Apple targets.
+        let tools = manifest_dir.path().join("aws-lc/util/fipstools");
+        let inject_dir = tools.join("inject_hash");
+        let inject_hash = inject_dir.join("inject_hash.go");
+        for host in [native, cross] {
+            let err = rejection(host).unwrap();
+            assert!(err.contains("inject_hash.go"), "{err}");
+        }
+        std::fs::create_dir_all(&inject_dir).unwrap();
+        std::fs::write(&inject_hash, r#"flag.Bool("apple", false, "")"#).unwrap();
+        assert!(rejection(cross).unwrap().contains("linker map"));
+
+        // Sources with aws/aws-lc#3133 support Windows linker maps.
+        std::fs::write(
+            &inject_hash,
+            "flag.Bool(\"windows\", false, \"\")\nflag.String(\"map\", \"\", \"\")",
+        )
+        .unwrap();
+        assert!(rejection(cross).unwrap().contains("go.mod"));
+        std::fs::write(
+            manifest_dir.path().join("aws-lc/go.mod"),
+            "module github.com/aws/aws-lc\n",
+        )
+        .unwrap();
+        assert_eq!(rejection(native), None);
+        assert_eq!(rejection(cross), None);
+
+        let capture_hash_dir = tools.join("capture_hash");
+        std::fs::create_dir_all(&capture_hash_dir).unwrap();
+        let capture_hash = capture_hash_dir.join("capture_hash.go");
+
+        // A read error other than NotFound must not select the linker-map path.
+        std::fs::write(&capture_hash, [0xff]).unwrap();
+        let err = rejection(cross).unwrap();
+        assert!(err.contains("capture_hash.go"), "{err}");
+
+        // Sources without aws/aws-lc#3013 fail the integrity check even natively.
+        std::fs::write(&capture_hash, "package main\n").unwrap();
+        for host in [native, cross] {
+            let err = rejection(host).unwrap();
+            assert!(err.contains("not supported"), "{err}");
+        }
+
+        // Sources with only aws/aws-lc#3013 must run the ARM64 module.
+        std::fs::write(&capture_hash, r#"flag.String("patch-dll", "", "")"#).unwrap();
+        assert_eq!(rejection(native), None);
+        let _host = EnvGuard::new("HOST", cross);
+        let err = builder.check_dependencies().unwrap_err();
+        assert!(err.contains("Windows ARM64 host"), "{err}");
+
+        let _x64 = EnvGuard::new("CARGO_CFG_TARGET_ARCH", "x86_64");
+        assert_eq!(rejection(cross), None);
+    }
+
+    #[test]
+    fn test_windows_fips_profile() {
+        let check = |opt_level, arch, expected| {
+            let mut cfg = cmake::Config::new(".");
+            cfg.generator("Ninja Multi-Config");
+            configure_windows_fips_profile(&mut cfg, opt_level, arch);
+            assert_eq!(cfg.get_profile(), expected);
+        };
+        for opt_level in ["0", "1", "2"] {
+            check(opt_level, "x86_64", "RelWithDebInfo");
+            check(opt_level, "aarch64", "Release");
+        }
+        for opt_level in ["3", "s", "z"] {
+            check(opt_level, "x86_64", "Release");
+            check(opt_level, "aarch64", "Release");
+        }
     }
 }
