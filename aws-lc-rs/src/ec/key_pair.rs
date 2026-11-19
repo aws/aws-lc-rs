@@ -28,6 +28,10 @@ use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 
 /// An ECDSA key pair, used for signing.
+///
+/// A key pair is bound to one [`EcdsaSigningAlgorithm`] (curve, digest, and signature encoding).
+/// To sign with the same key under a different algorithm for its curve, use
+/// [`EcdsaKeyPair::with_algorithm`].
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
@@ -62,7 +66,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
+        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey)?;
 
         Ok(Self {
             algorithm,
@@ -77,7 +81,7 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
-        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -202,10 +206,57 @@ impl EcdsaKeyPair {
         PrivateKey(self)
     }
 
-    /// [`EcdsaSigningAlgorithm`] which was used to create this [`EcdsaKeyPair`]
+    /// The [`EcdsaSigningAlgorithm`] this key pair is bound to.
     #[must_use]
     pub fn algorithm(&self) -> &'static EcdsaSigningAlgorithm {
         self.algorithm
+    }
+
+    /// Returns a key pair sharing this key pair's key material, bound to `alg`.
+    ///
+    /// The private key is reference counted; only the cached public key encoding is copied.
+    /// This does not re-parse or re-validate the key. Use a predefined constant or
+    /// [`EcdsaSigningAlgorithm::get`] to select `alg`.
+    ///
+    /// Prefer using each key with a single algorithm. Rebind it only when the protocol
+    /// requires another digest or signature format for the same curve.
+    ///
+    /// ```
+    /// use aws_lc_rs::digest::SHA512;
+    /// use aws_lc_rs::error::Unspecified;
+    /// use aws_lc_rs::rand::SystemRandom;
+    /// use aws_lc_rs::signature::{
+    ///     EcdsaKeyPair, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    ///     ECDSA_P256_SHA256_ASN1_SIGNING,
+    /// };
+    ///
+    /// let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_ASN1_SIGNING)?;
+    /// let algorithm = EcdsaSigningAlgorithm::get(
+    ///     key_pair.algorithm().curve(),
+    ///     &SHA512,
+    ///     EcdsaSignatureFormat::Asn1,
+    /// )
+    /// .ok_or(Unspecified)?;
+    /// let sha512_key_pair = key_pair.with_algorithm(algorithm)?;
+    ///
+    /// let rng = SystemRandom::new();
+    /// let sha256_signature = key_pair.sign(&rng, b"message")?;
+    /// let sha512_signature = sha512_key_pair.sign(&rng, b"message")?;
+    /// # Ok::<(), aws_lc_rs::error::Unspecified>(())
+    /// ```
+    ///
+    /// # Errors
+    /// `error::KeyRejected::wrong_algorithm()` if `alg` is for a different curve than this key
+    /// pair.
+    pub fn with_algorithm(&self, alg: &'static EcdsaSigningAlgorithm) -> Result<Self, KeyRejected> {
+        if alg.curve() != self.algorithm.curve() {
+            return Err(KeyRejected::wrong_algorithm());
+        }
+        Ok(Self {
+            algorithm: alg,
+            evp_pkey: self.evp_pkey.clone(),
+            pubkey: self.pubkey.clone(),
+        })
     }
 
     /// Returns a signature for the message.
@@ -229,7 +280,7 @@ impl EcdsaKeyPair {
         )?;
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),
@@ -240,21 +291,22 @@ impl EcdsaKeyPair {
     /// Returns a signature for the message corresponding to the provided digest.
     ///
     /// # Errors
-    /// `error::Unspecified` on internal error.
+    /// `error::Unspecified` if the digest's algorithm does not match this key pair's configured
+    /// digest algorithm, or on internal error.
     //
     // # FIPS
     // Not allowed.
     #[inline]
     pub fn sign_digest(&self, digest: &Digest) -> Result<Signature, Unspecified> {
-        let out_sig = self
-            .evp_pkey
-            .sign_digest(digest, No_EVP_PKEY_CTX_consumer)?;
         if self.algorithm.digest != digest.algorithm() {
             return Err(Unspecified);
         }
+        let out_sig = self
+            .evp_pkey
+            .sign_digest(digest, No_EVP_PKEY_CTX_consumer)?;
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),
