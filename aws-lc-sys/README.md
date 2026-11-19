@@ -32,6 +32,12 @@ libraries AWS-LC requires; a build script linking the static `libcrypto_path`
 artifact must link these too. On `*-windows-gnu` it is `bcrypt`, which MinGW/GCC
 does not pick up from AWS-LC's `#pragma comment(lib, "bcrypt.lib")`.
 
+`libcrypto_full` is `1` when the libcrypto defines every AWS-LC symbol and `0`
+when it defines only what the universal bindings reach; see
+[libcrypto for the universal bindings](#libcrypto-for-the-universal-bindings).
+C code that calls past the universal bindings should check it and fail with a
+clear message rather than leave the mismatch to the linker.
+
 On Windows, `libcrypto_path` and `libssl_path` refer to the link-time artifact
 -- for dynamic builds this is the import library (`*.lib` for MSVC,
 `lib*.dll.a` for MinGW), not the runtime DLL. For builds from source the DLL is
@@ -288,6 +294,44 @@ Key properties:
   to obtain the full assembly size reduction on Windows.
 * **FIPS.** `aws-lc-fips-sys` never enables this automatically; it requires
   an explicit `AWS_LC_FIPS_SYS_SMALL=1`. See its README for details.
+
+## libcrypto for the universal bindings
+
+Without the `all-bindings` feature, `aws-lc-sys` exposes the universal bindings:
+the part of AWS-LC that aws-lc-rs calls, pregenerated for every supported
+target. Rust code cannot reach anything else, so the `cc` builder leaves out the
+libcrypto sources those bindings never reach -- X.509, PEM, PKCS#7 and PKCS#8,
+OCSP, trust tokens, HPKE, most of ASN.1 and BIO, and a few smaller ones
+(`builder/cc_builder/universal_bindings_excluded.rs`, generated from the
+bindings and the archive's symbol graph). Programs that call AWS-LC only through
+the universal bindings, as aws-lc-rs does, link exactly the same objects either
+way; the build just spends about half the CPU time compiling AWS-LC (wall time
+drops less on many-core machines, where a few large files dominate).
+
+Everything is compiled when Rust can call past the universal bindings: with the
+`all-bindings` feature (the default feature of `aws-lc-sys`, also enabled by
+aws-lc-rs's `legacy-des`), when the build generates its bindings (the `bindgen`
+feature, `AWS_LC_SYS_EXTERNAL_BINDGEN=1`, `AWS_LC_SYS_NO_PREFIX=1`, or a target
+without pregenerated bindings), in CMake builds, and with a system-installed
+AWS-LC. `aws-lc-fips-sys` always builds all of its library.
+
+**C code that links libcrypto through the
+[native build metadata](#native-build-metadata)** and calls into the excluded
+parts -- s2n-tls is one such consumer -- needs the full archive. The preferred
+way to get it is to enable the `all-bindings` feature of `aws-lc-sys`, which is
+additive and composes with every other dependency on the crate:
+
+```toml
+[dependencies]
+aws-lc-sys = { version = "0.47", features = ["all-bindings"] }
+```
+
+When changing features is not an option, `AWS_LC_SYS_FULL_LIBCRYPTO=1` (or
+`AWS_LC_SYS_FULL_LIBCRYPTO_<target>=1` for one target) makes the `cc` builder
+compile everything. A build script can tell which archive it got from the
+exported `libcrypto_full` metadata. Without either, calls into the excluded
+parts fail at link time with undefined prefixed symbols such as
+`aws_lc_0_47_0_X509_free`.
 
 ## Build Prerequisites
 

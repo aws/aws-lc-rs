@@ -48,6 +48,21 @@ The target-specific variant takes precedence when both are set.
   When set to `1`, forces the build to generate CMake source files instead of using
   pre-generated ones.
 
+* **`AWS_LC_SYS_FULL_LIBCRYPTO`**
+
+  When set to `1`, the `cc` crate builder compiles every libcrypto source. By default, a build
+  that ships the universal bindings (no `all-bindings` feature) leaves out the sources those
+  bindings never reach (X.509, PEM, PKCS#7/#8, OCSP and others), which roughly halves the CPU
+  time spent compiling AWS-LC without changing what Rust code can call. C code that links libcrypto
+  through the `DEP_AWS_LC_*` build metadata and calls into those parts needs the full archive;
+  enabling the `all-bindings` feature of `aws-lc-sys` is the preferred way to get it, and this
+  variable is the override when changing features is not an option. See
+  [the `aws-lc-sys` README](https://github.com/aws/aws-lc-rs/blob/main/aws-lc-sys/README.md#libcrypto-for-the-universal-bindings)
+  for details.
+
+  > **Note:** This option only applies to `aws-lc-sys`. CMake builds, builds that generate
+  > their bindings, and `aws-lc-fips-sys` always provide the full library.
+
 ### Bindings Generation
 
 * **`AWS_LC_SYS_EXTERNAL_BINDGEN`** | **`AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN`**

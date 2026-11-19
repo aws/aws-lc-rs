@@ -33,9 +33,30 @@ fn main() {
 fn build_and_link(links: &str, target_name: &str) {
     let links = links.to_uppercase();
 
+    // Whether the archive defines every AWS-LC symbol, or only what the
+    // universal bindings reach. A plain aws-lc-rs dependency gets the reduced
+    // archive from the cc builder; every other configuration, and
+    // `aws-lc-sys/all-bindings`, gets the full one.
+    let libcrypto_full = env(format!("DEP_{links}_LIBCRYPTO_FULL"));
+    assert!(
+        matches!(libcrypto_full.as_str(), "0" | "1"),
+        "unexpected exported libcrypto_full: {libcrypto_full:?}"
+    );
+    let libcrypto_full = libcrypto_full == "1";
+    if cfg!(feature = "aws-lc-rs-all-bindings") || !cfg!(feature = "aws-lc-rs") {
+        assert!(
+            libcrypto_full,
+            "this configuration must export the full libcrypto"
+        );
+    }
+
     // ensure that the include path is exported and set up correctly
     cc::Build::new()
         .include(env(format!("DEP_{links}_INCLUDE")))
+        .define(
+            "LINKS_TESTING_FULL_LIBCRYPTO",
+            if libcrypto_full { "1" } else { "0" },
+        )
         .file("src/testing.c")
         .compile(&format!("testing_{target_name}"));
 

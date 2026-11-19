@@ -72,6 +72,12 @@ jobs:
   # rustc not to enable section GC, so any unresolved symbol inside the
   # archive becomes a link error. The two settings together provide a
   # generic guarantee that every internal symbol reference resolves.
+  #
+  # With default features the archive is the full libcrypto. On the cmake=0
+  # legs the tests also run without default features, where the cc builder
+  # leaves out the sources the universal bindings never reach
+  # (builder/cc_builder/universal_bindings_excluded.rs), so the reduced
+  # archive gets the same whole-archive guarantee.
   aws-lc-sys-link-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-sys link tests (${{ matrix.os }} / cmake=${{ matrix.cmake }})
@@ -98,6 +104,43 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run aws-lc-sys sanity tests
         run: cargo test -p aws-lc-sys --tests
+      - name: Run aws-lc-sys sanity tests against the universal-bindings libcrypto
+        if: matrix.cmake == '0'
+        run: cargo test -p aws-lc-sys --tests --no-default-features
+
+  # Checks, with `nm` alone, that the libcrypto of a universal-bindings build
+  # defines every symbol the bindings declare and leaves no reference
+  # unresolved that the full archive resolves. Needs no link step, so it also
+  # covers Windows, which the whole-archive job above does not.
+  universal-bindings-libcrypto-check:
+    if: github.repository_owner == 'aws'
+    name: universal-bindings libcrypto check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          components: llvm-tools
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install NASM
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+      - name: Check the universal-bindings libcrypto
+        shell: bash
+        # The toolchain's llvm-nm reads every archive format the targets use;
+        # Windows runners have no `nm`.
+        run: |
+          NM="$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/bin/llvm-nm" \
+            ./scripts/ci/check_universal_bindings_libcrypto.sh
 
   bindgen-test:
     if: github.repository_owner == 'aws'
