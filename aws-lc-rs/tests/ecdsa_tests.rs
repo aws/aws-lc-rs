@@ -23,7 +23,7 @@ const ECDSA_CURVES: [EcdsaCurve; 4] = [
     EcdsaCurve::P256K1,
 ];
 const ECDSA_SIGNATURE_FORMATS: [EcdsaSignatureFormat; 2] =
-    [EcdsaSignatureFormat::Asn1, EcdsaSignatureFormat::Fixed];
+    [EcdsaSignatureFormat::ASN1, EcdsaSignatureFormat::Fixed];
 const ECDSA_SIGNING_DIGESTS: [&digest::Algorithm; 8] = [
     &SHA224,
     &SHA256,
@@ -85,20 +85,20 @@ fn ecdsa_algorithm_lookups_match_constants() {
         ECDSA_P521_SHA3_512_FIXED = (P521, SHA3_512, Fixed);
         ECDSA_P256K1_SHA256_FIXED = (P256K1, SHA256, Fixed);
         ECDSA_P256K1_SHA3_256_FIXED = (P256K1, SHA3_256, Fixed);
-        ECDSA_P256_SHA256_ASN1 = (P256, SHA256, Asn1);
-        ECDSA_P256_SHA384_ASN1 = (P256, SHA384, Asn1);
-        ECDSA_P256_SHA512_ASN1 = (P256, SHA512, Asn1);
-        ECDSA_P384_SHA256_ASN1 = (P384, SHA256, Asn1);
-        ECDSA_P384_SHA384_ASN1 = (P384, SHA384, Asn1);
-        ECDSA_P384_SHA512_ASN1 = (P384, SHA512, Asn1);
-        ECDSA_P384_SHA3_384_ASN1 = (P384, SHA3_384, Asn1);
-        ECDSA_P521_SHA224_ASN1 = (P521, SHA224, Asn1);
-        ECDSA_P521_SHA256_ASN1 = (P521, SHA256, Asn1);
-        ECDSA_P521_SHA384_ASN1 = (P521, SHA384, Asn1);
-        ECDSA_P521_SHA512_ASN1 = (P521, SHA512, Asn1);
-        ECDSA_P521_SHA3_512_ASN1 = (P521, SHA3_512, Asn1);
-        ECDSA_P256K1_SHA256_ASN1 = (P256K1, SHA256, Asn1);
-        ECDSA_P256K1_SHA3_256_ASN1 = (P256K1, SHA3_256, Asn1);
+        ECDSA_P256_SHA256_ASN1 = (P256, SHA256, ASN1);
+        ECDSA_P256_SHA384_ASN1 = (P256, SHA384, ASN1);
+        ECDSA_P256_SHA512_ASN1 = (P256, SHA512, ASN1);
+        ECDSA_P384_SHA256_ASN1 = (P384, SHA256, ASN1);
+        ECDSA_P384_SHA384_ASN1 = (P384, SHA384, ASN1);
+        ECDSA_P384_SHA512_ASN1 = (P384, SHA512, ASN1);
+        ECDSA_P384_SHA3_384_ASN1 = (P384, SHA3_384, ASN1);
+        ECDSA_P521_SHA224_ASN1 = (P521, SHA224, ASN1);
+        ECDSA_P521_SHA256_ASN1 = (P521, SHA256, ASN1);
+        ECDSA_P521_SHA384_ASN1 = (P521, SHA384, ASN1);
+        ECDSA_P521_SHA512_ASN1 = (P521, SHA512, ASN1);
+        ECDSA_P521_SHA3_512_ASN1 = (P521, SHA3_512, ASN1);
+        ECDSA_P256K1_SHA256_ASN1 = (P256K1, SHA256, ASN1);
+        ECDSA_P256K1_SHA3_256_ASN1 = (P256K1, SHA3_256, ASN1);
     }
 
     assert_lookup! { EcdsaSigningAlgorithm:
@@ -112,16 +112,16 @@ fn ecdsa_algorithm_lookups_match_constants() {
         ECDSA_P521_SHA3_512_FIXED_SIGNING = (P521, SHA3_512, Fixed);
         ECDSA_P256K1_SHA256_FIXED_SIGNING = (P256K1, SHA256, Fixed);
         ECDSA_P256K1_SHA3_256_FIXED_SIGNING = (P256K1, SHA3_256, Fixed);
-        ECDSA_P256_SHA256_ASN1_SIGNING = (P256, SHA256, Asn1);
-        ECDSA_P384_SHA384_ASN1_SIGNING = (P384, SHA384, Asn1);
-        ECDSA_P384_SHA3_384_ASN1_SIGNING = (P384, SHA3_384, Asn1);
-        ECDSA_P521_SHA224_ASN1_SIGNING = (P521, SHA224, Asn1);
-        ECDSA_P521_SHA256_ASN1_SIGNING = (P521, SHA256, Asn1);
-        ECDSA_P521_SHA384_ASN1_SIGNING = (P521, SHA384, Asn1);
-        ECDSA_P521_SHA512_ASN1_SIGNING = (P521, SHA512, Asn1);
-        ECDSA_P521_SHA3_512_ASN1_SIGNING = (P521, SHA3_512, Asn1);
-        ECDSA_P256K1_SHA256_ASN1_SIGNING = (P256K1, SHA256, Asn1);
-        ECDSA_P256K1_SHA3_256_ASN1_SIGNING = (P256K1, SHA3_256, Asn1);
+        ECDSA_P256_SHA256_ASN1_SIGNING = (P256, SHA256, ASN1);
+        ECDSA_P384_SHA384_ASN1_SIGNING = (P384, SHA384, ASN1);
+        ECDSA_P384_SHA3_384_ASN1_SIGNING = (P384, SHA3_384, ASN1);
+        ECDSA_P521_SHA224_ASN1_SIGNING = (P521, SHA224, ASN1);
+        ECDSA_P521_SHA256_ASN1_SIGNING = (P521, SHA256, ASN1);
+        ECDSA_P521_SHA384_ASN1_SIGNING = (P521, SHA384, ASN1);
+        ECDSA_P521_SHA512_ASN1_SIGNING = (P521, SHA512, ASN1);
+        ECDSA_P521_SHA3_512_ASN1_SIGNING = (P521, SHA3_512, ASN1);
+        ECDSA_P256K1_SHA256_ASN1_SIGNING = (P256K1, SHA256, ASN1);
+        ECDSA_P256K1_SHA3_256_ASN1_SIGNING = (P256K1, SHA3_256, ASN1);
     }
 }
 
@@ -421,12 +421,12 @@ fn ecdsa_algorithm_lifetimes() {
     for format in ECDSA_SIGNATURE_FORMATS {
         let (key_pair, verifying, unparsed, parsed) = {
             let curve = EcdsaCurve::P384;
-            let digest_alg = &SHA512_256;
+            let digest_alg = SHA512_256;
             let original_alg =
-                EcdsaSigningAlgorithm::get(curve, &SHA384, EcdsaSignatureFormat::Asn1).unwrap();
+                EcdsaSigningAlgorithm::get(curve, &SHA384, EcdsaSignatureFormat::ASN1).unwrap();
             let original = EcdsaKeyPair::generate(original_alg).unwrap();
-            let signing = EcdsaSigningAlgorithm::get(curve, digest_alg, format).unwrap();
-            let verifying = EcdsaVerificationAlgorithm::get(curve, digest_alg, format).unwrap();
+            let signing = EcdsaSigningAlgorithm::get(curve, &digest_alg, format).unwrap();
+            let verifying = EcdsaVerificationAlgorithm::get(curve, &digest_alg, format).unwrap();
             let key_pair = original.with_algorithm(signing).unwrap();
             let public_key = key_pair.public_key().as_ref();
             let unparsed = UnparsedPublicKey::new(verifying, public_key.to_vec());
@@ -932,9 +932,9 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
             _ => panic!("Unsupported curve+digest: {curve_name}+{digest_name}"),
         };
         let signing_alg =
-            EcdsaSigningAlgorithm::get(curve, digest_alg, EcdsaSignatureFormat::Asn1).unwrap();
+            EcdsaSigningAlgorithm::get(curve, digest_alg, EcdsaSignatureFormat::ASN1).unwrap();
         let verification_alg =
-            EcdsaVerificationAlgorithm::get(curve, digest_alg, EcdsaSignatureFormat::Asn1).unwrap();
+            EcdsaVerificationAlgorithm::get(curve, digest_alg, EcdsaSignatureFormat::ASN1).unwrap();
 
         let private_key =
             EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();

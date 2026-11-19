@@ -22,8 +22,9 @@
 //! [`EcdsaSigningAlgorithm::get`] or [`EcdsaVerificationAlgorithm::get`]. Both
 //! are `const fn` lookups that take a curve, digest, and signature format and
 //! return `Option<&'static Self>` without allocating, at compile time or at
-//! runtime. Callers must enforce their protocol's algorithm policy: `Some`
-//! means the combination is supported, not that the protocol permits it.
+//! runtime. The returned algorithm does not borrow the caller's digest algorithm.
+//! Callers must enforce their protocol's algorithm policy: `Some` means the
+//! combination is supported, not that the protocol permits it.
 //! Legacy SHA-1 verification is available only via existing named constants
 //! such as [`ECDSA_P256_SHA1_ASN1`], not through either lookup.
 //!
@@ -169,9 +170,9 @@
 //! };
 //!
 //! const SIGNING: Option<&EcdsaSigningAlgorithm> =
-//!     EcdsaSigningAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
+//!     EcdsaSigningAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::ASN1);
 //! const VERIFYING: Option<&EcdsaVerificationAlgorithm> =
-//!     EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::Asn1);
+//!     EcdsaVerificationAlgorithm::get(EcdsaCurve::P256, &SHA512, EcdsaSignatureFormat::ASN1);
 //!
 //! let key_pair = EcdsaKeyPair::generate(SIGNING.ok_or(Unspecified)?)?;
 //! let signature = key_pair.sign(&SystemRandom::new(), b"message")?;
@@ -1000,112 +1001,112 @@ pub const ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerific
 pub const ECDSA_P256_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-384.
 pub const ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA384,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-512.
 pub const ECDSA_P256_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA512,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-256.
 pub const ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA256,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub const ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-512.
 pub const ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA512,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
 pub const ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA3_384,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-1.
 pub const ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
 pub const ECDSA_P521_SHA224_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA224,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
 pub const ECDSA_P521_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA256,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
 pub const ECDSA_P521_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA384,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
 pub const ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA512,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
 pub const ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA3_512,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
 pub const ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA256,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
 pub const ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA3_256,
-    sig_format: EcdsaSignatureFormat::Asn1,
+    sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
