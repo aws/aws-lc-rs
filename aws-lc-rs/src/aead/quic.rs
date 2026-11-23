@@ -13,6 +13,7 @@ use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::key::SymmetricCipherKey;
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
+use zeroize::Zeroizing;
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
@@ -22,7 +23,7 @@ pub struct HeaderProtectionKey {
 
 impl From<hkdf::Okm<'_, &'static Algorithm>> for HeaderProtectionKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
-        let mut key_bytes = [0; super::MAX_KEY_LEN];
+        let mut key_bytes = Zeroizing::new([0; super::MAX_KEY_LEN]);
         let algorithm = *okm.len();
         let key_bytes = &mut key_bytes[..algorithm.key_len()];
         okm.fill(key_bytes).unwrap();

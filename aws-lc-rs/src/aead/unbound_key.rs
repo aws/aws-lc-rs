@@ -17,6 +17,7 @@ use core::fmt::Debug;
 use core::mem::MaybeUninit;
 use core::ops::RangeFrom;
 use core::ptr::null;
+use zeroize::Zeroizing;
 
 /// The maximum length of a nonce returned by our AEAD API.
 const MAX_NONCE_LEN: usize = NONCE_LEN;
@@ -608,7 +609,7 @@ impl From<AeadCtx> for UnboundKey {
 
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
-        let mut key_bytes = [0; MAX_KEY_LEN];
+        let mut key_bytes = Zeroizing::new([0; MAX_KEY_LEN]);
         let key_bytes = &mut key_bytes[..okm.len().key_len];
         let algorithm = *okm.len();
         okm.fill(key_bytes).unwrap();

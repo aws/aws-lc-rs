@@ -261,6 +261,7 @@ use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use crate::ptr::ConstPointer;
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
+use zeroize::Zeroizing;
 
 /// The number of bytes in an AES 128-bit key
 pub use crate::cipher::aes::AES_128_KEY_LEN;
@@ -816,7 +817,7 @@ impl Debug for UnboundCipherKey {
 
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundCipherKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
-        let mut key_bytes = [0; MAX_CIPHER_KEY_LEN];
+        let mut key_bytes = Zeroizing::new([0; MAX_CIPHER_KEY_LEN]);
         let key_bytes = &mut key_bytes[..okm.len().key_len];
         let algorithm = *okm.len();
         okm.fill(key_bytes).unwrap();

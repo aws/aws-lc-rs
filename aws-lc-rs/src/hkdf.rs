@@ -95,7 +95,9 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: Arc<[u8]>,
+    // A salt is not always public: TLS 1.3 extracts its master secret from a derived secret used
+    // as the salt and an all-zero IKM. So the bytes are wiped when their last owner is dropped.
+    bytes: Arc<ZeroizeBoxSlice<u8>>,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -129,7 +131,7 @@ impl Salt {
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Self {
             algorithm,
-            bytes: Arc::from(value),
+            bytes: Arc::new(ZeroizeBoxSlice::from(value)),
         }
     }
 
@@ -195,12 +197,13 @@ impl Salt {
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.len;
-        let salt_len = okm.len.len();
-        let mut salt_bytes = vec![0u8; salt_len];
+        // Fill the self-wiping heap buffer directly so the derived salt is never held anywhere
+        // else.
+        let mut salt_bytes = ZeroizeBoxSlice::zeroed(algorithm.len());
         okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: Arc::from(salt_bytes.as_slice()),
+            bytes: Arc::new(salt_bytes),
         }
     }
 }
@@ -217,11 +220,11 @@ enum PrkMode {
     // Heap-allocated so that moving or cloning a `Prk` never copies the key bytes, and they are
     // wiped when the last clone is dropped.
     Expand {
-        key: Arc<ZeroizeBoxSlice<u8>>,
+        key: Arc<PrkKey>,
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: Arc<[u8]>,
+        salt: Arc<ZeroizeBoxSlice<u8>>,
     },
 }
 
@@ -235,8 +238,8 @@ impl PrkMode {
                     out.as_mut_ptr(),
                     out.len(),
                     digest,
-                    key.as_ptr(),
-                    key.len(),
+                    key.bytes.as_ptr(),
+                    key.len,
                     info.as_ptr(),
                     info.len(),
                 )) {
@@ -272,6 +275,42 @@ impl fmt::Debug for PrkMode {
             Self::Expand { .. } => f.debug_struct("Expand").finish_non_exhaustive(),
             Self::ExtractExpand { .. } => f.debug_struct("ExtractExpand").finish_non_exhaustive(),
         }
+    }
+}
+
+/// The key of a `Prk` that can only be expanded.
+///
+/// The bytes are stored inline, rather than in a `ZeroizeBoxSlice`, so that the key shares a
+/// single allocation with the `Arc` that owns it.
+struct PrkKey {
+    bytes: [u8; MAX_HKDF_PRK_LEN],
+    len: usize,
+}
+
+impl PrkKey {
+    /// Constructs a key of `len` bytes. `fill` writes the key in place, in its heap allocation,
+    /// so that the key bytes are never held on the stack.
+    fn construct<F>(len: usize, fill: F) -> Result<Arc<Self>, Unspecified>
+    where
+        F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
+    {
+        if len > MAX_HKDF_PRK_LEN {
+            return Err(Unspecified);
+        }
+        let mut key = Arc::new(Self {
+            bytes: [0u8; MAX_HKDF_PRK_LEN],
+            len,
+        });
+        // A newly created `Arc` has no other owner, so `get_mut` cannot fail.
+        let key_bytes = &mut Arc::get_mut(&mut key).ok_or(Unspecified)?.bytes[..len];
+        fill(key_bytes)?;
+        Ok(key)
+    }
+}
+
+impl Drop for PrkKey {
+    fn drop(&mut self) {
+        self.bytes.zeroize();
     }
 }
 
@@ -350,14 +389,13 @@ impl Prk {
     }
 
     fn try_new_less_safe(algorithm: Algorithm, value: &[u8]) -> Result<Prk, Unspecified> {
-        if value.len() > MAX_HKDF_PRK_LEN {
-            return Err(Unspecified);
-        }
+        let key = PrkKey::construct(value.len(), |key_bytes| {
+            key_bytes.copy_from_slice(value);
+            Ok(())
+        })?;
         Ok(Self {
             algorithm,
-            mode: PrkMode::Expand {
-                key: Arc::new(ZeroizeBoxSlice::from(value)),
-            },
+            mode: PrkMode::Expand { key },
         })
     }
 
@@ -407,13 +445,11 @@ impl Prk {
 impl From<Okm<'_, Algorithm>> for Prk {
     fn from(okm: Okm<Algorithm>) -> Self {
         let algorithm = okm.len;
-        // Fill the heap allocation directly so the derived key is never held on the stack.
-        let mut key = ZeroizeBoxSlice::zeroed(okm.len.len());
-        okm.fill(&mut key).unwrap();
+        let key = PrkKey::construct(algorithm.len(), |key_bytes| okm.fill(key_bytes)).unwrap();
 
         Self {
             algorithm,
-            mode: PrkMode::Expand { key: Arc::new(key) },
+            mode: PrkMode::Expand { key },
         }
     }
 }

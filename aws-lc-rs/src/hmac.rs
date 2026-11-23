@@ -28,7 +28,9 @@
 //! memory until it is overwritten. When the HMAC output is itself secret (for
 //! example, when HMAC is used to derive keys), use [`sign_to_buffer`] with a
 //! buffer that you wipe after use, such as a `zeroize::Zeroizing` array,
-//! rather than [`sign`] or [`Context::sign`].
+//! rather than [`sign`] or [`Context::sign`]. There is currently no multi-part
+//! equivalent of [`sign_to_buffer`]: [`Context::sign`] always returns a
+//! [`Tag`].
 //!
 //! This wiping is best-effort: it covers copies made by this crate, not
 //! transient copies that the compiler or the underlying digest implementation
@@ -283,7 +285,6 @@ impl Key {
     where
         F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
     {
-        // `Zeroizing` wipes the raw key bytes on every exit path, including unwinding.
         let mut key_bytes = Zeroizing::new([0; digest::MAX_OUTPUT_LEN]);
         let key_bytes = &mut key_bytes[..algorithm.tag_len()];
         fill(key_bytes)?;

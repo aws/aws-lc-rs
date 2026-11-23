@@ -101,6 +101,7 @@ use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
+use zeroize::Zeroizing;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum AlgorithmId {
@@ -255,7 +256,7 @@ impl Key {
     /// # Errors
     /// `error::Unspecified` if random generation or key construction fails.
     pub fn generate(algorithm: Algorithm) -> Result<Self, Unspecified> {
-        let mut key_bytes = vec![0u8; algorithm.key_len()];
+        let mut key_bytes = Zeroizing::new(vec![0u8; algorithm.key_len()]);
         rand::fill(&mut key_bytes)?;
         Self::new(algorithm, &key_bytes)
     }
@@ -529,6 +530,17 @@ mod tests {
             let tag = sign(&key, data).unwrap();
             assert!(verify(&key, data, tag.as_ref()).is_ok());
             assert!(verify(&key, b"hello, worle", tag.as_ref()).is_err());
+        }
+    }
+
+    // `Key::generate` must key the context with the random bytes it generated.
+    #[test]
+    fn cmac_generate_uses_random_key() {
+        for &algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
+            let data = b"hello, world";
+            let tag1 = sign(&Key::generate(algorithm).unwrap(), data).unwrap();
+            let tag2 = sign(&Key::generate(algorithm).unwrap(), data).unwrap();
+            assert_ne!(tag1.as_ref(), tag2.as_ref());
         }
     }
 
