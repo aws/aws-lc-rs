@@ -610,6 +610,43 @@ fn rsa_pss_runtime_salt_length() {
     }
 }
 
+#[test]
+fn rsa_pss_prehashed_is_not_approved() {
+    let key_pair = RsaKeyPair::from_pkcs8(&TEST_RSA_2048_PRIVATE_PKCS8_DER[..]).unwrap();
+    let alg = &digest::SHA3_256;
+    let signing = RsaSignatureEncoding::get(RsaSignaturePadding::PSS, alg).unwrap();
+    let verifying = RsaParameters::get(RsaSignaturePadding::PSS, alg, KeySize::Rsa2048).unwrap();
+    let message = TEST_MESSAGE.as_bytes();
+    let message_digest = digest::digest(alg, message);
+    let public_key = key_pair.public_key().as_ref();
+    let mut signature = vec![0; key_pair.public_modulus_len()];
+
+    // Run an approved operation first. AWS-LC runs its RSA self-test on the first RSA
+    // operation, and the self-test's hashing advances the indicator unless the caller has
+    // locked it. `EVP_DigestSign` and `EVP_DigestVerify` lock it, but the prehashed
+    // `EVP_PKEY_sign` and `EVP_PKEY_verify` do not.
+    assert_fips_status_indicator!(
+        key_pair.sign(signing, &SystemRandom::new(), message, &mut signature),
+        FipsServiceStatus::Approved
+    )
+    .unwrap();
+    assert_fips_status_indicator!(
+        verifying.verify_digest_sig(public_key, &message_digest, &signature),
+        FipsServiceStatus::NonApproved
+    )
+    .unwrap();
+    assert_fips_status_indicator!(
+        key_pair.sign_digest(signing, &message_digest, &mut signature),
+        FipsServiceStatus::NonApproved
+    )
+    .unwrap();
+    assert_fips_status_indicator!(
+        verifying.verify_sig(public_key, message, &signature),
+        FipsServiceStatus::Approved
+    )
+    .unwrap();
+}
+
 macro_rules! rsa_verify {
     ($name:ident, $key:expr, $verify_alg:expr, $signature:expr, $verify_expect:path) => {
         #[test]

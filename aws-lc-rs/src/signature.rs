@@ -99,10 +99,10 @@
 //! [RFC 3447 Section 8.2].
 //!
 //! The public key is encoded as an ASN.1 `RSAPublicKey` as described in
-//! [RFC 3447 Appendix-A.1.1]. The public key modulus length, rounded *up* to
-//! the nearest (larger) multiple of 8 bits, must be in the range given in the
-//! name of the algorithm. The public exponent must be an odd integer of 2-33
-//! bits, inclusive.
+//! [RFC 3447 Appendix-A.1.1], or as a DER-encoded X.509 `SubjectPublicKeyInfo`
+//! structure. The exact modulus length in bits must be within the inclusive range
+//! specified by the verification algorithm; it is not rounded to a byte boundary.
+//! The public exponent must be an odd integer of 2-33 bits, inclusive.
 //!
 //!
 //! ## `RSA_PSS_*` Details: RSA PSS Signatures
@@ -110,11 +110,9 @@
 //! The signature is an RSASSA-PSS signature as described in
 //! [RFC 3447 Section 8.1].
 //!
-//! The public key is encoded as an ASN.1 `RSAPublicKey` as described in
-//! [RFC 3447 Appendix-A.1.1]. The public key modulus length, rounded *up* to
-//! the nearest (larger) multiple of 8 bits, must be in the range given in the
-//! name of the algorithm. The public exponent must be an odd integer of 2-33
-//! bits, inclusive.
+//! As with PKCS#1 v1.5, verification accepts DER-encoded `RSAPublicKey` or
+//! `SubjectPublicKeyInfo`, checks the exact modulus length in bits against the
+//! algorithm's inclusive range, and requires an odd public exponent of 2-33 bits.
 //!
 //! Signing and verification use the message digest algorithm for MGF1. The salt length
 //! defaults to the digest length, as required by TLS 1.3. For a different salt length,
@@ -127,6 +125,9 @@
 //! rejects it. If the key carries `RSASSA-PSS-params`, verification also fails unless the
 //! key's hash algorithm and MGF1 hash algorithm are both the digest of the selected
 //! algorithm, and the algorithm's salt length is at least the key's `saltLength`.
+//! AWS-LC recognizes only SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512 in these
+//! key parameters. PSS signatures using SHA-512/256 or SHA-3 can still be verified
+//! with an `rsaEncryption` key or an `id-RSASSA-PSS` key with absent parameters.
 //!
 //!
 //! ## `ML_DSA_*` Details: ML-DSA (FIPS 204) Signatures
@@ -253,31 +254,21 @@
 //!
 //! ## Signing and verifying with RSA (PKCS#1 1.5 padding)
 //!
-//! By default OpenSSL writes RSA public keys in `SubjectPublicKeyInfo` format,
-//! not `RSAPublicKey` format, and Base64-encodes them (“PEM” format).
-//!
-//! To convert the PEM `SubjectPublicKeyInfo` format (“BEGIN PUBLIC KEY”) to the
-//! binary `RSAPublicKey` format needed by `verify()`, use:
+//! To convert a PEM public key (`BEGIN PUBLIC KEY`) to DER, keep the
+//! `SubjectPublicKeyInfo` so verification can enforce any RSA-PSS restrictions:
 //!
 //! ```sh
-//! openssl rsa -pubin \
-//!             -in public_key.pem \
-//!             -inform PEM \
-//!             -RSAPublicKey_out \
-//!             -outform DER \
-//!             -out public_key.der
+//! openssl pkey -pubin -in public_key.pem -outform DER -out public_key.der
 //! ```
 //!
-//! To extract the RSAPublicKey-formatted public key from an ASN.1 (binary)
-//! DER-encoded `RSAPrivateKey` format private key file, use:
+//! To extract the public key in the same format from a DER-encoded `RSAPrivateKey`:
 //!
 //! ```sh
-//! openssl rsa -in private_key.der \
-//!             -inform DER \
-//!             -RSAPublicKey_out \
-//!             -outform DER \
-//!             -out public_key.der
+//! openssl pkey -inform DER -in private_key.der -pubout -outform DER -out public_key.der
 //! ```
+//!
+//! Verification also accepts a DER-encoded `RSAPublicKey`, which is the format of the
+//! public key file used in this example.
 //!
 //! ```
 //! use aws_lc_rs::{rand, signature};
@@ -441,9 +432,10 @@ pub trait VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
     ///
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * RSA Key Sizes: 1024 bits (legacy constants only), or 2048 bits or larger (an even number of bits)
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
+    // * RSA-PSS salt length: the digest length
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
@@ -464,9 +456,10 @@ pub trait VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
     ///
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * RSA Key Sizes: 1024 bits (legacy constants only), or 2048 bits or larger (an even number of bits)
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
+    // * RSA-PSS salt length: the digest length
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
@@ -609,9 +602,10 @@ impl ParsedPublicKey {
     ///
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * RSA Key Sizes: 1024 bits (legacy constants only), or 2048 bits or larger (an even number of bits)
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
+    // * RSA-PSS salt length: the digest length
     //
     /// # Errors
     /// `error::Unspecified` if the signature is invalid or verification fails.
@@ -706,9 +700,10 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * RSA Key Sizes: 1024 bits (legacy constants only), or 2048 bits or larger (an even number of bits)
     // * NIST Elliptic Curves: P256, P384, P521
-    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    // * Digest Algorithms: SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
+    // * RSA-PSS salt length: the digest length
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.

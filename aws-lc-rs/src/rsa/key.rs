@@ -29,7 +29,6 @@ use core::ffi::c_int;
 use crate::digest::{match_digest_type, Digest};
 use crate::pkcs8::Version;
 use crate::rsa::encoding::{rfc5280, rfc8017};
-
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
 use zeroize::Zeroize;
@@ -234,7 +233,7 @@ impl KeyPair {
     /// not required to be a `'static` reference.
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 2048, 3072, 4096
+    // * RSA Key Sizes: 2048 bits or larger (an even number of bits)
     // * Digest Algorithms: SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
     // * RSA-PSS salt length: the digest length
     //
@@ -506,7 +505,15 @@ impl PublicKey {
         Ok(PublicKey { key })
     }
 
-    /// Parses an RSA public key from either RFC8017 or RFC5280
+    /// Parses a DER-encoded `RSAPublicKey` (RFC 8017) or `SubjectPublicKeyInfo` (RFC 5280).
+    ///
+    /// This type stores only the modulus and public exponent. To enforce the restrictions of
+    /// an `id-RSASSA-PSS` key during verification, pass the original `SubjectPublicKeyInfo`
+    /// bytes to [`ParsedPublicKey::new`] or [`UnparsedPublicKey::new`].
+    ///
+    /// [`ParsedPublicKey::new`]: crate::signature::ParsedPublicKey::new
+    /// [`UnparsedPublicKey::new`]: crate::signature::UnparsedPublicKey::new
+    ///
     /// # Errors
     /// `KeyRejected` if the encoding is not for a valid RSA key.
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
