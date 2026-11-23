@@ -214,9 +214,10 @@ pub trait KeyType {
 
 #[derive(Clone)]
 enum PrkMode {
+    // Heap-allocated so that moving or cloning a `Prk` never copies the key bytes, and they are
+    // wiped when the last clone is dropped.
     Expand {
-        key_bytes: [u8; MAX_HKDF_PRK_LEN],
-        key_len: usize,
+        key: Arc<ZeroizeBoxSlice<u8>>,
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
@@ -229,13 +230,13 @@ impl PrkMode {
         let digest = digest::match_digest_type(&algorithm.0.digest_algorithm().id).as_const_ptr();
 
         match &self {
-            PrkMode::Expand { key_bytes, key_len } => unsafe {
+            PrkMode::Expand { key } => unsafe {
                 if 1 != indicator_check!(HKDF_expand(
                     out.as_mut_ptr(),
                     out.len(),
                     digest,
-                    key_bytes.as_ptr(),
-                    *key_len,
+                    key.as_ptr(),
+                    key.len(),
                     info.as_ptr(),
                     info.len(),
                 )) {
@@ -276,11 +277,23 @@ impl fmt::Debug for PrkMode {
 
 struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
 
+impl ZeroizeBoxSlice<u8> {
+    fn zeroed(len: usize) -> Self {
+        Self(vec![0u8; len].into_boxed_slice())
+    }
+}
+
 impl<T: Zeroize> core::ops::Deref for ZeroizeBoxSlice<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<T: Zeroize> core::ops::DerefMut for ZeroizeBoxSlice<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -301,17 +314,6 @@ impl<T: Zeroize> Drop for ZeroizeBoxSlice<T> {
 pub struct Prk {
     algorithm: Algorithm,
     mode: PrkMode,
-}
-
-impl Drop for Prk {
-    fn drop(&mut self) {
-        if let PrkMode::Expand {
-            ref mut key_bytes, ..
-        } = self.mode
-        {
-            key_bytes.zeroize();
-        }
-    }
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -348,15 +350,14 @@ impl Prk {
     }
 
     fn try_new_less_safe(algorithm: Algorithm, value: &[u8]) -> Result<Prk, Unspecified> {
-        let key_len = value.len();
-        if key_len > MAX_HKDF_PRK_LEN {
+        if value.len() > MAX_HKDF_PRK_LEN {
             return Err(Unspecified);
         }
-        let mut key_bytes = [0u8; MAX_HKDF_PRK_LEN];
-        key_bytes[0..key_len].copy_from_slice(value);
         Ok(Self {
             algorithm,
-            mode: PrkMode::Expand { key_bytes, key_len },
+            mode: PrkMode::Expand {
+                key: Arc::new(ZeroizeBoxSlice::from(value)),
+            },
         })
     }
 
@@ -406,13 +407,13 @@ impl Prk {
 impl From<Okm<'_, Algorithm>> for Prk {
     fn from(okm: Okm<Algorithm>) -> Self {
         let algorithm = okm.len;
-        let key_len = okm.len.len();
-        let mut key_bytes = [0u8; MAX_HKDF_PRK_LEN];
-        okm.fill(&mut key_bytes[0..key_len]).unwrap();
+        // Fill the heap allocation directly so the derived key is never held on the stack.
+        let mut key = ZeroizeBoxSlice::zeroed(okm.len.len());
+        okm.fill(&mut key).unwrap();
 
         Self {
             algorithm,
-            mode: PrkMode::Expand { key_bytes, key_len },
+            mode: PrkMode::Expand { key: Arc::new(key) },
         }
     }
 }
@@ -503,7 +504,10 @@ impl<L: KeyType> Okm<'_, L> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hkdf::{Salt, HKDF_SHA256, HKDF_SHA384};
+    use crate::hkdf::{
+        KeyType, Prk, Salt, HKDF_SHA1_FOR_LEGACY_USE_ONLY, HKDF_SHA256, HKDF_SHA384, HKDF_SHA512,
+        MAX_HKDF_PRK_LEN,
+    };
 
     #[cfg(feature = "fips")]
     mod fips;
@@ -614,5 +618,47 @@ mod tests {
 
         // Verify outputs are different (they should be due to different salts)
         assert_ne!(output, output2);
+    }
+
+    // `Prk::from(Okm)` must hold exactly the derived bytes.
+    #[test]
+    fn test_prk_from_okm_matches_new_less_safe() {
+        for &alg in &[
+            HKDF_SHA1_FOR_LEGACY_USE_ONLY,
+            HKDF_SHA256,
+            HKDF_SHA384,
+            HKDF_SHA512,
+        ] {
+            let prk = Salt::new(alg, b"salt").extract(b"input keying material");
+            let info: &[&[u8]] = &[b"prk"];
+
+            let derived = Prk::from(prk.expand(info, alg).unwrap());
+
+            let mut prk_bytes = [0u8; MAX_HKDF_PRK_LEN];
+            let prk_bytes = &mut prk_bytes[..alg.len()];
+            prk.expand(info, alg).unwrap().fill(prk_bytes).unwrap();
+            let explicit = Prk::new_less_safe(alg, prk_bytes);
+
+            let out_info: &[&[u8]] = &[b"output"];
+            let mut out_derived = [0u8; MAX_HKDF_PRK_LEN];
+            let mut out_explicit = [0u8; MAX_HKDF_PRK_LEN];
+            derived
+                .expand(out_info, alg)
+                .unwrap()
+                .fill(&mut out_derived[..alg.len()])
+                .unwrap();
+            explicit
+                .expand(out_info, alg)
+                .unwrap()
+                .fill(&mut out_explicit[..alg.len()])
+                .unwrap();
+            assert_eq!(out_derived, out_explicit);
+        }
+    }
+
+    #[test]
+    fn test_prk_new_less_safe_length_limit() {
+        assert!(Prk::try_new_less_safe(HKDF_SHA256, &[0u8; MAX_HKDF_PRK_LEN]).is_ok());
+        assert!(Prk::try_new_less_safe(HKDF_SHA256, &[0u8; MAX_HKDF_PRK_LEN + 1]).is_err());
     }
 }
