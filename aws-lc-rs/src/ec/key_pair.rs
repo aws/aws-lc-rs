@@ -234,7 +234,7 @@ impl EcdsaKeyPair {
     /// let algorithm = EcdsaSigningAlgorithm::get(
     ///     key_pair.algorithm().curve(),
     ///     &SHA512,
-    ///     EcdsaSignatureFormat::Asn1,
+    ///     EcdsaSignatureFormat::ASN1,
     /// )
     /// .ok_or(Unspecified)?;
     /// let sha512_key_pair = key_pair.with_algorithm(algorithm)?;
@@ -280,7 +280,7 @@ impl EcdsaKeyPair {
         )?;
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),
@@ -306,7 +306,7 @@ impl EcdsaKeyPair {
             .sign_digest(digest, No_EVP_PKEY_CTX_consumer)?;
 
         Ok(match self.algorithm.sig_format {
-            EcdsaSignatureFormat::Asn1 => Signature::new(|slice| {
+            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
                 slice[..out_sig.len()].copy_from_slice(&out_sig);
                 out_sig.len()
             }),

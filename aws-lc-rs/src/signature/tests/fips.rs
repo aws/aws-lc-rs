@@ -149,12 +149,12 @@ macro_rules! ecdsa_lookup_asn1 {
                 EcdsaSigningAlgorithm::get(
                     EcdsaCurve::$curve,
                     &digest::$digest,
-                    EcdsaSignatureFormat::Asn1,
+                    EcdsaSignatureFormat::ASN1,
                 ).unwrap(),
                 EcdsaVerificationAlgorithm::get(
                     EcdsaCurve::$curve,
                     &digest::$digest,
-                    EcdsaSignatureFormat::Asn1,
+                    EcdsaSignatureFormat::ASN1,
                 ).unwrap(),
                 FipsServiceStatus::Approved,
                 FipsServiceStatus::Approved
@@ -184,8 +184,8 @@ fn ecdsa_with_algorithm() {
     .unwrap();
 
     for (digest_alg, format) in [
-        (&digest::SHA224, EcdsaSignatureFormat::Asn1),
-        (&digest::SHA512, EcdsaSignatureFormat::Asn1),
+        (&digest::SHA224, EcdsaSignatureFormat::ASN1),
+        (&digest::SHA512, EcdsaSignatureFormat::ASN1),
         (&digest::SHA256, EcdsaSignatureFormat::Fixed),
     ] {
         let signing_alg = EcdsaSigningAlgorithm::get(EcdsaCurve::P256, digest_alg, format).unwrap();
@@ -236,7 +236,7 @@ fn ecdsa_sign_digest_rejects_mismatch_before_signing() {
     let wrong_digest =
         digest::Digest::import_less_safe(message_digest.as_ref(), &digest::SHA3_512).unwrap();
 
-    for format in [EcdsaSignatureFormat::Asn1, EcdsaSignatureFormat::Fixed] {
+    for format in [EcdsaSignatureFormat::ASN1, EcdsaSignatureFormat::Fixed] {
         let signing_alg =
             EcdsaSigningAlgorithm::get(EcdsaCurve::P256, &digest::SHA512, format).unwrap();
         let verification_alg =
