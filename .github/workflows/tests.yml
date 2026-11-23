@@ -804,11 +804,14 @@ jobs:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
         name: Update Cmake
-        # Use latest CMake
+        # Use latest CMake. Homebrew no longer provides bottles for Intel macOS,
+        # so upgrading there builds CMake from source (~25 minutes); keep the
+        # runner image's CMake on x86_64.
         run: |
-          brew update
-          brew uninstall --force cmake
-          brew install --force cmake
+          if [ "$(uname -m)" = 'arm64' ]; then
+            brew update
+            brew install --force cmake
+          fi
           cmake --version
           echo 'CMAKE=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test

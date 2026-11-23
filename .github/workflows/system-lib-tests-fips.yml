@@ -83,9 +83,14 @@ jobs:
 
       - name: Update CMake (macOS)
         if: startsWith(matrix.os, 'macos-')
+        # Use latest CMake. Homebrew no longer provides bottles for Intel macOS,
+        # so upgrading there builds CMake from source (~25 minutes); keep the
+        # runner image's CMake on x86_64.
         run: |
-          brew update
-          brew install --force cmake
+          if [ "$(uname -m)" = 'arm64' ]; then
+            brew update
+            brew install --force cmake
+          fi
           cmake --version
 
       - name: Install bindgen-cli
