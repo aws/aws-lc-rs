@@ -143,11 +143,12 @@ See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.
 | OpenWrt (aarch64-musl)    | ✓     |       |
 | Alpine Linux              | ✓     | ✓     |
 
-`wasm32-wasip2` builds with stable Rust. `wasm32-wasip3` requires nightly Rust.
-Both targets use wasi-sdk 34, with the target's `CC` set to its Clang and
-`CFLAGS` set to its sysroot. Older WASI SDKs emit an incompatible WASIp3 thread
-context ABI. Direct `aws-lc-sys` users must disable the default `all-bindings`
-feature to use universal bindings on these targets.
+`wasm32-wasip2` builds with stable Rust. `wasm32-wasip3` builds with stable Rust
+1.100 or later (earlier versions require nightly). Both targets use wasi-sdk 34,
+with the target's `CC` set to its Clang and `CFLAGS` set to its sysroot. Older
+WASI SDKs emit an incompatible WASIp3 thread context ABI. Direct `aws-lc-sys`
+users must disable the default `all-bindings` feature to use universal bindings
+on these targets.
 
 [AWS-LC]: https://github.com/aws/aws-lc
 [platform-support]: https://doc.rust-lang.org/rustc/platform-support.html
