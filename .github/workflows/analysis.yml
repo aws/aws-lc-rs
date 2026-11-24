@@ -129,6 +129,7 @@ jobs:
         uses: actions/dependency-review-action@v5
         with:
           allow-licenses: Apache-2.0, ISC, MIT, MIT-0
+          allow-dependencies-licenses: pkg:cargo/aws-lc-rs, pkg:cargo/aws-lc-sys, pkg:cargo/aws-lc-fips-sys
 
   udeps:
     if: github.repository_owner == 'aws'
