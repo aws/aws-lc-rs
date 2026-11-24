@@ -7,6 +7,7 @@
 //!
 //! See draft-ietf-quic-tls.
 
+use crate::buffer::ZeroizingSlice;
 use crate::cipher::aes::encrypt_block;
 use crate::cipher::block;
 use crate::cipher::chacha::encrypt_block_chacha20;
@@ -24,9 +25,9 @@ impl From<hkdf::Okm<'_, &'static Algorithm>> for HeaderProtectionKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
         let mut key_bytes = [0; super::MAX_KEY_LEN];
         let algorithm = *okm.len();
-        let key_bytes = &mut key_bytes[..algorithm.key_len()];
-        okm.fill(key_bytes).unwrap();
-        Self::new(algorithm, key_bytes).unwrap()
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes[..algorithm.key_len()]);
+        okm.fill(&mut key_bytes).unwrap();
+        Self::new(algorithm, &key_bytes).unwrap()
     }
 }
 

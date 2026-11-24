@@ -15,6 +15,27 @@
 //! used. Otherwise, if the input is in multiple parts, `Context` should be
 //! used.
 //!
+//! # Key material in memory
+//!
+//! A [`Key`], and each [`Context`] created from it, keeps its keyed state in a
+//! heap allocation that is initialized and copied in place and is wiped when
+//! dropped, so moving a `Key` or `Context` does not leave copies of that state
+//! behind. The one-shot [`sign`], [`sign_to_buffer`], and [`verify`] functions
+//! wipe their working state before returning. The `key_value` passed to
+//! [`Key::new`] is owned by the caller, who is responsible for wiping it.
+//!
+//! [`Tag`] is `Copy` and is never wiped, so every copy of a tag remains in
+//! memory until it is overwritten. When the HMAC output is itself secret (for
+//! example, when HMAC is used to derive keys), use [`sign_to_buffer`] with a
+//! buffer that you wipe after use, such as a `zeroize::Zeroizing` array,
+//! rather than [`sign`] or [`Context::sign`]. There is currently no multi-part
+//! equivalent of [`sign_to_buffer`]: [`Context::sign`] always returns a
+//! [`Tag`].
+//!
+//! This wiping is best-effort: it covers copies made by this crate, not
+//! transient copies that the compiler or the underlying digest implementation
+//! may leave in registers or on the stack.
+//!
 //! # Examples:
 //!
 //! ## Signing a value and verifying it wasn't tampered with
@@ -96,9 +117,9 @@
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
 use crate::aws_lc::{
-    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
-    HMAC_CTX,
+    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_Final, HMAC_Init_ex, HMAC_Update, HMAC_CTX,
 };
+use crate::buffer::ZeroizingSlice;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::{constant_time, digest, hkdf};
@@ -160,6 +181,10 @@ pub const HMAC_SHA512: Algorithm = Algorithm(&digest::SHA512);
 /// An HMAC tag.
 ///
 /// For a given tag `t`, use `t.as_ref()` to get the tag value as a byte slice.
+///
+/// `Tag` is `Copy` and is not wiped when dropped. See the
+/// [module documentation](self#key-material-in-memory) for how to handle HMAC
+/// outputs that are secret.
 #[derive(Clone, Copy, Debug)]
 pub struct Tag {
     msg: [u8; digest::MAX_OUTPUT_LEN],
@@ -173,29 +198,53 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
-struct LcHmacCtx(HMAC_CTX);
+/// Brings uninitialized storage for an `HMAC_CTX` to the initial state of a context.
+///
+/// An all-zero `HMAC_CTX` is in its initial state: AWS-LC requires that `HMAC_CTX ctx = {0};`
+/// gives a usable context. The storage is zeroed here rather than by `HMAC_CTX_init`, which does
+/// the same but can be much slower: GCC compiles its fixed-size `memset` to `rep stos` on x86-64.
+///
+/// # Safety
+/// `ctx` must be valid for writes of an `HMAC_CTX`.
+#[inline]
+unsafe fn hmac_ctx_init(ctx: *mut HMAC_CTX) {
+    unsafe { ctx.write_bytes(0, 1) };
+}
+
+/// A heap-allocated `HMAC_CTX` that is wiped when dropped.
+///
+/// The allocation is owned by Rust, rather than obtained from `HMAC_CTX_new`, so that the context
+/// is wiped once when dropped: `HMAC_CTX_free` wipes it, and then `OPENSSL_free` wipes it again.
+struct LcHmacCtx(Box<MaybeUninit<HMAC_CTX>>);
 
 impl LcHmacCtx {
-    fn as_mut_ptr(&mut self) -> *mut HMAC_CTX {
-        &mut self.0
-    }
-    fn as_ptr(&self) -> *const HMAC_CTX {
-        &self.0
+    fn new() -> Self {
+        let mut ctx = Box::new(MaybeUninit::<HMAC_CTX>::uninit());
+        unsafe { hmac_ctx_init(ctx.as_mut_ptr()) };
+        Self(ctx)
     }
 
-    fn try_clone(&self) -> Result<Self, Unspecified> {
-        unsafe {
-            let mut hmac_ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            HMAC_CTX_init(hmac_ctx.as_mut_ptr());
-            let mut hmac_ctx = hmac_ctx.assume_init();
-            if 1 != HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr()) {
-                return Err(Unspecified);
-            }
-            Ok(LcHmacCtx(hmac_ctx))
-        }
+    fn as_const_ptr(&self) -> *const HMAC_CTX {
+        self.0.as_ptr()
+    }
+
+    fn as_mut_ptr(&mut self) -> *mut HMAC_CTX {
+        self.0.as_mut_ptr()
     }
 }
-unsafe impl Send for LcHmacCtx {}
+
+impl Clone for LcHmacCtx {
+    fn clone(&self) -> Self {
+        let mut new_ctx = Self::new();
+        unsafe {
+            assert!(
+                1 == HMAC_CTX_copy_ex(new_ctx.as_mut_ptr(), self.as_const_ptr()),
+                "HMAC_CTX_copy_ex failed"
+            );
+        }
+        new_ctx
+    }
+}
 
 impl Drop for LcHmacCtx {
     fn drop(&mut self) {
@@ -203,9 +252,12 @@ impl Drop for LcHmacCtx {
     }
 }
 
-impl Clone for LcHmacCtx {
-    fn clone(&self) -> Self {
-        self.try_clone().expect("Unable to clone LcHmacCtx")
+/// Wipes the `HMAC_CTX` it points to when dropped, including when unwinding.
+struct CleanseOnDrop(*mut HMAC_CTX);
+
+impl Drop for CleanseOnDrop {
+    fn drop(&mut self) {
+        unsafe { HMAC_CTX_cleanup(self.0) }
     }
 }
 
@@ -221,11 +273,14 @@ impl Clone for LcHmacCtx {
 #[derive(Clone)]
 pub struct Key {
     pub(crate) algorithm: Algorithm,
+    // Heap-allocated so that the keyed state is initialized and copied in place, is never
+    // copied by a move of `Key`, and is wiped on drop.
     ctx: LcHmacCtx,
 }
 
 unsafe impl Send for Key {}
-// All uses of *mut HMAC_CTX require the creation of a Context, which will clone the Key.
+// A shared `Key` only ever reads its `HMAC_CTX` (to copy it). Mutation happens only on a copy
+// owned by a `Context` or by a one-shot operation.
 unsafe impl Sync for Key {}
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -269,9 +324,9 @@ impl Key {
         F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
-        let key_bytes = &mut key_bytes[..algorithm.tag_len()];
-        fill(key_bytes)?;
-        Ok(Self::new(algorithm, key_bytes))
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes[..algorithm.tag_len()]);
+        fill(&mut key_bytes)?;
+        Ok(Self::new(algorithm, &key_bytes))
     }
 
     /// Construct an HMAC signing key using the given digest algorithm and key
@@ -302,25 +357,20 @@ impl Key {
     }
 
     fn try_new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
-        unsafe {
-            let mut ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            HMAC_CTX_init(ctx.as_mut_ptr());
-            let evp_md_type = digest::match_digest_type(&algorithm.digest_algorithm().id);
-            if 1 != HMAC_Init_ex(
+        let mut ctx = LcHmacCtx::new();
+        let evp_md_type = digest::match_digest_type(&algorithm.digest_algorithm().id);
+        if 1 != unsafe {
+            HMAC_Init_ex(
                 ctx.as_mut_ptr(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
                 evp_md_type.as_const_ptr(),
                 null_mut(),
-            ) {
-                return Err(Unspecified);
-            }
-            let result = Self {
-                algorithm,
-                ctx: LcHmacCtx(ctx.assume_init()),
-            };
-            Ok(result)
+            )
+        } {
+            return Err(Unspecified);
         }
+        Ok(Self { algorithm, ctx })
     }
 
     unsafe fn get_hmac_ctx_ptr(&mut self) -> *mut HMAC_CTX {
@@ -447,19 +497,27 @@ pub(crate) fn internal_sign<'in_out>(
     output: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
     let tag_len = ctx.key.algorithm().tag_len();
+    unsafe { hmac_final(ctx.key.get_hmac_ctx_ptr(), tag_len, output) }
+}
+
+/// Finalizes the HMAC in `ctx`, writing the tag to the start of `output`.
+///
+/// # Safety
+/// `ctx` must point to a valid, keyed `HMAC_CTX` whose tag length is `tag_len`.
+#[inline]
+unsafe fn hmac_final(
+    ctx: *mut HMAC_CTX,
+    tag_len: usize,
+    output: &mut [u8],
+) -> Result<&mut [u8], Unspecified> {
     if output.len() < tag_len {
         return Err(Unspecified);
     }
 
     let mut out_len = MaybeUninit::<c_uint>::uninit();
 
-    if 1 != indicator_check!(unsafe {
-        HMAC_Final(
-            ctx.key.get_hmac_ctx_ptr(),
-            output.as_mut_ptr(),
-            out_len.as_mut_ptr(),
-        )
-    }) {
+    if 1 != indicator_check!(unsafe { HMAC_Final(ctx, output.as_mut_ptr(), out_len.as_mut_ptr()) })
+    {
         return Err(Unspecified);
     }
     let actual_len = unsafe { out_len.assume_init() } as usize;
@@ -470,6 +528,31 @@ pub(crate) fn internal_sign<'in_out>(
     );
 
     Ok(&mut output[0..tag_len])
+}
+
+/// Computes the HMAC of `data` under `key` into `output` without creating a `Context`.
+///
+/// The keyed state is copied into an `HMAC_CTX` in this function's stack frame, used only through
+/// a pointer so that it is never moved, and wiped before returning, so no copy of it outlives the
+/// call and no heap allocation is needed.
+fn sign_one_shot<'out>(
+    key: &Key,
+    data: &[u8],
+    output: &'out mut [u8],
+) -> Result<&'out mut [u8], Unspecified> {
+    let mut storage = MaybeUninit::<HMAC_CTX>::uninit();
+    let ctx = storage.as_mut_ptr();
+    unsafe { hmac_ctx_init(ctx) };
+    let _cleanse = CleanseOnDrop(ctx);
+    unsafe {
+        if 1 != HMAC_CTX_copy_ex(ctx, key.ctx.as_const_ptr()) {
+            return Err(Unspecified);
+        }
+        if 1 != HMAC_Update(ctx, data.as_ptr(), data.len()) {
+            return Err(Unspecified);
+        }
+        hmac_final(ctx, key.algorithm.tag_len(), output)
+    }
 }
 
 /// Calculates the HMAC of `data` using the key `key` in one step.
@@ -486,12 +569,20 @@ pub(crate) fn internal_sign<'in_out>(
 // * `HMAC_SHA256`
 // * `HMAC_SHA384`
 // * `HMAC_SHA512`
+//
+/// # Panics
+/// Panics if the HMAC calculation fails
 #[inline]
 #[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
-    let mut ctx = Context::with_key(key);
-    ctx.update(data);
-    ctx.sign()
+    let mut tag = Tag {
+        msg: [0u8; digest::MAX_OUTPUT_LEN],
+        msg_len: 0,
+    };
+    tag.msg_len = sign_one_shot(key, data, &mut tag.msg)
+        .expect("HMAC signing failed")
+        .len();
+    tag
 }
 
 /// Calculates the HMAC of `data` using the key `key` in one step,
@@ -520,10 +611,7 @@ pub fn sign_to_buffer<'out>(
     data: &[u8],
     output: &'out mut [u8],
 ) -> Result<&'out mut [u8], Unspecified> {
-    let mut ctx = Context::with_key(key);
-    ctx.update(data);
-
-    internal_sign(&mut ctx, output)
+    sign_one_shot(key, data, output)
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies
@@ -546,15 +634,37 @@ pub fn sign_to_buffer<'out>(
 // * `HMAC_SHA512`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
-    constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)
+    // On failure, the computed tag is a valid tag for `data`, so wipe it rather than leave it on
+    // the stack.
+    let mut buf = [0u8; digest::MAX_OUTPUT_LEN];
+    let mut buf = ZeroizingSlice::new(&mut buf[..key.algorithm.tag_len()]);
+    let computed = sign_one_shot(key, data, &mut buf)?;
+    constant_time::verify_slices_are_equal(computed, tag)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{hmac, rand};
+    use crate::{digest, hkdf, hmac, rand};
 
     #[cfg(feature = "fips")]
     mod fips;
+
+    // `hmac_ctx_init` zeroes the storage instead of calling `HMAC_CTX_init`, so the initial state
+    // of a context must be all zeros.
+    #[test]
+    fn hmac_ctx_initial_state_is_zeroed() {
+        use crate::aws_lc::{HMAC_CTX_init, HMAC_CTX};
+        use core::mem::{size_of, MaybeUninit};
+
+        let mut storage = MaybeUninit::<HMAC_CTX>::uninit();
+        let ctx = storage.as_mut_ptr();
+        unsafe {
+            ctx.write_bytes(0, 1);
+            HMAC_CTX_init(ctx);
+            let bytes = core::slice::from_raw_parts(ctx.cast::<u8>(), size_of::<HMAC_CTX>());
+            assert!(bytes.iter().all(|&b| b == 0));
+        }
+    }
 
     #[test]
     fn hmac_algorithm_properties() {
@@ -616,6 +726,36 @@ mod tests {
             println!("{key:?}");
             assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
             assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err());
+        }
+    }
+
+    // `verify` must compare the whole tag.
+    #[test]
+    fn hmac_verify_rejects_modified_tags() {
+        for &algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::new(algorithm, b"key");
+            let data = b"hello, world";
+            let tag = hmac::sign(&key, data);
+            let tag = tag.as_ref();
+            assert!(hmac::verify(&key, data, tag).is_ok());
+
+            for i in 0..tag.len() {
+                let mut modified = tag.to_vec();
+                modified[i] ^= 1;
+                assert!(hmac::verify(&key, data, &modified).is_err());
+            }
+
+            assert!(hmac::verify(&key, data, &tag[..tag.len() - 1]).is_err());
+            assert!(hmac::verify(&key, data, &[]).is_err());
+            let mut extended = tag.to_vec();
+            extended.push(0);
+            assert!(hmac::verify(&key, data, &extended).is_err());
         }
     }
 
@@ -696,5 +836,33 @@ mod tests {
         // Empty buffer should fail
         let mut empty_buffer = vec![];
         assert!(hmac::sign_to_buffer(&key, data, &mut empty_buffer).is_err());
+    }
+
+    // `Key::from(Okm)` must be keyed with exactly the derived bytes.
+    #[test]
+    fn hmac_key_from_okm_matches_key_new() {
+        for &alg in &[
+            hkdf::HKDF_SHA1_FOR_LEGACY_USE_ONLY,
+            hkdf::HKDF_SHA256,
+            hkdf::HKDF_SHA384,
+            hkdf::HKDF_SHA512,
+        ] {
+            let hmac_alg = alg.hmac_algorithm();
+            let prk = hkdf::Salt::new(alg, b"salt").extract(b"input keying material");
+            let info: &[&[u8]] = &[b"hmac key"];
+
+            let derived = hmac::Key::from(prk.expand(info, hmac_alg).unwrap());
+
+            let mut key_bytes = [0u8; digest::MAX_OUTPUT_LEN];
+            let key_bytes = &mut key_bytes[..hmac_alg.tag_len()];
+            prk.expand(info, hmac_alg).unwrap().fill(key_bytes).unwrap();
+            let explicit = hmac::Key::new(hmac_alg, key_bytes);
+
+            let msg = b"hello, world";
+            assert_eq!(
+                hmac::sign(&derived, msg).as_ref(),
+                hmac::sign(&explicit, msg).as_ref()
+            );
+        }
     }
 }

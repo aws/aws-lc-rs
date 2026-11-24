@@ -9,6 +9,7 @@ use super::{
 use crate::aws_lc::{
     EVP_AEAD_CTX_open, EVP_AEAD_CTX_open_gather, EVP_AEAD_CTX_seal, EVP_AEAD_CTX_seal_scatter,
 };
+use crate::buffer::ZeroizingSlice;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::hkdf;
@@ -609,10 +610,10 @@ impl From<AeadCtx> for UnboundKey {
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
         let mut key_bytes = [0; MAX_KEY_LEN];
-        let key_bytes = &mut key_bytes[..okm.len().key_len];
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes[..okm.len().key_len]);
         let algorithm = *okm.len();
-        okm.fill(key_bytes).unwrap();
-        Self::new(algorithm, key_bytes).unwrap()
+        okm.fill(&mut key_bytes).unwrap();
+        Self::new(algorithm, &key_bytes).unwrap()
     }
 }
 

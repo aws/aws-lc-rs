@@ -95,6 +95,7 @@ use crate::aws_lc::{
     CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init, CMAC_Update, EVP_aes_128_cbc,
     EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX, EVP_CIPHER,
 };
+use crate::buffer::ZeroizingSlice;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
@@ -256,6 +257,7 @@ impl Key {
     /// `error::Unspecified` if random generation or key construction fails.
     pub fn generate(algorithm: Algorithm) -> Result<Self, Unspecified> {
         let mut key_bytes = vec![0u8; algorithm.key_len()];
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes);
         rand::fill(&mut key_bytes)?;
         Self::new(algorithm, &key_bytes)
     }
@@ -529,6 +531,17 @@ mod tests {
             let tag = sign(&key, data).unwrap();
             assert!(verify(&key, data, tag.as_ref()).is_ok());
             assert!(verify(&key, b"hello, worle", tag.as_ref()).is_err());
+        }
+    }
+
+    // `Key::generate` must key the context with the random bytes it generated.
+    #[test]
+    fn cmac_generate_uses_random_key() {
+        for &algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
+            let data = b"hello, world";
+            let tag1 = sign(&Key::generate(algorithm).unwrap(), data).unwrap();
+            let tag2 = sign(&Key::generate(algorithm).unwrap(), data).unwrap();
+            assert_ne!(tag1.as_ref(), tag2.as_ref());
         }
     }
 

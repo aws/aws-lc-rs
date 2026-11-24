@@ -45,12 +45,12 @@
 //! ```
 
 use crate::aws_lc::{HKDF_expand, HKDF};
+use crate::buffer::cleanse;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::{digest, hmac};
 use alloc::sync::Arc;
 use core::fmt;
-use zeroize::Zeroize;
 
 /// An HKDF algorithm.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -95,7 +95,9 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: Arc<[u8]>,
+    // A salt is not always public: TLS 1.3 extracts its master secret from a derived secret used
+    // as the salt and an all-zero IKM. So the bytes are wiped on drop.
+    bytes: ZeroizeBoxSlice,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -129,7 +131,7 @@ impl Salt {
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Self {
             algorithm,
-            bytes: Arc::from(value),
+            bytes: ZeroizeBoxSlice::from(value),
         }
     }
 
@@ -178,8 +180,8 @@ impl Salt {
         Prk {
             algorithm: self.algorithm,
             mode: PrkMode::ExtractExpand {
-                secret: Arc::new(ZeroizeBoxSlice::from(secret)),
-                salt: Arc::clone(&self.bytes),
+                secret_and_salt: Arc::new(ZeroizeBoxSlice::concat(secret, &self.bytes)),
+                secret_len: secret.len(),
             },
         }
     }
@@ -195,12 +197,13 @@ impl Salt {
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.len;
-        let salt_len = okm.len.len();
-        let mut salt_bytes = vec![0u8; salt_len];
+        // Fill the self-wiping heap buffer directly so the derived salt is never held anywhere
+        // else.
+        let mut salt_bytes = ZeroizeBoxSlice::zeroed(algorithm.len());
         okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: Arc::from(salt_bytes.as_slice()),
+            bytes: salt_bytes,
         }
     }
 }
@@ -214,13 +217,16 @@ pub trait KeyType {
 
 #[derive(Clone)]
 enum PrkMode {
+    // Heap-allocated so that moving a `Prk` never copies the key bytes, and they are wiped on
+    // drop. Uniquely owned, so that constructing and dropping a `Prk` involves no reference
+    // counting; cloning one copies the key to a new allocation.
     Expand {
-        key_bytes: [u8; MAX_HKDF_PRK_LEN],
-        key_len: usize,
+        key: ZeroizeBoxSlice,
     },
+    // The secret followed by the salt, in one allocation that the clones of a `Prk` share.
     ExtractExpand {
-        secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: Arc<[u8]>,
+        secret_and_salt: Arc<ZeroizeBoxSlice>,
+        secret_len: usize,
     },
 }
 
@@ -229,20 +235,24 @@ impl PrkMode {
         let digest = digest::match_digest_type(&algorithm.0.digest_algorithm().id).as_const_ptr();
 
         match &self {
-            PrkMode::Expand { key_bytes, key_len } => unsafe {
+            PrkMode::Expand { key } => unsafe {
                 if 1 != indicator_check!(HKDF_expand(
                     out.as_mut_ptr(),
                     out.len(),
                     digest,
-                    key_bytes.as_ptr(),
-                    *key_len,
+                    key.as_ptr(),
+                    key.len(),
                     info.as_ptr(),
                     info.len(),
                 )) {
                     return Err(Unspecified);
                 }
             },
-            PrkMode::ExtractExpand { secret, salt } => {
+            PrkMode::ExtractExpand {
+                secret_and_salt,
+                secret_len,
+            } => {
+                let (secret, salt) = secret_and_salt.split_at(*secret_len);
                 if 1 != indicator_check!(unsafe {
                     HKDF(
                         out.as_mut_ptr(),
@@ -274,25 +284,58 @@ impl fmt::Debug for PrkMode {
     }
 }
 
-struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
+/// Heap-allocated bytes that are zeroized when dropped.
+struct ZeroizeBoxSlice(Box<[u8]>);
 
-impl<T: Zeroize> core::ops::Deref for ZeroizeBoxSlice<T> {
-    type Target = [T];
+impl ZeroizeBoxSlice {
+    // `vec![0u8; len]`, which this lint suggests, allocates with `calloc`. glibc serves a `calloc`
+    // this small more slowly than a `malloc` of the same size.
+    #[allow(clippy::slow_vector_initialization)]
+    fn zeroed(len: usize) -> Self {
+        let mut bytes = Vec::with_capacity(len);
+        bytes.resize(len, 0u8);
+        Self(bytes.into_boxed_slice())
+    }
+
+    /// Returns `first` followed by `second`.
+    fn concat(first: &[u8], second: &[u8]) -> Self {
+        let mut bytes = Vec::with_capacity(first.len() + second.len());
+        bytes.extend_from_slice(first);
+        bytes.extend_from_slice(second);
+        Self(bytes.into_boxed_slice())
+    }
+}
+
+impl core::ops::Deref for ZeroizeBoxSlice {
+    type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<T: Clone + Zeroize> From<&[T]> for ZeroizeBoxSlice<T> {
-    fn from(value: &[T]) -> Self {
+impl core::ops::DerefMut for ZeroizeBoxSlice {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<&[u8]> for ZeroizeBoxSlice {
+    fn from(value: &[u8]) -> Self {
         Self(Vec::from(value).into_boxed_slice())
     }
 }
 
-impl<T: Zeroize> Drop for ZeroizeBoxSlice<T> {
+// Copies from one heap allocation to another, so the bytes never pass through the stack.
+impl Clone for ZeroizeBoxSlice {
+    fn clone(&self) -> Self {
+        Self::from(&**self)
+    }
+}
+
+impl Drop for ZeroizeBoxSlice {
     fn drop(&mut self) {
-        self.0.zeroize();
+        cleanse(&mut self.0);
     }
 }
 
@@ -301,17 +344,6 @@ impl<T: Zeroize> Drop for ZeroizeBoxSlice<T> {
 pub struct Prk {
     algorithm: Algorithm,
     mode: PrkMode,
-}
-
-impl Drop for Prk {
-    fn drop(&mut self) {
-        if let PrkMode::Expand {
-            ref mut key_bytes, ..
-        } = self.mode
-        {
-            key_bytes.zeroize();
-        }
-    }
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -348,15 +380,14 @@ impl Prk {
     }
 
     fn try_new_less_safe(algorithm: Algorithm, value: &[u8]) -> Result<Prk, Unspecified> {
-        let key_len = value.len();
-        if key_len > MAX_HKDF_PRK_LEN {
+        if value.len() > MAX_HKDF_PRK_LEN {
             return Err(Unspecified);
         }
-        let mut key_bytes = [0u8; MAX_HKDF_PRK_LEN];
-        key_bytes[0..key_len].copy_from_slice(value);
         Ok(Self {
             algorithm,
-            mode: PrkMode::Expand { key_bytes, key_len },
+            mode: PrkMode::Expand {
+                key: ZeroizeBoxSlice::from(value),
+            },
         })
     }
 
@@ -406,13 +437,13 @@ impl Prk {
 impl From<Okm<'_, Algorithm>> for Prk {
     fn from(okm: Okm<Algorithm>) -> Self {
         let algorithm = okm.len;
-        let key_len = okm.len.len();
-        let mut key_bytes = [0u8; MAX_HKDF_PRK_LEN];
-        okm.fill(&mut key_bytes[0..key_len]).unwrap();
+        // Fill the heap allocation directly so the derived key is never held on the stack.
+        let mut key = ZeroizeBoxSlice::zeroed(algorithm.len());
+        okm.fill(&mut key).unwrap();
 
         Self {
             algorithm,
-            mode: PrkMode::Expand { key_bytes, key_len },
+            mode: PrkMode::Expand { key },
         }
     }
 }
@@ -503,7 +534,10 @@ impl<L: KeyType> Okm<'_, L> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hkdf::{Salt, HKDF_SHA256, HKDF_SHA384};
+    use crate::hkdf::{
+        KeyType, Prk, Salt, HKDF_SHA1_FOR_LEGACY_USE_ONLY, HKDF_SHA256, HKDF_SHA384, HKDF_SHA512,
+        MAX_HKDF_PRK_LEN,
+    };
 
     #[cfg(feature = "fips")]
     mod fips;
@@ -614,5 +648,47 @@ mod tests {
 
         // Verify outputs are different (they should be due to different salts)
         assert_ne!(output, output2);
+    }
+
+    // `Prk::from(Okm)` must hold exactly the derived bytes.
+    #[test]
+    fn test_prk_from_okm_matches_new_less_safe() {
+        for &alg in &[
+            HKDF_SHA1_FOR_LEGACY_USE_ONLY,
+            HKDF_SHA256,
+            HKDF_SHA384,
+            HKDF_SHA512,
+        ] {
+            let prk = Salt::new(alg, b"salt").extract(b"input keying material");
+            let info: &[&[u8]] = &[b"prk"];
+
+            let derived = Prk::from(prk.expand(info, alg).unwrap());
+
+            let mut prk_bytes = [0u8; MAX_HKDF_PRK_LEN];
+            let prk_bytes = &mut prk_bytes[..alg.len()];
+            prk.expand(info, alg).unwrap().fill(prk_bytes).unwrap();
+            let explicit = Prk::new_less_safe(alg, prk_bytes);
+
+            let out_info: &[&[u8]] = &[b"output"];
+            let mut out_derived = [0u8; MAX_HKDF_PRK_LEN];
+            let mut out_explicit = [0u8; MAX_HKDF_PRK_LEN];
+            derived
+                .expand(out_info, alg)
+                .unwrap()
+                .fill(&mut out_derived[..alg.len()])
+                .unwrap();
+            explicit
+                .expand(out_info, alg)
+                .unwrap()
+                .fill(&mut out_explicit[..alg.len()])
+                .unwrap();
+            assert_eq!(out_derived, out_explicit);
+        }
+    }
+
+    #[test]
+    fn test_prk_new_less_safe_length_limit() {
+        assert!(Prk::try_new_less_safe(HKDF_SHA256, &[0u8; MAX_HKDF_PRK_LEN]).is_ok());
+        assert!(Prk::try_new_less_safe(HKDF_SHA256, &[0u8; MAX_HKDF_PRK_LEN + 1]).is_err());
     }
 }

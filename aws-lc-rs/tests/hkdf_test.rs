@@ -23,7 +23,7 @@ fn hkdf_tests() {
         let secret = test_case.consume_bytes("IKM");
         let salt = test_case.consume_bytes("salt");
         let info = test_case.consume_bytes("info");
-        test_case.consume_bytes("PRK");
+        let prk = test_case.consume_bytes("PRK");
         let expected_out = test_case.consume_bytes("OKM");
 
         let salt = hkdf::Salt::new(alg, &salt);
@@ -31,6 +31,13 @@ fn hkdf_tests() {
         // TODO: test multi-part info, especially with empty parts.
         let My(out) = salt
             .extract(&secret)
+            .expand(&[&info], My(expected_out.len()))
+            .unwrap()
+            .into();
+        assert_eq!(out, expected_out);
+
+        // Expanding the PRK directly must give the same OKM.
+        let My(out) = hkdf::Prk::new_less_safe(alg, &prk)
             .expand(&[&info], My(expected_out.len()))
             .unwrap()
             .into();
@@ -188,6 +195,98 @@ fn hkdf_cross_algorithm_salt_from_okm() {
     assert_eq!(from_derived, from_explicit);
 }
 
+// `UnboundKey::from(Okm)` must be keyed with exactly the derived bytes.
+#[test]
+fn hkdf_aead_key_from_okm_matches_explicit_key() {
+    const PLAINTEXT: &[u8] = b"hello, world";
+
+    let prk = hkdf::Salt::new(hkdf::HKDF_SHA256, b"salt").extract(b"input keying material");
+    let info: &[&[u8]] = &[b"aead key"];
+
+    for alg in [
+        &aead::AES_128_GCM,
+        &aead::AES_256_GCM,
+        &aead::CHACHA20_POLY1305,
+    ] {
+        let derived =
+            aead::LessSafeKey::new(aead::UnboundKey::from(prk.expand(info, alg).unwrap()));
+
+        let mut key_bytes = vec![0u8; alg.key_len()];
+        prk.expand(info, alg).unwrap().fill(&mut key_bytes).unwrap();
+        let explicit = aead::LessSafeKey::new(aead::UnboundKey::new(alg, &key_bytes).unwrap());
+
+        let mut in_out = PLAINTEXT.to_vec();
+        derived
+            .seal_in_place_append_tag(
+                aead::Nonce::assume_unique_for_key([0u8; aead::NONCE_LEN]),
+                aead::Aad::empty(),
+                &mut in_out,
+            )
+            .unwrap();
+        let opened = explicit
+            .open_in_place(
+                aead::Nonce::assume_unique_for_key([0u8; aead::NONCE_LEN]),
+                aead::Aad::empty(),
+                &mut in_out,
+            )
+            .unwrap();
+        assert_eq!(&*opened, PLAINTEXT);
+    }
+}
+
+// `UnboundCipherKey::from(Okm)` must be keyed with exactly the derived bytes.
+#[test]
+fn hkdf_cipher_key_from_okm_matches_explicit_key() {
+    const PLAINTEXT: &[u8] = b"hello, world";
+
+    let prk = hkdf::Salt::new(hkdf::HKDF_SHA256, b"salt").extract(b"input keying material");
+    let info: &[&[u8]] = &[b"cipher key"];
+
+    for (alg, key_len) in [
+        (&cipher::AES_128, cipher::AES_128_KEY_LEN),
+        (&cipher::AES_256, cipher::AES_256_KEY_LEN),
+    ] {
+        let derived = cipher::EncryptingKey::ctr(cipher::UnboundCipherKey::from(
+            prk.expand(info, alg).unwrap(),
+        ))
+        .unwrap();
+
+        let mut key_bytes = vec![0u8; key_len];
+        prk.expand(info, alg).unwrap().fill(&mut key_bytes).unwrap();
+        let explicit =
+            cipher::DecryptingKey::ctr(cipher::UnboundCipherKey::new(alg, &key_bytes).unwrap())
+                .unwrap();
+
+        let mut in_out = PLAINTEXT.to_vec();
+        let context = derived.encrypt(&mut in_out).unwrap();
+        let decrypted = explicit.decrypt(&mut in_out, context).unwrap();
+        assert_eq!(&*decrypted, PLAINTEXT);
+    }
+}
+
+// `HeaderProtectionKey::from(Okm)` must be keyed with exactly the derived bytes.
+#[test]
+fn hkdf_header_protection_key_from_okm_matches_explicit_key() {
+    use aead::quic;
+
+    let prk = hkdf::Salt::new(hkdf::HKDF_SHA256, b"salt").extract(b"input keying material");
+    let info: &[&[u8]] = &[b"header protection key"];
+    let sample = [0x5au8; 16];
+
+    for alg in [&quic::AES_128, &quic::AES_256, &quic::CHACHA20] {
+        let derived = quic::HeaderProtectionKey::from(prk.expand(info, alg).unwrap());
+
+        let mut key_bytes = vec![0u8; alg.key_len()];
+        prk.expand(info, alg).unwrap().fill(&mut key_bytes).unwrap();
+        let explicit = quic::HeaderProtectionKey::new(alg, &key_bytes).unwrap();
+
+        assert_eq!(
+            derived.new_mask(&sample).unwrap(),
+            explicit.new_mask(&sample).unwrap()
+        );
+    }
+}
+
 #[test]
 fn hkdf_clone_tests() {
     for &alg in &[
@@ -199,19 +298,25 @@ fn hkdf_clone_tests() {
         // Coverage sanity check.
         assert_eq!(alg.clone(), alg);
 
-        // Only using this API to construct a simple PRK.
-        let prk = hkdf::Prk::new_less_safe(alg, &[0; 32]);
-        let result: My<Vec<u8>> = prk
-            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
-            .unwrap()
-            .into();
+        // A clone must hold the same key material, whichever way the PRK was made. The key is
+        // not all zeros, so that a clone which lost its key bytes would be detected.
+        for prk in [
+            hkdf::Prk::new_less_safe(alg, &[0x5a; 32]),
+            hkdf::Salt::new(alg, b"salt").extract(b"input keying material"),
+        ] {
+            let result: My<Vec<u8>> = prk
+                .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+                .unwrap()
+                .into();
 
-        let prk_clone = prk.clone();
-        let result_2: My<Vec<u8>> = prk_clone
-            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
-            .unwrap()
-            .into();
-        assert_eq!(result, result_2);
+            let prk_clone = prk.clone();
+            drop(prk);
+            let result_2: My<Vec<u8>> = prk_clone
+                .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+                .unwrap()
+                .into();
+            assert_eq!(result, result_2);
+        }
     }
 }
 

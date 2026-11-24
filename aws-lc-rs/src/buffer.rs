@@ -6,9 +6,11 @@
 
 #![allow(clippy::module_name_repetitions)]
 
+use crate::aws_lc::OPENSSL_cleanse;
 use alloc::borrow::Cow;
 use core::fmt;
 use core::marker::PhantomData;
+use core::ops::{Deref, DerefMut};
 
 use zeroize::Zeroize;
 
@@ -52,6 +54,52 @@ impl<T> AsRef<[u8]> for Buffer<'_, T> {
     }
 }
 
+/// Zeroizes `bytes` with `OPENSSL_cleanse`.
+///
+/// Use this rather than `Zeroize` on a hot path. `OPENSSL_cleanse` zeroizes in bulk, whereas
+/// `zeroize` writes an array, a `Vec` or a `Box<[u8]>` one byte at a time, and in older versions a
+/// slice as well.
+#[inline]
+pub(crate) fn cleanse(bytes: &mut [u8]) {
+    unsafe { OPENSSL_cleanse(bytes.as_mut_ptr().cast(), bytes.len()) };
+}
+
+/// A borrowed byte slice that is zeroized when dropped, including when unwinding.
+///
+/// Use this rather than `zeroize::Zeroizing` for a temporary buffer on a hot path: it zeroizes
+/// only the bytes that were borrowed, and does so with [`cleanse`].
+pub(crate) struct ZeroizingSlice<'a>(&'a mut [u8]);
+
+impl<'a> ZeroizingSlice<'a> {
+    #[inline]
+    pub(crate) fn new(bytes: &'a mut [u8]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl Deref for ZeroizingSlice<'_> {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &[u8] {
+        self.0
+    }
+}
+
+impl DerefMut for ZeroizingSlice<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [u8] {
+        self.0
+    }
+}
+
+impl Drop for ZeroizingSlice<'_> {
+    #[inline]
+    fn drop(&mut self) {
+        cleanse(self.0);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,5 +116,25 @@ mod tests {
         let buffer: Buffer<u8> = Buffer::take_from_slice(&mut slice);
         assert_eq!(buffer.as_ref(), &[1, 2, 3]);
         assert_eq!(slice, [0, 0, 0]);
+    }
+
+    #[test]
+    fn test_zeroizing_slice() {
+        let mut bytes = [1u8, 2, 3, 4];
+        {
+            let mut used = ZeroizingSlice::new(&mut bytes[..3]);
+            used[0] = 5;
+            assert_eq!(&*used, &[5, 2, 3]);
+        }
+        // Only the borrowed bytes are zeroized.
+        assert_eq!(bytes, [0, 0, 0, 4]);
+    }
+
+    #[test]
+    fn test_cleanse() {
+        let mut bytes = [1u8, 2, 3, 4];
+        cleanse(&mut bytes[1..3]);
+        assert_eq!(bytes, [1, 0, 0, 4]);
+        cleanse(&mut []);
     }
 }
