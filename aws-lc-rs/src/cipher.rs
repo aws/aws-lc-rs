@@ -584,8 +584,9 @@ pub const AES_256: Algorithm = Algorithm {
 /// interoperability with legacy systems. New designs must use an AES-based
 /// algorithm.
 ///
-/// Only CBC and ECB operating modes are supported. Weak and semi-weak DES
-/// keys are rejected.
+/// Only CBC and ECB operating modes are supported. Encryption rejects weak and
+/// semi-weak DES keys, ignoring parity bits. Decryption accepts them so that
+/// existing ciphertexts remain recoverable.
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
@@ -606,14 +607,16 @@ pub const DES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 /// since 2015 — several years earlier than 3-key Triple DES. It is retained here
 /// solely for interoperability. New designs must use an AES-based algorithm.
 ///
-/// Only CBC and ECB operating modes are supported. Key material is validated
-/// beyond the length check: weak and semi-weak DES subkeys are rejected, and
-/// K1 must differ from K2 (otherwise the cipher degenerates to single-DES).
+/// Only CBC and ECB operating modes are supported. For encryption, key material
+/// is validated beyond the length check: weak and semi-weak DES subkeys are
+/// rejected, and K1 must differ from K2 (otherwise the cipher degenerates to
+/// single-DES). These checks ignore each byte's parity bit.
 /// This validation is deferred — constructing an [`UnboundCipherKey`] only
 /// checks length; the weak-key and pairwise-distinctness checks fire when the
-/// [`UnboundCipherKey`] is passed to an [`EncryptingKey`], [`DecryptingKey`],
-/// [`PaddedBlockEncryptingKey`], [`PaddedBlockDecryptingKey`],
-/// [`StreamingEncryptingKey`], or [`StreamingDecryptingKey`] constructor.
+/// [`UnboundCipherKey`] is passed to an [`EncryptingKey`],
+/// [`PaddedBlockEncryptingKey`], or [`StreamingEncryptingKey`] constructor.
+/// Decryption constructors accept such keys so that existing ciphertexts remain
+/// recoverable.
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
@@ -634,15 +637,16 @@ pub const DES_EDE_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 /// after 2023. It is retained here solely for interoperability. New designs
 /// must use an AES-based algorithm.
 ///
-/// Only CBC and ECB operating modes are supported. Key material is validated
-/// beyond the length check: weak and semi-weak DES subkeys are rejected, and
-/// K1, K2, and K3 must all be pairwise distinct (otherwise 3TDEA degenerates
-/// to either single-DES or 2TDEA). This validation is deferred —
+/// Only CBC and ECB operating modes are supported. For encryption, key material
+/// is validated beyond the length check: weak and semi-weak DES subkeys are
+/// rejected, and K1, K2, and K3 must all be pairwise distinct (otherwise 3TDEA
+/// degenerates to either single-DES or 2TDEA). This validation is deferred —
 /// constructing an [`UnboundCipherKey`] only checks length; the weak-key and
 /// pairwise-distinctness checks fire when the [`UnboundCipherKey`] is passed
-/// to an [`EncryptingKey`], [`DecryptingKey`], [`PaddedBlockEncryptingKey`],
-/// [`PaddedBlockDecryptingKey`], [`StreamingEncryptingKey`], or
-/// [`StreamingDecryptingKey`] constructor.
+/// to an [`EncryptingKey`], [`PaddedBlockEncryptingKey`], or
+/// [`StreamingEncryptingKey`] constructor. These checks ignore each byte's parity
+/// bit. Decryption constructors accept such keys so that existing ciphertexts
+/// remain recoverable.
 ///
 /// Callers who specifically need 2-key Triple DES (2TDEA) must use
 /// [`DES_EDE_FOR_LEGACY_USE_ONLY`] (16-byte key) rather than encoding 2TDEA
@@ -864,14 +868,13 @@ impl UnboundCipherKey {
     /// the length check performed by [`UnboundCipherKey::new`].
     ///
     /// For DES algorithms (behind `legacy-des`), this rejects weak DES subkeys
-    /// and degenerate key configurations (e.g. K1 == K2 for 2TDEA). For other
-    /// algorithms this is a no-op since the only constraint is key length.
+    /// and degenerate key configurations (e.g. K1 == K2 for 2TDEA), ignoring
+    /// parity bits. For other algorithms this is a no-op since the only
+    /// constraint is key length.
     ///
-    /// The streaming cipher constructors call this because they pass raw key
-    /// bytes directly to the EVP API rather than going through
-    /// [`SymmetricCipherKey`] construction, which would otherwise perform these
-    /// checks. This is necessary because the EVP layer internally uses
-    /// `DES_set_key_unchecked`, which skips weak-key detection.
+    /// Only encryption constructors call this. Decryption constructors accept
+    /// weak and degenerate keys so that existing ciphertexts remain
+    /// recoverable.
     #[allow(clippy::unused_self)]
     #[allow(clippy::unnecessary_wraps)]
     fn validate_key_material(&self) -> Result<(), KeyRejected> {
@@ -879,13 +882,13 @@ impl UnboundCipherKey {
         #[allow(deprecated)]
         match self.algorithm.id() {
             AlgorithmId::DesForLegacyUseOnly => {
-                let _ = SymmetricCipherKey::prepare_des(self.key_bytes.as_ref())?;
+                SymmetricCipherKey::validate_des(self.key_bytes.as_ref())?;
             }
             AlgorithmId::DesEdeForLegacyUseOnly => {
-                let _ = SymmetricCipherKey::prepare_des_ede(self.key_bytes.as_ref())?;
+                SymmetricCipherKey::validate_des_ede(self.key_bytes.as_ref())?;
             }
             AlgorithmId::DesEde3ForLegacyUseOnly => {
-                let _ = SymmetricCipherKey::prepare_des_ede3(self.key_bytes.as_ref())?;
+                SymmetricCipherKey::validate_des_ede3(self.key_bytes.as_ref())?;
             }
             _ => {}
         }
@@ -1061,6 +1064,7 @@ impl EncryptingKey {
         if !algorithm.supports_mode(mode) {
             return Err(Unspecified);
         }
+        key.validate_key_material()?;
         let key = key.try_into()?;
         Ok(Self {
             algorithm,
@@ -1236,12 +1240,6 @@ impl DecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
-    ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
-    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
-    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
-    ///   for 3TDEA).
     pub fn cbc(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         Self::new(key, OperatingMode::CBC)
     }
@@ -1262,12 +1260,6 @@ impl DecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `DecryptingKey`.
-    ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
-    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
-    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
-    ///   for 3TDEA).
     pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::ECB)
     }

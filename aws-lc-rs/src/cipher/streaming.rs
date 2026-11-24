@@ -133,9 +133,9 @@ impl StreamingEncryptingKey {
             return Err(Unspecified);
         }
         // The streaming path passes raw key bytes to the EVP API rather than
-        // going through `SymmetricCipherKey` construction.  Validate
+        // going through `SymmetricCipherKey` construction, so validate
         // algorithm-specific key constraints (e.g. DES weak-key / K1!=K2
-        // checks) that would otherwise be missed.
+        // checks) here as the other encryption constructors do.
         key.validate_key_material()?;
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
@@ -581,8 +581,9 @@ impl StreamingDecryptingKey {
         if !algorithm.is_valid_decryption_context(mode, &context) {
             return Err(Unspecified);
         }
-        // See comment in `StreamingEncryptingKey::new`.
-        key.validate_key_material()?;
+        // Unlike encryption, decryption does not validate key strength, so
+        // ciphertexts produced under weak or degenerate DES keys stay
+        // recoverable.
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
@@ -778,12 +779,7 @@ impl StreamingDecryptingKey {
     /// The resulting plaintext will be shorter than the ciphertext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    /// provided key material contains weak or semi-weak DES subkeys, or (for
-    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
-    /// or any pairwise equality for 3TDEA).
+    /// Returns an error on an internal failure.
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,
@@ -850,12 +846,7 @@ impl StreamingDecryptingKey {
     /// very likely not what you want to use.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    /// provided key material contains weak or semi-weak DES subkeys, or (for
-    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
-    /// or any pairwise equality for 3TDEA).
+    /// Returns an error on an internal failure.
     pub fn ecb_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,
