@@ -251,7 +251,7 @@ use crate::aws_lc::{
 use crate::aws_lc::{
     EVP_des_cbc, EVP_des_ecb, EVP_des_ede, EVP_des_ede3_cbc, EVP_des_ede3_ecb, EVP_des_ede_cbc,
 };
-use crate::buffer::Buffer;
+use crate::buffer::{Buffer, ZeroizingSlice};
 use crate::error::{KeyRejected, Unspecified};
 use crate::hkdf;
 use crate::hkdf::KeyType;
@@ -261,7 +261,6 @@ use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use crate::ptr::ConstPointer;
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
-use zeroize::Zeroizing;
 
 /// The number of bytes in an AES 128-bit key
 pub use crate::cipher::aes::AES_128_KEY_LEN;
@@ -817,11 +816,11 @@ impl Debug for UnboundCipherKey {
 
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundCipherKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
-        let mut key_bytes = Zeroizing::new([0; MAX_CIPHER_KEY_LEN]);
-        let key_bytes = &mut key_bytes[..okm.len().key_len];
+        let mut key_bytes = [0; MAX_CIPHER_KEY_LEN];
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes[..okm.len().key_len]);
         let algorithm = *okm.len();
-        okm.fill(key_bytes).unwrap();
-        Self::new(algorithm, key_bytes).unwrap()
+        okm.fill(&mut key_bytes).unwrap();
+        Self::new(algorithm, &key_bytes).unwrap()
     }
 }
 

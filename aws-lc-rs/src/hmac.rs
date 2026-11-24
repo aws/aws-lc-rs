@@ -117,17 +117,15 @@
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
 use crate::aws_lc::{
-    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_CTX_new, HMAC_Final, HMAC_Init_ex,
-    HMAC_Update, HMAC_CTX,
+    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_Final, HMAC_Init_ex, HMAC_Update, HMAC_CTX,
 };
+use crate::buffer::ZeroizingSlice;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use crate::ptr::LcPtr;
 use crate::{constant_time, digest, hkdf};
 use core::ffi::c_uint;
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
-use zeroize::Zeroizing;
 
 /// A deprecated alias for `Tag`.
 #[deprecated(since = "1.0.0", note = "Renamed to `hmac::Tag`.")]
@@ -200,10 +198,44 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
-impl Clone for LcPtr<HMAC_CTX> {
+/// Brings uninitialized storage for an `HMAC_CTX` to the initial state of a context.
+///
+/// An all-zero `HMAC_CTX` is in its initial state: AWS-LC requires that `HMAC_CTX ctx = {0};`
+/// gives a usable context. The storage is zeroed here rather than by `HMAC_CTX_init`, which does
+/// the same but can be much slower: GCC compiles its fixed-size `memset` to `rep stos` on x86-64.
+///
+/// # Safety
+/// `ctx` must be valid for writes of an `HMAC_CTX`.
+#[inline]
+unsafe fn hmac_ctx_init(ctx: *mut HMAC_CTX) {
+    unsafe { ctx.write_bytes(0, 1) };
+}
+
+/// A heap-allocated `HMAC_CTX` that is wiped when dropped.
+///
+/// The allocation is owned by Rust, rather than obtained from `HMAC_CTX_new`, so that the context
+/// is wiped once when dropped: `HMAC_CTX_free` wipes it, and then `OPENSSL_free` wipes it again.
+struct LcHmacCtx(Box<MaybeUninit<HMAC_CTX>>);
+
+impl LcHmacCtx {
+    fn new() -> Self {
+        let mut ctx = Box::new(MaybeUninit::<HMAC_CTX>::uninit());
+        unsafe { hmac_ctx_init(ctx.as_mut_ptr()) };
+        Self(ctx)
+    }
+
+    fn as_const_ptr(&self) -> *const HMAC_CTX {
+        self.0.as_ptr()
+    }
+
+    fn as_mut_ptr(&mut self) -> *mut HMAC_CTX {
+        self.0.as_mut_ptr()
+    }
+}
+
+impl Clone for LcHmacCtx {
     fn clone(&self) -> Self {
-        // `HMAC_CTX_new` returns a zeroed context, which is equivalent to `HMAC_CTX_init`.
-        let mut new_ctx = LcPtr::new(unsafe { HMAC_CTX_new() }).expect("HMAC_CTX_new failed");
+        let mut new_ctx = Self::new();
         unsafe {
             assert!(
                 1 == HMAC_CTX_copy_ex(new_ctx.as_mut_ptr(), self.as_const_ptr()),
@@ -211,6 +243,12 @@ impl Clone for LcPtr<HMAC_CTX> {
             );
         }
         new_ctx
+    }
+}
+
+impl Drop for LcHmacCtx {
+    fn drop(&mut self) {
+        unsafe { HMAC_CTX_cleanup(self.as_mut_ptr()) }
     }
 }
 
@@ -236,8 +274,8 @@ impl Drop for CleanseOnDrop {
 pub struct Key {
     pub(crate) algorithm: Algorithm,
     // Heap-allocated so that the keyed state is initialized and copied in place, is never
-    // copied by a move of `Key`, and is wiped by `HMAC_CTX_free` on drop.
-    ctx: LcPtr<HMAC_CTX>,
+    // copied by a move of `Key`, and is wiped on drop.
+    ctx: LcHmacCtx,
 }
 
 unsafe impl Send for Key {}
@@ -285,10 +323,10 @@ impl Key {
     where
         F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
     {
-        let mut key_bytes = Zeroizing::new([0; digest::MAX_OUTPUT_LEN]);
-        let key_bytes = &mut key_bytes[..algorithm.tag_len()];
-        fill(key_bytes)?;
-        Ok(Self::new(algorithm, key_bytes))
+        let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes[..algorithm.tag_len()]);
+        fill(&mut key_bytes)?;
+        Ok(Self::new(algorithm, &key_bytes))
     }
 
     /// Construct an HMAC signing key using the given digest algorithm and key
@@ -319,8 +357,7 @@ impl Key {
     }
 
     fn try_new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
-        // `HMAC_CTX_new` returns a zeroed context, which is equivalent to `HMAC_CTX_init`.
-        let mut ctx = LcPtr::new(unsafe { HMAC_CTX_new() })?;
+        let mut ctx = LcHmacCtx::new();
         let evp_md_type = digest::match_digest_type(&algorithm.digest_algorithm().id);
         if 1 != unsafe {
             HMAC_Init_ex(
@@ -505,7 +542,7 @@ fn sign_one_shot<'out>(
 ) -> Result<&'out mut [u8], Unspecified> {
     let mut storage = MaybeUninit::<HMAC_CTX>::uninit();
     let ctx = storage.as_mut_ptr();
-    unsafe { HMAC_CTX_init(ctx) };
+    unsafe { hmac_ctx_init(ctx) };
     let _cleanse = CleanseOnDrop(ctx);
     unsafe {
         if 1 != HMAC_CTX_copy_ex(ctx, key.ctx.as_const_ptr()) {
@@ -599,8 +636,9 @@ pub fn sign_to_buffer<'out>(
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     // On failure, the computed tag is a valid tag for `data`, so wipe it rather than leave it on
     // the stack.
-    let mut buf = Zeroizing::new([0u8; digest::MAX_OUTPUT_LEN]);
-    let computed = sign_one_shot(key, data, &mut *buf)?;
+    let mut buf = [0u8; digest::MAX_OUTPUT_LEN];
+    let mut buf = ZeroizingSlice::new(&mut buf[..key.algorithm.tag_len()]);
+    let computed = sign_one_shot(key, data, &mut buf)?;
     constant_time::verify_slices_are_equal(computed, tag)
 }
 
@@ -610,6 +648,23 @@ mod tests {
 
     #[cfg(feature = "fips")]
     mod fips;
+
+    // `hmac_ctx_init` zeroes the storage instead of calling `HMAC_CTX_init`, so the initial state
+    // of a context must be all zeros.
+    #[test]
+    fn hmac_ctx_initial_state_is_zeroed() {
+        use crate::aws_lc::{HMAC_CTX_init, HMAC_CTX};
+        use core::mem::{size_of, MaybeUninit};
+
+        let mut storage = MaybeUninit::<HMAC_CTX>::uninit();
+        let ctx = storage.as_mut_ptr();
+        unsafe {
+            ctx.write_bytes(0, 1);
+            HMAC_CTX_init(ctx);
+            let bytes = core::slice::from_raw_parts(ctx.cast::<u8>(), size_of::<HMAC_CTX>());
+            assert!(bytes.iter().all(|&b| b == 0));
+        }
+    }
 
     #[test]
     fn hmac_algorithm_properties() {
@@ -671,6 +726,36 @@ mod tests {
             println!("{key:?}");
             assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
             assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err());
+        }
+    }
+
+    // `verify` must compare the whole tag.
+    #[test]
+    fn hmac_verify_rejects_modified_tags() {
+        for &algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::new(algorithm, b"key");
+            let data = b"hello, world";
+            let tag = hmac::sign(&key, data);
+            let tag = tag.as_ref();
+            assert!(hmac::verify(&key, data, tag).is_ok());
+
+            for i in 0..tag.len() {
+                let mut modified = tag.to_vec();
+                modified[i] ^= 1;
+                assert!(hmac::verify(&key, data, &modified).is_err());
+            }
+
+            assert!(hmac::verify(&key, data, &tag[..tag.len() - 1]).is_err());
+            assert!(hmac::verify(&key, data, &[]).is_err());
+            let mut extended = tag.to_vec();
+            extended.push(0);
+            assert!(hmac::verify(&key, data, &extended).is_err());
         }
     }
 

@@ -23,7 +23,7 @@ fn hkdf_tests() {
         let secret = test_case.consume_bytes("IKM");
         let salt = test_case.consume_bytes("salt");
         let info = test_case.consume_bytes("info");
-        test_case.consume_bytes("PRK");
+        let prk = test_case.consume_bytes("PRK");
         let expected_out = test_case.consume_bytes("OKM");
 
         let salt = hkdf::Salt::new(alg, &salt);
@@ -31,6 +31,13 @@ fn hkdf_tests() {
         // TODO: test multi-part info, especially with empty parts.
         let My(out) = salt
             .extract(&secret)
+            .expand(&[&info], My(expected_out.len()))
+            .unwrap()
+            .into();
+        assert_eq!(out, expected_out);
+
+        // Expanding the PRK directly must give the same OKM.
+        let My(out) = hkdf::Prk::new_less_safe(alg, &prk)
             .expand(&[&info], My(expected_out.len()))
             .unwrap()
             .into();
@@ -291,19 +298,25 @@ fn hkdf_clone_tests() {
         // Coverage sanity check.
         assert_eq!(alg.clone(), alg);
 
-        // Only using this API to construct a simple PRK.
-        let prk = hkdf::Prk::new_less_safe(alg, &[0; 32]);
-        let result: My<Vec<u8>> = prk
-            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
-            .unwrap()
-            .into();
+        // A clone must hold the same key material, whichever way the PRK was made. The key is
+        // not all zeros, so that a clone which lost its key bytes would be detected.
+        for prk in [
+            hkdf::Prk::new_less_safe(alg, &[0x5a; 32]),
+            hkdf::Salt::new(alg, b"salt").extract(b"input keying material"),
+        ] {
+            let result: My<Vec<u8>> = prk
+                .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+                .unwrap()
+                .into();
 
-        let prk_clone = prk.clone();
-        let result_2: My<Vec<u8>> = prk_clone
-            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
-            .unwrap()
-            .into();
-        assert_eq!(result, result_2);
+            let prk_clone = prk.clone();
+            drop(prk);
+            let result_2: My<Vec<u8>> = prk_clone
+                .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+                .unwrap()
+                .into();
+            assert_eq!(result, result_2);
+        }
     }
 }
 

@@ -95,13 +95,13 @@ use crate::aws_lc::{
     CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init, CMAC_Update, EVP_aes_128_cbc,
     EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX, EVP_CIPHER,
 };
+use crate::buffer::ZeroizingSlice;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
-use zeroize::Zeroizing;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum AlgorithmId {
@@ -256,7 +256,8 @@ impl Key {
     /// # Errors
     /// `error::Unspecified` if random generation or key construction fails.
     pub fn generate(algorithm: Algorithm) -> Result<Self, Unspecified> {
-        let mut key_bytes = Zeroizing::new(vec![0u8; algorithm.key_len()]);
+        let mut key_bytes = vec![0u8; algorithm.key_len()];
+        let mut key_bytes = ZeroizingSlice::new(&mut key_bytes);
         rand::fill(&mut key_bytes)?;
         Self::new(algorithm, &key_bytes)
     }
