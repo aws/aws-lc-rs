@@ -3,7 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::digest::{Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512};
+use aws_lc_rs::digest::{
+    Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512, SHA512,
+    SHA512_256,
+};
 use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::rsa::{
@@ -13,12 +16,37 @@ use aws_lc_rs::rsa::{
     OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
 };
 use aws_lc_rs::signature::{
-    KeyPair, ParsedPublicKey, RsaKeyPair, RsaParameters, RsaPublicKeyComponents,
-    RsaSubjectPublicKey, UnparsedPublicKey, VerificationAlgorithm,
+    KeyPair, ParsedPublicKey, RsaEncoding, RsaKeyPair, RsaParameters, RsaPssSaltLength,
+    RsaPublicKeyComponents, RsaSignatureEncoding, RsaSignaturePadding, RsaSubjectPublicKey,
+    UnparsedPublicKey, VerificationAlgorithm,
 };
 use aws_lc_rs::test::to_hex_upper;
 use aws_lc_rs::{digest, rand, signature, test, test_file};
 use std::collections::HashSet;
+
+const RSA_SIGNATURE_PADDINGS: [RsaSignaturePadding; 2] =
+    [RsaSignaturePadding::PKCS1, RsaSignaturePadding::PSS];
+const RSA_LOOKUP_DIGESTS: [&digest::Algorithm; 8] = [
+    &SHA224,
+    &SHA256,
+    &SHA384,
+    &SHA512,
+    &SHA512_256,
+    &SHA3_256,
+    &SHA3_384,
+    &SHA3_512,
+];
+const RSA_MIN_KEY_SIZES: [KeySize; 4] = [
+    KeySize::Rsa2048,
+    KeySize::Rsa3072,
+    KeySize::Rsa4096,
+    KeySize::Rsa8192,
+];
+
+/// The modulus length in bits that a `KeySize` denotes.
+fn key_size_bits(key_size: KeySize) -> u32 {
+    u32::try_from(key_size.len() * 8).unwrap()
+}
 
 #[test]
 fn rsa_traits() {
@@ -47,6 +75,31 @@ fn rsa_traits() {
     test::compile_time_assert_sync::<Pkcs1PublicEncryptingKey>();
 
     test::compile_time_assert_eq::<RsaParameters>();
+
+    test::compile_time_assert_eq::<RsaSignatureEncoding>();
+
+    test::compile_time_assert_eq::<RsaSignaturePadding>();
+    test::compile_time_assert_copy::<RsaSignaturePadding>();
+}
+
+#[test]
+fn rsa_algorithm_ownership_compatibility() {
+    // Existing consumers can move a descriptor into a closure without `move` and
+    // call `.clone()` on a borrowed descriptor to copy just the reference.
+    macro_rules! check {
+        ($ty:ty, $value:expr) => {{
+            fn deferred(value: $ty) -> impl FnOnce() -> $ty {
+                || value
+            }
+            let owned = deferred($value)();
+            let borrowed = &owned;
+            #[allow(noop_method_call)]
+            let cloned: &$ty = borrowed.clone();
+            assert!(std::ptr::eq(borrowed, cloned));
+        }};
+    }
+    check!(RsaParameters, signature::RSA_PSS_2048_8192_SHA256);
+    check!(RsaSignatureEncoding, signature::RSA_PSS_SHA256);
 }
 
 #[test]
@@ -96,6 +149,529 @@ fn rsa_parameters_equality() {
         &signature::RSA_PKCS1_2048_8192_SHA384,
         &signature::RSA_PKCS1_2048_8192_SHA512
     );
+}
+
+/// The lookups return values equal to the predefined non-legacy RSA constants.
+#[test]
+fn rsa_algorithm_lookups_match_constants() {
+    macro_rules! assert_signing {
+        ($($constant:ident = ($padding:ident, $digest:ident);)+) => {
+            $(
+                let encoding =
+                    RsaSignatureEncoding::get(RsaSignaturePadding::$padding, &$digest).unwrap();
+                assert_eq!(*encoding, signature::$constant, stringify!($constant));
+            )+
+        };
+    }
+    macro_rules! assert_verification {
+        ($($constant:ident = ($padding:ident, $digest:ident, $min_key_size:ident);)+) => {
+            $(
+                let parameters = RsaParameters::get(
+                    RsaSignaturePadding::$padding,
+                    &$digest,
+                    KeySize::$min_key_size,
+                )
+                .unwrap();
+                assert_eq!(*parameters, signature::$constant, stringify!($constant));
+            )+
+        };
+    }
+
+    assert_signing! {
+        RSA_PKCS1_SHA256 = (PKCS1, SHA256);
+        RSA_PKCS1_SHA384 = (PKCS1, SHA384);
+        RSA_PKCS1_SHA512 = (PKCS1, SHA512);
+        RSA_PSS_SHA256 = (PSS, SHA256);
+        RSA_PSS_SHA384 = (PSS, SHA384);
+        RSA_PSS_SHA512 = (PSS, SHA512);
+    }
+
+    assert_verification! {
+        RSA_PKCS1_2048_8192_SHA256 = (PKCS1, SHA256, Rsa2048);
+        RSA_PKCS1_2048_8192_SHA384 = (PKCS1, SHA384, Rsa2048);
+        RSA_PKCS1_2048_8192_SHA512 = (PKCS1, SHA512, Rsa2048);
+        RSA_PKCS1_3072_8192_SHA384 = (PKCS1, SHA384, Rsa3072);
+        RSA_PSS_2048_8192_SHA256 = (PSS, SHA256, Rsa2048);
+        RSA_PSS_2048_8192_SHA384 = (PSS, SHA384, Rsa2048);
+        RSA_PSS_2048_8192_SHA512 = (PSS, SHA512, Rsa2048);
+    }
+}
+
+/// `Debug` names each predefined constant, and describes a combination that has no constant
+/// in the same style.
+#[test]
+fn rsa_algorithm_debug() {
+    macro_rules! assert_debug_is_name {
+        ($($constant:ident),+ $(,)?) => {
+            $(
+                assert_eq!(
+                    format!("{:?}", signature::$constant),
+                    concat!("{ ", stringify!($constant), " }")
+                );
+            )+
+        };
+    }
+    assert_debug_is_name!(
+        RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
+        RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+        RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+        RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
+        RSA_PKCS1_2048_8192_SHA256,
+        RSA_PKCS1_2048_8192_SHA384,
+        RSA_PKCS1_2048_8192_SHA512,
+        RSA_PKCS1_3072_8192_SHA384,
+        RSA_PSS_2048_8192_SHA256,
+        RSA_PSS_2048_8192_SHA384,
+        RSA_PSS_2048_8192_SHA512,
+        RSA_PKCS1_SHA256,
+        RSA_PKCS1_SHA384,
+        RSA_PKCS1_SHA512,
+        RSA_PSS_SHA256,
+        RSA_PSS_SHA384,
+        RSA_PSS_SHA512,
+    );
+
+    let encoding = RsaSignatureEncoding::get(RsaSignaturePadding::PKCS1, &SHA512_256).unwrap();
+    assert_eq!(format!("{encoding:?}"), "{ RSA_PKCS1_SHA512_256 }");
+    let parameters =
+        RsaParameters::get(RsaSignaturePadding::PSS, &SHA3_384, KeySize::Rsa4096).unwrap();
+    assert_eq!(format!("{parameters:?}"), "{ RSA_PSS_4096_8192_SHA3_384 }");
+    assert_eq!(
+        format!(
+            "{:?}",
+            parameters.copy_with_pss_salt_length(RsaPssSaltLength::Max)
+        ),
+        "{ RSA_PSS_4096_8192_SHA3_384, RSA-PSS salt length: Max }"
+    );
+}
+
+/// The lookups and accessors are usable in `const` contexts.
+#[test]
+fn rsa_algorithm_const_selection() {
+    // Select a combination that has no named constant.
+    const PADDING: RsaSignaturePadding = RsaSignaturePadding::PSS;
+    const SIGNING: &RsaSignatureEncoding = match RsaSignatureEncoding::get(PADDING, &SHA512_256) {
+        Some(encoding) => encoding,
+        None => panic!("expected a signature encoding"),
+    };
+    const VERIFYING: &RsaParameters =
+        match RsaParameters::get(PADDING, &SHA512_256, KeySize::Rsa2048) {
+            Some(parameters) => parameters,
+            None => panic!("expected verification parameters"),
+        };
+    const CUSTOM_SALT: RsaPssSaltLength = RsaPssSaltLength::Custom(20);
+    const CUSTOM_SIGNING: RsaSignatureEncoding = SIGNING.copy_with_pss_salt_length(CUSTOM_SALT);
+    const CUSTOM_VERIFYING: RsaParameters = VERIFYING.copy_with_pss_salt_length(CUSTOM_SALT);
+    const VERIFYING_3072: Option<&RsaParameters> =
+        RsaParameters::get(PADDING, &SHA512_256, KeySize::Rsa3072);
+    const SIGNING_PADDING: RsaSignaturePadding = SIGNING.padding();
+    const SIGNING_DIGEST: &digest::Algorithm = SIGNING.digest_algorithm();
+    const SIGNING_SALT: RsaPssSaltLength = SIGNING.pss_salt_length();
+    const VERIFYING_PADDING: RsaSignaturePadding = VERIFYING.padding();
+    const VERIFYING_DIGEST: &digest::Algorithm = VERIFYING.digest_algorithm();
+    const VERIFYING_SALT: RsaPssSaltLength = VERIFYING.pss_salt_length();
+    const MIN_MODULUS_LEN: u32 = VERIFYING.min_modulus_len();
+    const MAX_MODULUS_LEN: u32 = VERIFYING.max_modulus_len();
+    const MESSAGE: &[u8] = b"compile-time RSA algorithm selection";
+
+    assert_eq!(SIGNING_PADDING, PADDING);
+    assert_eq!(SIGNING_DIGEST, &SHA512_256);
+    assert_eq!(SIGNING_SALT, RsaPssSaltLength::Digest);
+    assert_eq!(VERIFYING_PADDING, PADDING);
+    assert_eq!(VERIFYING_DIGEST, &SHA512_256);
+    assert_eq!(VERIFYING_SALT, RsaPssSaltLength::Digest);
+    assert_eq!(MIN_MODULUS_LEN, 2048);
+    assert_eq!(MAX_MODULUS_LEN, 8192);
+    assert_eq!(VERIFYING_3072.unwrap().min_modulus_len(), 3072);
+
+    let key_pair =
+        RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
+    let public_key = key_pair.public_key().as_ref();
+    let mut signature = vec![0u8; key_pair.public_modulus_len()];
+    key_pair
+        .sign(
+            &CUSTOM_SIGNING,
+            &SystemRandom::new(),
+            MESSAGE,
+            &mut signature,
+        )
+        .unwrap();
+    ParsedPublicKey::new(&CUSTOM_VERIFYING, public_key)
+        .unwrap()
+        .verify_sig(MESSAGE, &signature)
+        .unwrap();
+    assert!(UnparsedPublicKey::new(VERIFYING, public_key)
+        .verify(MESSAGE, &signature)
+        .is_err());
+}
+
+/// Every lookup combination resolves to an algorithm with the requested parameters and can
+/// sign and verify, including combinations with no predefined constant.
+#[test]
+fn rsa_algorithm_lookup_matrix() {
+    const MESSAGE: &[u8] = b"runtime RSA algorithm lookup";
+    let rng = SystemRandom::new();
+    let key_pair =
+        RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
+    let public_key = key_pair.public_key().as_ref();
+    let mut signature = vec![0u8; key_pair.public_modulus_len()];
+    let mut digest_signature = vec![0u8; key_pair.public_modulus_len()];
+
+    for padding in RSA_SIGNATURE_PADDINGS {
+        for digest_alg in RSA_LOOKUP_DIGESTS {
+            let signing: &'static RsaSignatureEncoding =
+                RsaSignatureEncoding::get(padding, digest_alg).unwrap();
+            assert_eq!(signing.padding(), padding);
+            assert_eq!(signing.digest_algorithm(), digest_alg);
+            assert_eq!(signing.pss_salt_length(), RsaPssSaltLength::Digest);
+
+            let message_digest = digest::digest(digest_alg, MESSAGE);
+            key_pair
+                .sign(signing, &rng, MESSAGE, &mut signature)
+                .unwrap_or_else(|err| panic!("{signing:?}: {err:?}"));
+            key_pair
+                .sign_digest(signing, &message_digest, &mut digest_signature)
+                .unwrap_or_else(|err| panic!("{signing:?}: {err:?}"));
+
+            for min_key_size in RSA_MIN_KEY_SIZES {
+                let verifying: &'static RsaParameters =
+                    RsaParameters::get(padding, digest_alg, min_key_size).unwrap();
+                assert_eq!(verifying.padding(), padding);
+                assert_eq!(verifying.digest_algorithm(), digest_alg);
+                assert_eq!(verifying.pss_salt_length(), RsaPssSaltLength::Digest);
+                assert_eq!(verifying.min_modulus_len(), key_size_bits(min_key_size));
+                assert_eq!(verifying.max_modulus_len(), 8192);
+
+                // The key size is checked when verifying, not when the key is parsed.
+                let unparsed = UnparsedPublicKey::new(verifying, public_key);
+                let parsed = ParsedPublicKey::new(verifying, public_key).unwrap();
+                let is_accepted = min_key_size == KeySize::Rsa2048;
+                for signature in [&signature, &digest_signature] {
+                    for result in [
+                        unparsed.verify(MESSAGE, signature),
+                        unparsed.verify_digest(&message_digest, signature),
+                        parsed.verify_sig(MESSAGE, signature),
+                        parsed.verify_digest_sig(&message_digest, signature),
+                        verifying.verify_sig(public_key, MESSAGE, signature),
+                        verifying.verify_digest_sig(public_key, &message_digest, signature),
+                    ] {
+                        assert_eq!(result.is_ok(), is_accepted, "{verifying:?}");
+                    }
+                }
+            }
+
+            // The signature is specific to the padding scheme and digest.
+            for other_padding in RSA_SIGNATURE_PADDINGS {
+                for other_digest in RSA_LOOKUP_DIGESTS {
+                    let is_same = other_padding == padding && other_digest == digest_alg;
+                    let other_signing =
+                        RsaSignatureEncoding::get(other_padding, other_digest).unwrap();
+                    let other_verifying =
+                        RsaParameters::get(other_padding, other_digest, KeySize::Rsa2048).unwrap();
+                    assert_eq!(other_signing == signing, is_same);
+                    assert_eq!(
+                        other_verifying
+                            .verify_sig(public_key, MESSAGE, &signature)
+                            .is_ok(),
+                        is_same,
+                        "{signing:?} verified by {other_verifying:?}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Each minimum key size accepts a key of at least that size.
+#[test]
+fn rsa_algorithm_lookup_min_key_size() {
+    const MESSAGE: &[u8] = b"RSA minimum key size";
+    let rng = SystemRandom::new();
+
+    for (private_key, key_bits) in [
+        (
+            &include_bytes!("data/rsa_test_private_key_2048.p8")[..],
+            2048,
+        ),
+        (
+            &include_bytes!("data/rsa_test_private_key_8192.p8")[..],
+            8192,
+        ),
+    ] {
+        let key_pair = RsaKeyPair::from_pkcs8(private_key).unwrap();
+        let public_key = key_pair.public_key().as_ref();
+        assert_eq!(
+            RsaParameters::public_modulus_len(public_key).unwrap(),
+            key_bits
+        );
+        let mut signature = vec![0u8; key_pair.public_modulus_len()];
+        key_pair
+            .sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut signature)
+            .unwrap();
+
+        for min_key_size in RSA_MIN_KEY_SIZES {
+            let verifying =
+                RsaParameters::get(RsaSignaturePadding::PKCS1, &SHA256, min_key_size).unwrap();
+            assert_eq!(
+                verifying
+                    .verify_sig(public_key, MESSAGE, &signature)
+                    .is_ok(),
+                key_bits >= key_size_bits(min_key_size),
+                "{key_bits}-bit key with {verifying:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn rsa_lookups_reject_sha1() {
+    // SHA-1 is not selectable in const code either.
+    const _: () = {
+        match (
+            RsaSignatureEncoding::get(RsaSignaturePadding::PKCS1, &SHA1_FOR_LEGACY_USE_ONLY),
+            RsaParameters::get(
+                RsaSignaturePadding::PKCS1,
+                &SHA1_FOR_LEGACY_USE_ONLY,
+                KeySize::Rsa2048,
+            ),
+        ) {
+            (None, None) => {}
+            _ => panic!("SHA-1 must not be selectable"),
+        }
+    };
+
+    assert_rsa_lookups_reject(&SHA1_FOR_LEGACY_USE_ONLY);
+}
+
+#[cfg(all(not(feature = "fips"), feature = "unstable"))]
+#[test]
+fn rsa_keccak_rejected() {
+    assert_rsa_lookups_reject(&aws_lc_rs::unstable::digest::KECCAK256);
+}
+
+fn assert_rsa_lookups_reject(digest_alg: &'static digest::Algorithm) {
+    for padding in RSA_SIGNATURE_PADDINGS {
+        assert_eq!(RsaSignatureEncoding::get(padding, digest_alg), None);
+        for min_key_size in RSA_MIN_KEY_SIZES {
+            assert_eq!(RsaParameters::get(padding, digest_alg, min_key_size), None);
+        }
+    }
+}
+
+/// The lookups borrow the digest only for the call, so the reference need not be `'static`.
+#[test]
+fn rsa_lookups_accept_short_lived_digest_reference() {
+    fn lookups(
+        digest_alg: &digest::Algorithm,
+    ) -> Option<(&'static RsaSignatureEncoding, &'static RsaParameters)> {
+        let padding = RsaSignaturePadding::PSS;
+        Some((
+            RsaSignatureEncoding::get(padding, digest_alg)?,
+            RsaParameters::get(padding, digest_alg, KeySize::Rsa2048)?,
+        ))
+    }
+
+    let (signing, verifying) = {
+        // A local copy of the constant, dropped before the results are used.
+        let digest_alg = SHA512_256;
+        lookups(&digest_alg).unwrap()
+    };
+    assert_eq!(signing.digest_algorithm(), &SHA512_256);
+    assert_eq!(verifying.digest_algorithm(), &SHA512_256);
+    assert!(lookups(&SHA1_FOR_LEGACY_USE_ONLY).is_none());
+}
+
+/// Signing and verification can use a PSS salt length chosen at runtime.
+#[test]
+fn rsa_runtime_pss_salt_length() {
+    const MESSAGE: &[u8] = b"runtime RSA-PSS salt length";
+    let rng = SystemRandom::new();
+    let key_pair =
+        RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
+    let public_key = key_pair.public_key().as_ref();
+    let message_digest = digest::digest(&SHA512_256, MESSAGE);
+    let default_signing = RsaSignatureEncoding::get(RsaSignaturePadding::PSS, &SHA512_256).unwrap();
+    let default_verifying =
+        RsaParameters::get(RsaSignaturePadding::PSS, &SHA512_256, KeySize::Rsa2048).unwrap();
+    let mut signature = vec![0u8; key_pair.public_modulus_len()];
+
+    // None of these is the digest length, which is the default.
+    for salt_length in [
+        RsaPssSaltLength::Custom(0),
+        RsaPssSaltLength::Custom(1),
+        RsaPssSaltLength::Custom(20),
+        RsaPssSaltLength::Custom(100),
+        RsaPssSaltLength::Max,
+    ] {
+        let signing = default_signing.copy_with_pss_salt_length(salt_length);
+        let verifying = default_verifying.copy_with_pss_salt_length(salt_length);
+        assert_eq!(signing.pss_salt_length(), salt_length);
+        assert_eq!(verifying.pss_salt_length(), salt_length);
+        assert_ne!(signing, *default_signing);
+        assert_ne!(verifying, *default_verifying);
+        // Also usable as a trait object that is not `'static`.
+        let encoding: &dyn RsaEncoding = &signing;
+        assert_eq!(encoding.encoding(), &signing);
+
+        key_pair
+            .sign(encoding, &rng, MESSAGE, &mut signature)
+            .unwrap();
+        verifying
+            .verify_sig(public_key, MESSAGE, &signature)
+            .unwrap();
+        assert!(default_verifying
+            .verify_sig(public_key, MESSAGE, &signature)
+            .is_err());
+
+        key_pair
+            .sign_digest(&signing, &message_digest, &mut signature)
+            .unwrap();
+        verifying
+            .verify_digest_sig(public_key, &message_digest, &signature)
+            .unwrap();
+        assert!(default_verifying
+            .verify_digest_sig(public_key, &message_digest, &signature)
+            .is_err());
+    }
+}
+
+/// Signatures made by OpenSSL for every lookup combination. The data file records how they
+/// were generated.
+#[test]
+fn rsa_algorithm_lookup_openssl_vectors() {
+    let rng = SystemRandom::new();
+    let key_pair =
+        RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
+    let public_key = key_pair.public_key().as_ref();
+    let mut combinations = Vec::new();
+
+    test::run(
+        test_file!("data/rsa_lookup_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+            let padding_name = test_case.consume_string("Padding");
+            let padding = match padding_name.as_str() {
+                "PKCS1" => RsaSignaturePadding::PKCS1,
+                "PSS" => RsaSignaturePadding::PSS,
+                _ => panic!("Unsupported padding: {padding_name}"),
+            };
+            let digest_name = test_case.consume_string("Digest");
+            let digest_alg: &'static digest::Algorithm = match digest_name.as_str() {
+                "SHA224" => &SHA224,
+                "SHA256" => &SHA256,
+                "SHA384" => &SHA384,
+                "SHA512" => &SHA512,
+                "SHA512_256" => &SHA512_256,
+                "SHA3_256" => &SHA3_256,
+                "SHA3_384" => &SHA3_384,
+                "SHA3_512" => &SHA3_512,
+                _ => panic!("Unsupported digest: {digest_name}"),
+            };
+            let msg = test_case.consume_bytes("Msg");
+            let expected = test_case.consume_bytes("Sig");
+            combinations.push((padding, digest_alg));
+
+            let signing = RsaSignatureEncoding::get(padding, digest_alg).unwrap();
+            let verifying = RsaParameters::get(padding, digest_alg, KeySize::Rsa2048).unwrap();
+            let message_digest = digest::digest(digest_alg, &msg);
+            let unparsed = UnparsedPublicKey::new(verifying, public_key);
+            let parsed = unparsed.parse().unwrap();
+
+            let mut actual = vec![0u8; key_pair.public_modulus_len()];
+            key_pair.sign(signing, &rng, &msg, &mut actual)?;
+            let mut actual_digest = vec![0u8; key_pair.public_modulus_len()];
+            key_pair.sign_digest(signing, &message_digest, &mut actual_digest)?;
+            // RSASSA-PKCS1-v1_5 is deterministic, while RSASSA-PSS uses a random salt.
+            let is_deterministic = padding == RsaSignaturePadding::PKCS1;
+            assert_eq!(actual == expected, is_deterministic, "{signing:?}");
+            assert_eq!(actual_digest == expected, is_deterministic, "{signing:?}");
+
+            let mut changed_msg = msg.clone();
+            changed_msg.push(0);
+            for signature in [&expected, &actual, &actual_digest] {
+                unparsed.verify(&msg, signature)?;
+                unparsed.verify_digest(&message_digest, signature)?;
+                parsed.verify_sig(&msg, signature)?;
+                parsed.verify_digest_sig(&message_digest, signature)?;
+                assert!(unparsed.verify(&changed_msg, signature).is_err());
+                assert!(parsed.verify_sig(&changed_msg, signature).is_err());
+            }
+
+            Ok(())
+        },
+    );
+
+    // The file covers each combination exactly once.
+    assert_eq!(
+        combinations.len(),
+        RSA_SIGNATURE_PADDINGS.len() * RSA_LOOKUP_DIGESTS.len()
+    );
+    for padding in RSA_SIGNATURE_PADDINGS {
+        for digest_alg in RSA_LOOKUP_DIGESTS {
+            assert!(combinations.contains(&(padding, digest_alg)));
+        }
+    }
+}
+
+/// A public key whose `SubjectPublicKeyInfo` algorithm is `id-RSASSA-PSS` cannot stand in for
+/// the selected algorithm: PKCS#1 v1.5 verification never accepts its PSS signatures, and PSS
+/// verification rejects a key whose MGF1 hash is not the algorithm's digest. The data file
+/// records how the keys and signatures were generated.
+#[test]
+fn rsa_pss_public_key_must_agree_with_algorithm() {
+    let mut key_params = Vec::new();
+
+    test::run(
+        test_file!("data/rsa_pss_public_key_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+            let params = test_case.consume_string("KeyParams");
+            let mgf1 = test_case.consume_string("MGF1");
+            let key = test_case.consume_bytes("Key");
+            let msg = test_case.consume_bytes("Msg");
+            let sig = test_case.consume_bytes("Sig");
+            let message_digest = digest::digest(&SHA256, &msg);
+
+            // Every signature is a valid RSASSA-PSS signature with SHA-256 and a 32-byte salt.
+            // `RSA_PSS_2048_8192_SHA256` must accept only those that also use SHA-256 for
+            // MGF1, whatever MGF1 hash the key names.
+            let pss_is_accepted = match mgf1.as_str() {
+                "SHA256" => true,
+                "SHA1" => false,
+                _ => panic!("Unsupported MGF1 digest: {mgf1}"),
+            };
+
+            for (verifying, is_accepted) in [
+                (&signature::RSA_PKCS1_2048_8192_SHA256, false),
+                (&signature::RSA_PSS_2048_8192_SHA256, pss_is_accepted),
+            ] {
+                // The key always parses. It is rejected when a signature is verified.
+                let unparsed = UnparsedPublicKey::new(verifying, &key);
+                let parsed = unparsed.parse().unwrap();
+                for result in [
+                    unparsed.verify(&msg, &sig),
+                    unparsed.verify_digest(&message_digest, &sig),
+                    parsed.verify_sig(&msg, &sig),
+                    parsed.verify_digest_sig(&message_digest, &sig),
+                    verifying.verify_sig(&key, &msg, &sig),
+                    verifying.verify_digest_sig(&key, &message_digest, &sig),
+                ] {
+                    assert_eq!(
+                        result.is_ok(),
+                        is_accepted,
+                        "{verifying:?} with key parameters {params}"
+                    );
+                }
+            }
+
+            key_params.push(params);
+            Ok(())
+        },
+    );
+
+    // A key without parameters, one whose parameters agree with `RSA_PSS_2048_8192_SHA256`,
+    // and one whose MGF1 hash does not.
+    assert_eq!(key_params, ["None", "SHA256/SHA256/32", "SHA256/SHA1/32"]);
 }
 
 #[test]
@@ -653,8 +1229,8 @@ fn test_rsa_public_key_components_to_parsed_public_key_pss() {
     // `RsaParameters` instance passed in, not e.g. a silently-substituted
     // PKCS#1 default. Compare via `Debug` output because `VerificationAlgorithm`
     // is a trait object and does not implement `PartialEq`; `RsaParameters`'s
-    // `Debug` impl uses its `RsaVerificationAlgorithmId`, which is unique per
-    // algorithm constant.
+    // `Debug` impl prints its padding scheme, modulus range, and digest, which
+    // are unique per algorithm constant.
     assert_eq!(
         format!("{:?}", parsed.algorithm()),
         format!("{:?}", &signature::RSA_PSS_2048_8192_SHA256),

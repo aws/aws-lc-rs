@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-use super::signature::{RsaEncoding, RsaPadding};
+use super::signature::{configure_signature_padding, RsaEncoding};
 use super::{encoding, RsaParameters};
 use crate::aws_lc::{
     EVP_PKEY_CTX_set_rsa_keygen_bits, EVP_PKEY_CTX_set_signature_md, EVP_PKEY_assign_RSA,
@@ -29,7 +29,6 @@ use core::ffi::c_int;
 use crate::digest::{match_digest_type, Digest};
 use crate::pkcs8::Version;
 use crate::rsa::encoding::{rfc5280, rfc8017};
-use crate::rsa::signature::configure_rsa_pkcs1_pss_padding;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
 use zeroize::Zeroize;
@@ -225,40 +224,43 @@ impl KeyPair {
     /// This function does *not* take a precomputed digest; instead, `sign`
     /// calculates the digest itself. See `sign_digest`.
     ///
+    /// `padding_alg` is one of the predefined encodings, such as
+    /// [`RSA_PKCS1_SHA256`](crate::signature::RSA_PKCS1_SHA256), or one selected
+    /// with [`RsaSignatureEncoding::get`](crate::signature::RsaSignatureEncoding::get).
+    ///
     /// # *ring* Compatibility
-    /// Our implementation ignores the `SecureRandom` parameter.
+    /// Our implementation ignores the `SecureRandom` parameter. `padding_alg` is
+    /// not required to be a `'static` reference.
     // # FIPS
     // The following conditions must be met:
-    // * RSA Key Sizes: 2048, 3072, 4096
-    // * Digest Algorithms: SHA256, SHA384, SHA512
+    // * RSA Key Sizes: 2048 bits or larger (an even number of bits)
+    // * Digest Algorithms: SHA224, SHA256, SHA384, SHA512, SHA512_256, SHA3_256, SHA3_384, SHA3_512
+    // * RSA-PSS salt length: the digest length
     //
     /// # Errors
     /// `error::Unspecified` on error.
     /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
     pub fn sign(
         &self,
-        padding_alg: &'static dyn RsaEncoding,
+        padding_alg: &dyn RsaEncoding,
         _rng: &dyn rand::SecureRandom,
         msg: &[u8],
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
         let encoding = padding_alg.encoding();
-        let padding_fn = if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.padding() {
-            Some(|pctx: *mut EVP_PKEY_CTX| {
-                configure_rsa_pkcs1_pss_padding(
-                    pctx,
-                    encoding.pss_salt_length(),
-                    encoding.digest_algorithm(),
-                    &self.evp_pkey,
-                )
-            })
-        } else {
-            None
+        let padding_fn = |pctx| {
+            configure_signature_padding(
+                pctx,
+                encoding.padding(),
+                encoding.pss_salt_length(),
+                encoding.digest_algorithm(),
+                &self.evp_pkey,
+            )
         };
 
-        let sig_bytes = self
-            .evp_pkey
-            .sign(msg, Some(encoding.digest_algorithm()), padding_fn)?;
+        let sig_bytes =
+            self.evp_pkey
+                .sign(msg, Some(encoding.digest_algorithm()), Some(padding_fn))?;
 
         signature.copy_from_slice(&sig_bytes);
         Ok(())
@@ -280,7 +282,7 @@ impl KeyPair {
     /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
     pub fn sign_digest(
         &self,
-        padding_alg: &'static dyn RsaEncoding,
+        padding_alg: &dyn RsaEncoding,
         digest: &Digest,
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
@@ -295,16 +297,13 @@ impl KeyPair {
                 if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
                     return Err(());
                 }
-                if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.padding() {
-                    configure_rsa_pkcs1_pss_padding(
-                        pctx,
-                        encoding.pss_salt_length(),
-                        encoding.digest_algorithm(),
-                        &self.evp_pkey,
-                    )
-                } else {
-                    Ok(())
-                }
+                configure_signature_padding(
+                    pctx,
+                    encoding.padding(),
+                    encoding.pss_salt_length(),
+                    encoding.digest_algorithm(),
+                    &self.evp_pkey,
+                )
             }
         });
 
@@ -506,7 +505,15 @@ impl PublicKey {
         Ok(PublicKey { key })
     }
 
-    /// Parses an RSA public key from either RFC8017 or RFC5280
+    /// Parses a DER-encoded `RSAPublicKey` (RFC 8017) or `SubjectPublicKeyInfo` (RFC 5280).
+    ///
+    /// This type stores only the modulus and public exponent. To enforce the restrictions of
+    /// an `id-RSASSA-PSS` key during verification, pass the original `SubjectPublicKeyInfo`
+    /// bytes to [`ParsedPublicKey::new`] or [`UnparsedPublicKey::new`].
+    ///
+    /// [`ParsedPublicKey::new`]: crate::signature::ParsedPublicKey::new
+    /// [`UnparsedPublicKey::new`]: crate::signature::UnparsedPublicKey::new
+    ///
     /// # Errors
     /// `KeyRejected` if the encoding is not for a valid RSA key.
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
@@ -660,7 +667,7 @@ where
             &rsa,
             message,
             signature,
-            params.bit_size_range(),
+            &params.bit_size_range(),
         )
     }
 
