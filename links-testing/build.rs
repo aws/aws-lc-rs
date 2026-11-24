@@ -90,6 +90,14 @@ fn build_and_link(links: &str, target_name: &str) {
         );
         assert_eq!(libssl_path.parent(), Some(libdir.as_path()));
     }
+
+    // ensure the bindings file the sys crate compiles is exported
+    let bindings = std::path::PathBuf::from(env(format!("DEP_{links}_BINDINGS")));
+    assert!(
+        bindings.is_file(),
+        "exported bindings path does not exist: {}",
+        bindings.display()
+    );
 }
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {
