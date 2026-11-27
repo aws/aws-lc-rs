@@ -146,17 +146,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: wasm32-wasip2
-            toolchain: stable
-          - target: wasm32-wasip3
-            toolchain: nightly
+        target:
+          - wasm32-wasip2
+          - wasm32-wasip3
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust target
-        run: rustup toolchain install ${{ matrix.toolchain }} --profile minimal --target ${{ matrix.target }} --no-self-update
+        run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
       - name: Install Wasmtime
         uses: bytecodealliance/actions/wasmtime/setup@v1
         with:
@@ -178,9 +176,9 @@ jobs:
           export "CFLAGS_${target_var}=--sysroot=$WASI_SYSROOT"
           export AWS_LC_SYS_EXTERNAL_BINDGEN=0
           export "CARGO_TARGET_${target_var^^}_RUNNER=wasmtime run"
-          cargo +${{ matrix.toolchain }} test -p aws-lc-sys --no-default-features --target "$target" --test sanity-tests
-          cargo +${{ matrix.toolchain }} test -p aws-lc-rs --target "$target" --lib
-          cargo +${{ matrix.toolchain }} build -p aws-lc-rs --example digest --target "$target"
+          cargo +stable test -p aws-lc-sys --no-default-features --target "$target" --test sanity-tests
+          cargo +stable test -p aws-lc-rs --target "$target" --lib
+          cargo +stable build -p aws-lc-rs --example digest --target "$target"
           actual="$(wasmtime run --dir . "target/$target/debug/examples/digest.wasm" -d sha256 LICENSE)"
           expected="$(sha256sum LICENSE | cut -d ' ' -f1)"
           test "${actual%% *}" = "$expected"
